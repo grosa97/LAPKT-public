@@ -11,14 +11,14 @@ if(MACOS_BUILD)
 endif(MACOS_BUILD)
 
 if(NOT DEFINED PY_VERSION)
-  find_package(Python COMPONENTS Interpreter Development)
+  find_package(Python REQUIRED COMPONENTS Interpreter Development)
 else()
   string(REPLACE "." ";" PY_VERSION_PART ${PY_VERSION})
   LIST(GET PY_VERSION_PART 0 PY_VMAJOR)
   LIST(GET PY_VERSION_PART 1 PY_VMINOR)
   MATH(EXPR PY_VMINOR_NEXT "${PY_VMINOR} + 1")
   find_package(Python ${PY_VMAJOR}.${PY_VMINOR}...<${PY_VMAJOR}.${PY_VMINOR_NEXT} 
-    COMPONENTS Interpreter Development)
+    REQUIRED COMPONENTS Interpreter Development)
 endif()
 # if(${Python_VERSION} VERSION_LESS 3.6.0)
 #   message(SEND_ERROR
@@ -32,15 +32,17 @@ execute_process(COMMAND ${Python_EXECUTABLE} -m pip install --user
   -r ${PROJECT_SOURCE_DIR}/pip_requirements.txt
   RESULT_VARIABLE out
 )
-message(STATUS "Status- Install general pip result: ${out}")
+message(STATUS "Pip Install Status | ${Python_EXECUTABLE} -m pip install --user
+-r ${PROJECT_SOURCE_DIR}/pip_requirements.txt | result: ${out}")
 
 if(GEN_SPHINX_DOCS)
   execute_process(COMMAND ${Python_EXECUTABLE} -m pip install --user
     -r ${PROJECT_SOURCE_DIR}/config/pre_build/pip_auto_docs_requirements.txt
     RESULT_VARIABLE out
   )
+  message(STATUS "Pip Install Status |  ${Python_EXECUTABLE} -m pip install --user
+  -r ${PROJECT_SOURCE_DIR}/config/pre_build/pip_auto_docs_requirements.txt| result: ${out}")
 endif(GEN_SPHINX_DOCS)
-message(STATUS "Status- Install auto docs pip dependencies: ${out}")
 
 
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#
@@ -69,7 +71,7 @@ if(GEN_DOXYGEN_DOCS OR GEN_DOXYSPHINX_DOCS)
       BUILD_IN_SOURCE 1
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
-      INSTALL_COMMAND "" # ./b2 install
+      INSTALL_COMMAND ""
     )
     list (APPEND EXTRA_CMAKE_ARGS
       -DDOXYGEN_ROOT=${DEPS_INSTALL_PREFIX}/doxygen
@@ -84,7 +86,7 @@ if(GEN_DOXYGEN_DOCS OR GEN_DOXYSPHINX_DOCS)
       BUILD_IN_SOURCE 1
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
-      INSTALL_COMMAND "" # ./b2 install
+      INSTALL_COMMAND ""
     )
     list (APPEND EXTRA_CMAKE_ARGS
       -DDOXYGEN_ROOT=${DEPS_INSTALL_PREFIX}/doxygen
@@ -109,7 +111,7 @@ if(CMAKE_FF_CXX)
   )
   ExternalProject_Add(external_ff
     GIT_REPOSITORY https://github.com/LAPKT-dev/libff_parser
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/libff
     #SOURCE_SUBDIR src
     BINARY_DIR ${DEPS_BUILD_DIR}/ff/build
@@ -133,7 +135,7 @@ if(CMAKE_TESTING_ENABLED)
     # GIT_REPOSITORY https://github.com/catchorg/Catch2
     # GIT_TAG  v3.0.0-preview4
     URL ${PROJECT_SOURCE_DIR}/external_package/Catch2-3.0.0-preview4.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/Catch2
     #SOURCE_SUBDIR src
     BINARY_DIR ${DEPS_BUILD_DIR}/Catch2/build
@@ -209,9 +211,6 @@ list(APPEND BUILD_COMMAND
 )
 
 ExternalProject_Add( external_boost
-  URL ${PROJECT_SOURCE_DIR}/external_package/boost-1.81.0.tar.xz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-  URL_MD5 6cf0cdd797bca685910d527ae3c08cb3
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
   TMP_DIR     ${DEPS_BUILD_DIR}/boost/tmp
   SOURCE_DIR  ${DEPS_BUILD_DIR}/boost/src
@@ -220,6 +219,8 @@ ExternalProject_Add( external_boost
   CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
   BUILD_COMMAND ${BUILD_COMMAND}
   INSTALL_COMMAND ""
+  URL ${PROJECT_SOURCE_DIR}/external_package/boost-1.81.0.tar.xz
+  URL_MD5 6cf0cdd797bca685910d527ae3c08cb3
 )
 
 # Set the path to find Boost Cmake Config
@@ -253,7 +254,6 @@ foreach(var ${vars})
 endforeach()
 
 ExternalProject_Add (external_lapkt
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   DEPENDS ${DEPENDENCIES}
   SOURCE_DIR ${PROJECT_SOURCE_DIR}
   CMAKE_ARGS ${EXTRA_CMAKE_ARGS}
