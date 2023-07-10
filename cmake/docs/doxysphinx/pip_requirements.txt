@@ -1,4 +1,4 @@
-doxysphinx==3.1.0
+doxysphinx
 pytest==7.1.2
 sphinx==4.5.0
 Pillow==9.2.0
