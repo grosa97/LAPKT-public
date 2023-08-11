@@ -1,4 +1,4 @@
-# Build prerequisites for a standard Ubuntu 18.04/ 20.04/ 22.04 machine
+# Build prerequisites for a standard Ubuntu 20.04/ 22.04 machine
 
   - python3 >=3.7
   - python3-dev

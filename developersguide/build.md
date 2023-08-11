@@ -14,7 +14,7 @@ The build requires development tools specific to the operating system that you a
 
 | Operating System | Tested Versions | 
 |----|-----|
-| [Ubuntu](ubuntu_requirements.md)|18.04/ 20.04/ 22.04|
+| [Ubuntu](ubuntu_requirements.md)|20.04/ 22.04|
 | [Windows](windows_requirements.md)| 2019 |
 
 ## Build steps
