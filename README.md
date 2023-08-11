@@ -52,7 +52,7 @@ The python script can be found [here](https://github.com/LAPKT-dev/LAPKT-public/
 **Platform agnostic**
 
 1. The directory where the `pip` command installs the scripts, including `lapkt_cmd.py`, is generally on the system `PATH`, if not, it needs to be added manually.
-2. Python version [ `3.7`, `3.7`, `3.8`, `3.9`, `3.10` ] are supported
+2. Python version [ `3.8`, `3.9`, `3.10` ] are supported
 
 **@Windows**
 
