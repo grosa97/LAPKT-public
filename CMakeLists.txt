@@ -103,17 +103,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 #---- SECTION 1.2 Choose features to add to the lapkt library  ----#
 
-option(CMAKE_FF_CXX "Include the pure CXX lapkt extensions to support usage of FF parser" OFF)
-
-option(CMAKE_LEGACY_PLANNER "Old is gold! Build some legacy pure CXX planners" OFF)
-if(CMAKE_LEGACY_PLANNER AND NOT CMAKE_FF_CXX)
-  message(FATAL_ERROR "CMAKE_FF_CXX must be ON to install legacy planners")
-endif()
-
-if(CMAKE_FF_CXX)
-  add_definitions(-DUSE_FF)
-endif()
-
 # Install FD pddl and include the wrapper over it which
 #   acts as a pipe between output of FD tarnslate and lapkt
 option(CMAKE_FD "Install FD pddl" ON)

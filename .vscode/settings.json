@@ -11,8 +11,6 @@
         // "-DCMAKE_GENERATOR='Unix Makefiles'", // Default
         // "-DCMAKE_GENERATOR='MinGW Makefiles'", // Windows
         "-DUSE_SUPERBUILD=ON",  // Default: ON
-        "-DCMAKE_FF_CXX=OFF",  // Default: OFF
-        "-DCMAKE_LEGACY_PLANNER=OFF",  // Default: OFF
         "-DCMAKE_FD=ON",  // Default: ON
         "-DCMAKE_TARSKI=ON",  // Default: ON
         "-DGEN_DOXYGEN_DOCS=OFF",  // Default: OFF

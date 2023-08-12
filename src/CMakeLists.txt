@@ -23,9 +23,3 @@ add_subdirectory(planner)
 
 # Python packaging related
 add_subdirectory(python)
-
-#----- legacy lapkt-ff executables -----#
-if(CMAKE_LEGACY_PLANNER)
-    set(CMAKE_FF_CXX ON)
-    add_subdirectory(legacy_ff_planner)
-endif(CMAKE_LEGACY_PLANNER)

@@ -104,26 +104,26 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external_package/fd_translate/translate.py)
   COMMAND_ERROR_IS_FATAL ANY)
 endif()
 
-# BUILD FF
-if(CMAKE_FF_CXX)
-  list(APPEND DEPENDENCIES
-    external_ff
-  )
-  ExternalProject_Add(external_ff
-    GIT_REPOSITORY https://github.com/LAPKT-dev/libff_parser
-    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-    SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/libff
-    #SOURCE_SUBDIR src
-    BINARY_DIR ${DEPS_BUILD_DIR}/ff/build
-    INSTALL_DIR ${DEPS_INSTALL_PREFIX}/ff
-    #GIT_REMOTE_UPDATE_STRATEGY    CHECKOUT
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX}/ff
-    # INSTALL_COMMAND  cmake --install ${PROJECT_BINARY_DIR}/../build_external/ff/build
-  )
-  list (APPEND EXTRA_CMAKE_ARGS
-    -DFF_ROOT=${DEPS_INSTALL_PREFIX}/ff
-  )
-endif()
+# # BUILD FF
+# if(CMAKE_FF_CXX)
+#   list(APPEND DEPENDENCIES
+#     external_ff
+#   )
+#   ExternalProject_Add(external_ff
+#     GIT_REPOSITORY https://github.com/LAPKT-dev/libff_parser
+#     DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+#     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/libff
+#     #SOURCE_SUBDIR src
+#     BINARY_DIR ${DEPS_BUILD_DIR}/ff/build
+#     INSTALL_DIR ${DEPS_INSTALL_PREFIX}/ff
+#     #GIT_REMOTE_UPDATE_STRATEGY    CHECKOUT
+#     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX}/ff
+#     # INSTALL_COMMAND  cmake --install ${PROJECT_BINARY_DIR}/../build_external/ff/build
+#   )
+#   list (APPEND EXTRA_CMAKE_ARGS
+#     -DFF_ROOT=${DEPS_INSTALL_PREFIX}/ff
+#   )
+# endif()
 
 # BUILD CATCH2
 
