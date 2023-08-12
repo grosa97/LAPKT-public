@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        py_version: ["3.8", "3.9", "3.10"]
-        # py_version: ["3.8", "3.9", "3.10"]
+        py_version: ["3.8", "3.9", "3.10",  "3.11"]
+        # py_version: ["3.8", "3.9", "3.10",  "3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -116,8 +116,8 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        py_version: ["3.8", "3.9", "3.10"]
-        # py_version: ["3.8", "3.9", "3.10"]
+        py_version: ["3.8", "3.9", "3.10",  "3.11"]
+        # py_version: ["3.8", "3.9", "3.10",  "3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -209,7 +209,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        py_version: ["3.9", "3.10"]
+        py_version: ["3.9", "3.10",  "3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -291,7 +291,7 @@ jobs:
 #     runs-on: macos-11
 #     strategy:
 #       matrix:
-#         py_version: ["3.8", "3.9", "3.10"]
+#         py_version: ["3.8", "3.9", "3.10",  "3.11"]
 
 
 #     steps:
@@ -388,8 +388,8 @@ jobs:
   #   runs-on: macos-12
   #   strategy:
   #     matrix:
-  #       # py_version: ["3.8", "3.9", "3.10"]
-  #       py_version: ["3.8", "3.9", "3.10"]
+  #       # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+  #       py_version: ["3.8", "3.9", "3.10",  "3.11"]
   #       exclude:
   #         - py_version: "3.9"
 
@@ -481,8 +481,8 @@ jobs:
   #   runs-on: macos-11
   #   strategy:
   #     matrix:
-  #       # py_version: ["3.8", "3.9", "3.10"]
-  #       py_version: ["3.8", "3.9", "3.10"]
+  #       # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+  #       py_version: ["3.8", "3.9", "3.10",  "3.11"]
   #       exclude:
   #         - py_version: "3.9"
 
@@ -573,8 +573,8 @@ jobs:
   #   runs-on: macos-10.15
   #   strategy:
   #     matrix:
-  #       # py_version: ["3.8", "3.9", "3.10"]
-  #       py_version: ["3.8", "3.9", "3.10"]
+  #       # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+  #       py_version: ["3.8", "3.9", "3.10",  "3.11"]
   #       exclude:
   #         - py_version: "3.9"
 
