@@ -42,7 +42,7 @@ install(
         time.hxx
         types.hxx
     DESTINATION
-        ${CMAKE_INSTALL_PREFIX}/${REL_CORE_INC_DIR}/utility
+        ${CMAKE_INSTALL_PREFIX}/${REL_CORE_INC_DIR}/utils
     COMPONENT
         core
 )

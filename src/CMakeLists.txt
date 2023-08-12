@@ -9,9 +9,6 @@ add_subdirectory(translate)
 # Search engines 
 add_subdirectory(engine)
 
-# Components of the engine
-add_subdirectory(component)
-
 # Algorithms to evaluate a node
 add_subdirectory(node_eval)
 
@@ -19,7 +16,7 @@ add_subdirectory(node_eval)
 add_subdirectory(model)
 
 # lapkt template library(ltl) a set of utility blueprints
-add_subdirectory(ltl)
+add_subdirectory(utils)
 
 # Planners which leverage engine(s) in some particular configuration
 add_subdirectory(planner)
