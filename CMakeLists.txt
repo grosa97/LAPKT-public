@@ -171,7 +171,7 @@ endif()
 #     "UNTESTED PYTHON VERSION, expected >3.6.x but found - " ${Python_VERSION})
 # endif()
 
-message("The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
+message(STATUS "The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
 
 #---- Pybind11  ----#
 # MUST BE CALLED AFTER FINDPYTHON: CMake 3.12+ (3.15+ recommended, 3.18.2+ ideal) 
@@ -236,7 +236,7 @@ find_package(Boost
   # PATHS ${Boost_ROOT} 
   # NO_DEFAULT_PATH
   )
-message("THE BOOST INCLUDE dirs search path is " ${Boost_INCLUDE_DIRS} )
+message(STATUS "THE BOOST INCLUDE dirs search path is " ${Boost_INCLUDE_DIRS} )
 
 #---- Catch2 ----#
 

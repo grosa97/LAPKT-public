@@ -25,7 +25,7 @@ endif()
 #     "INCOMPATIBLE PYTHON VERSION, expected >3.6.x but found - "
 #     ${Python_VERSION})
 # endif()
-message("The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
+message(STATUS "The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
 
 # Install pip requirements
 execute_process(COMMAND ${Python_EXECUTABLE} -m pip install --user
@@ -159,12 +159,12 @@ if(CMAKE_BOOST_BUILD_TYPE STREQUAL "Debug")
 else()
   set(BOOST_VARIANT "release")
 endif()
-message("Building Boost in " ${BOOST_VARIANT} " mode")
+message(STATUS "Building Boost in " ${BOOST_VARIANT} " mode")
 file(WRITE ${DEPS_BUILD_DIR}/boost/user-config.jam "using python  :  ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR} ;")
 
 # LOGS
-message("Boost is built using python  :  ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR} ;")
-message("The boost build command is : ./b2 --user-config=${PROJECT_BINARY_DIR}/../build_external/boost/user-config.jam --with-python --with-program_options --build-dir=${PROJECT_BINARY_DIR}/../build_external/boost/build variant=${BOOST_VARIANT} optimization=space link=static install cxxflags=-fpic")
+message(STATUS "Boost is built using python  :  ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR} ;")
+message(STATUS "The boost build command is : ./b2 --user-config=${PROJECT_BINARY_DIR}/../build_external/boost/user-config.jam --with-python --with-program_options --build-dir=${PROJECT_BINARY_DIR}/../build_external/boost/build variant=${BOOST_VARIANT} optimization=space link=static install cxxflags=-fpic")
 
 
 # Boost Configure and Build commands
