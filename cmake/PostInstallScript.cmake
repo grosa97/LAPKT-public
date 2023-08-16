@@ -1,4 +1,4 @@
-message("\n# x-x-x-x POST-INSTALL THINGS BEGIN HERE x-x-x-x #\n")
+message(STATUS "\n# x-x-x-x POST-INSTALL THINGS BEGIN HERE x-x-x-x #\n")
 
 find_package(Python3 COMPONENTS Interpreter Development)
 if(${Python3_VERSION} VERSION_LESS 3.8.0)
@@ -13,4 +13,4 @@ endif()
 #     RESULT_VARIABLE out
 # )
 
-message("\n# x-x-x-x POST-INSTALL THINGS END HERE x-x-x-x #\n")
+message(STATUS "\n# x-x-x-x POST-INSTALL THINGS END HERE x-x-x-x #\n")
