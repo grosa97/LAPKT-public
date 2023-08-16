@@ -65,7 +65,6 @@ if(GEN_DOXYGEN_DOCS OR GEN_DOXYSPHINX_DOCS)
     ExternalProject_Add( external_doxygen
       URL https://sourceforge.net/projects/doxygen/files/rel-1.9.6/doxygen-1.9.6.linux.bin.tar.gz
       URL_MD5 b6193a16bc5128597f5affd878dbd7b7
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
       DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
       SOURCE_DIR  ${DEPS_INSTALL_PREFIX}/doxygen
       BUILD_IN_SOURCE 1
@@ -80,7 +79,6 @@ if(GEN_DOXYGEN_DOCS OR GEN_DOXYSPHINX_DOCS)
     ExternalProject_Add( external_doxygen
       URL https://www.doxygen.nl/files/doxygen-1.9.6.windows.x64.bin.zip
       URL_MD5 bdf1af97a733edd0a60fce2cf375c5c3
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
       DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
       SOURCE_DIR  ${DEPS_INSTALL_PREFIX}/doxygen
       BUILD_IN_SOURCE 1
@@ -111,7 +109,6 @@ endif()
 #   )
 #   ExternalProject_Add(external_ff
 #     GIT_REPOSITORY https://github.com/LAPKT-dev/libff_parser
-#     DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 #     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/libff
 #     #SOURCE_SUBDIR src
 #     BINARY_DIR ${DEPS_BUILD_DIR}/ff/build
@@ -135,7 +132,6 @@ if(CMAKE_TESTING_ENABLED)
     # GIT_REPOSITORY https://github.com/catchorg/Catch2
     # GIT_TAG  v3.0.0-preview4
     URL ${PROJECT_SOURCE_DIR}/external_package/Catch2-3.0.0-preview4.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/Catch2
     #SOURCE_SUBDIR src
     BINARY_DIR ${DEPS_BUILD_DIR}/Catch2/build
@@ -210,7 +206,9 @@ list(APPEND BUILD_COMMAND
     variant=${BOOST_VARIANT}
 )
 
-ExternalProject_Add( external_boost
+ExternalProject_Add(external_boost
+  URL ${PROJECT_SOURCE_DIR}/external_package/boost-1.81.0.tar.xz
+  URL_MD5 6cf0cdd797bca685910d527ae3c08cb3
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
   TMP_DIR     ${DEPS_BUILD_DIR}/boost/tmp
   SOURCE_DIR  ${DEPS_BUILD_DIR}/boost/src
@@ -219,8 +217,6 @@ ExternalProject_Add( external_boost
   CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
   BUILD_COMMAND ${BUILD_COMMAND}
   INSTALL_COMMAND ""
-  URL ${PROJECT_SOURCE_DIR}/external_package/boost-1.81.0.tar.xz
-  URL_MD5 6cf0cdd797bca685910d527ae3c08cb3
 )
 
 # Set the path to find Boost Cmake Config

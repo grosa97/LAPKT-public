@@ -13,6 +13,18 @@ cmake_minimum_required(VERSION 3.19)
 option(USE_SUPERBUILD "flag that a superbuild should be invoked" ON)
 message(STATUS "SUPERBUILD IS ${USE_SUPERBUILD}")
 
+# Set policies
+
+## NOTE: cmake adds new policies when it changes the interpretation of a 
+## a function to match the evolving expectations of the developers. Policies are
+## version dependent and an older version would not recognize the policy.
+
+if(${CMAKE_VERSION} VERSION_LESS "3.24.0") 
+  message(DEPRECATION "Please consider switching to the latest cmake version")
+else()
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 if (USE_SUPERBUILD)
   project(superbuild VERSION 1.0)
 
