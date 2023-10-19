@@ -18,6 +18,8 @@
 #include <approximate_rp_iw.hxx>
 #include <approximate_siw.hxx>
 
+#include <count_bfs_planner.hxx>
+
 #include <py_strips_interface.hxx>
 // #include <tarski_instantiator.hxx>
 // #include <strips_prob.hxx>
@@ -213,4 +215,15 @@ PYBIND11_MODULE(planner, m)
     .def_readwrite("plan_filename", &SIW_PLUS_BFS_F_Planner::m_plan_filename)
     .def_readwrite("enable_siw_plus", &SIW_PLUS_BFS_F_Planner::m_enable_siw_plus)
     .def_readwrite("enable_bfs_f", &SIW_PLUS_BFS_F_Planner::m_enable_bfs_f);
+
+
+  py::class_<COUNT_BFS_Planner, STRIPS_Interface>(m, "COUNT_BFS_Planner")
+    .def(py::init<>())
+    .def("setup", &COUNT_BFS_Planner::setup)
+    .def("solve", &COUNT_BFS_Planner::solve)
+    .def_readwrite("iw_bound", &COUNT_BFS_Planner::m_iw_bound)
+    .def_readwrite("log_filename", &COUNT_BFS_Planner::m_log_filename)
+    .def_readwrite("plan_filename", &COUNT_BFS_Planner::m_plan_filename)
+    .def_readwrite("atomic", &COUNT_BFS_Planner::m_atomic);
+
 }

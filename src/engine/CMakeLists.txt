@@ -1,6 +1,7 @@
 target_sources(core
     PRIVATE
         at_bfs.hxx
+        gs_custom_bfs.hxx
         at_bfs_dq.hxx
         at_bfs_dq_mh.hxx
         at_gbfs.hxx
@@ -41,6 +42,7 @@ target_include_directories(core
 install(
     FILES
         ${PROJECT_SOURCE_DIR}/src/engine/at_bfs.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/gs_custom_bfs.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/at_bfs_dq.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/at_bfs_dq_mh.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/at_gbfs.hxx

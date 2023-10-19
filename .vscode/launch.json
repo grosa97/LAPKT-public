@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.1",
     "configurations": [
+        
         // Launch python program to debug. 
         // To debug the C++ backend, the user needs to manually attach gdb (run the "(gdb) attach" launch option) when the program launches
         // Use the "(gdb) launch" option to debug C++ backend with gdb. "(gdb) launch" runs without the python debugger.
@@ -82,7 +83,7 @@
             // "program": ${env:HOME}\\AppData\\Local\\Programs\\Python\\Python310\\python",
             "args": [
                 "${workspaceFolder}/lapkt_package/lapkt.py",
-                "Approximate_BFWS",
+                //"Approximate_BFWS",
                 // "Approximate_IW",
                 // "Approximate_RP_IW",
                 // "Approximate_SIW",
@@ -95,26 +96,34 @@
                 // "DFIW_Planner",
                 // "DFSIW_Planner",
                 // "DFS_Plus_Planner",
-                // "IW_Planner",
+                "IW_Planner",
                 // "RPIW_Planner",
                 // "SIW_PLUS_BFS_F_Planner",
                 // "SIW_Planner",
                 // "SIW_Plus_Planner",
+                // "COUNT_BFS_Planner",
                 "--grounder", "FD",
                 // "--grounder", "FF",
                 "-d", 
                 // "${workspaceFolder}/test/classical_instance_small/visitall-opt11-strips/domain.pddl", 
                 // "${workspaceFolder}/test/classical_instance_small/cavediving/domain.pddl", 
-                "${workspaceFolder}/test/classical_instance_small/gripper/domain.pddl", 
+                // "${workspaceFolder}/test/classical_instance_small/gripper/domain.pddl", 
                 // "${workspaceFolder}/test/classical_instance_small/hiking-opt14-strips/domain.pddl", 
+                "${workspaceFolder}/test/classical_instance_small/barman-opt14-strips/domain.pddl",
                 "-p", 
                 // "${workspaceFolder}/test/classical_instance_small/visitall-opt11-strips/problem02-full.pddl", 
                 // "${workspaceFolder}/test/classical_instance_small/cavediving/testing01.pddl", 
-                "${workspaceFolder}/test/classical_instance_small/gripper/prob01.pddl", 
+                // "${workspaceFolder}/test/classical_instance_small/gripper/prob01.pddl", 
                 // "${workspaceFolder}/test/classical_instance_small/hiking-opt14-strips/ptesting-1-2-3.pddl", 
+                "${workspaceFolder}/test/classical_instance_small/barman-opt14-strips/p435.1.pddl"
             ],
             "stopAtEntry": false,
             "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "python import sys;sys.path.insert(0, '/usr/share/gcc/python');from libstdcxx.v6.printers import register_libstdcxx_printers;register_libstdcxx_printers(None)",
+                    "ignoreFailures": false
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",

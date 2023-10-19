@@ -1,5 +1,6 @@
 target_sources(core
     PRIVATE
+        count_novelty_heuristic.hxx
         node_novelty_spaces.hxx
         novelty.hxx
         approximate_novelty.hxx
@@ -17,6 +18,7 @@ target_include_directories(core
 
 install(
     FILES
+        count_novelty_heuristic.hxx
         node_novelty_spaces.hxx
         novelty.hxx
         approximate_novelty.hxx
