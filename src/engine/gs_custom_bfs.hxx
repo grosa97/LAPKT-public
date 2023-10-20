@@ -36,6 +36,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <algorithm>
 #include <iostream>
 
+#include <types.hxx>
+#include <memory.hxx>
+
 namespace aptk
 {
 
@@ -227,6 +230,8 @@ namespace aptk
 				void inc_replaced_open() { m_open_repl_count++; }
 				unsigned open_repl() const { return m_open_repl_count; }
 
+				void set_memory_budget_MB(float m) { m_memory_budget = m; }
+				float memory_budget() const {return m_memory_budget; }
 				void set_budget(float v) { m_time_budget = v; }
 				float time_budget() const { return m_time_budget; }
 
@@ -380,8 +385,25 @@ namespace aptk
 
 					Search_Node *head = get_node();
 					int counter = 0;
+
+					struct rusage usage_report;
 					while (head)
 					{
+						/**
+						 * check memory usage if > than threshold, if larger then throw exception or something
+						 * TODO: Set memory limit through a passed variable
+						*/
+						if (counter % 100000 == 0){
+							getrusage(RUSAGE_SELF, &usage_report);
+							std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							if ((usage_report.ru_maxrss / 1024) > 2048) {
+								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
+								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
+								std::cout << "Search: Memory limit exceeded." << std::endl;
+								return NULL;
+							}
+						}
+
 						if (head->gn() >= bound())
 						{
 							inc_pruned_bound();
@@ -471,6 +493,83 @@ namespace aptk
 					std::reverse(plan.begin(), plan.end());
 				}
 
+				void record_atomic_info(unsigned f) 
+				{
+					m_atomic_exp_count_map[f] = expanded();
+					m_atomic_gen_count_map[f] = generated();
+					m_atomic_pruned_B_count_map[f] = pruned_by_bound();
+					m_atomic_dead_end_count_map[f] = dead_ends();
+					m_atomic_open_repl_count_map[f] = open_repl();
+					m_atomic_time_used_map[f] = time_used() - m_t0;
+				}
+
+				bool has_additional_atomic_goal(Search_Node *s) 
+				{
+					bool new_atomic_goal = false;
+					Fluent_Vec added = get_added_atoms(s);
+					STRIPS_Problem strips_model = m_problem.task();
+					std::for_each(added.begin(), added.end(), [&](unsigned f) {
+						if (strips_model.is_in_goal(f)) {
+							if (m_achieved_atomic_goals_set.find(f) == m_achieved_atomic_goals_set.end())
+							{
+								new_atomic_goal = true;
+								m_achieved_atomic_goals_set.insert(f);
+								m_atomic_goals_state_map[f] = s;
+								record_atomic_info(f);
+							}
+						}
+					});
+					return new_atomic_goal;
+				}
+
+				const Fluent_Vec& get_added_atoms(const Search_Node *n) const
+				{
+					if (n->action() == no_op) 
+					{
+						return n->m_state->fluent_vec();
+					}
+					else 
+					{
+						STRIPS_Problem strips_model = m_problem.task();
+
+						Fluent_Vec new_atom_vec;
+						const Action *a = strips_model.actions()[n->action()];
+						if (a->has_ceff())
+						{
+							static Fluent_Set new_atom_set(strips_model.num_fluents() + 1);
+							new_atom_set.reset();
+							new_atom_vec.clear();
+							for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
+							{
+								if (new_atom_set.isset(*it))
+									continue;
+
+								new_atom_vec.push_back(*it);
+								new_atom_set.set(*it);
+							}
+							for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+							{
+								Conditional_Effect *ce = a->ceff_vec()[i];
+								if (ce->can_be_applied_on(*(n->parent()->state())))
+									for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
+									{
+										{
+											if (new_atom_set.isset(*it))
+												continue;
+
+											new_atom_vec.push_back(*it);
+											new_atom_set.set(*it);
+										}
+									}
+							}
+						}
+
+						const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
+
+						return add;
+					}
+				}
+
 			protected:
 				const Search_Model &m_problem;
 				Abstract_Heuristic *m_heuristic_func;
@@ -483,11 +582,22 @@ namespace aptk
 				unsigned m_open_repl_count;
 				float m_B;
 				float m_time_budget;
+				float m_memory_budget;
 				float m_t0;
 				Search_Node *m_root;
 				std::vector<Action_Idx> m_app_set;
 				bool m_greedy;
 				bool m_delay_eval;
+
+				std::set<unsigned> m_achieved_atomic_goals_set; //Use Fluent_Set instead? is bitset it more efficient??
+				std::unordered_map<unsigned int, Search_Node*> m_atomic_goals_state_map;
+				std::unordered_map<unsigned int, unsigned> m_atomic_exp_count_map;
+				std::unordered_map<unsigned int, unsigned> m_atomic_gen_count_map;
+				std::unordered_map<unsigned int, unsigned> m_atomic_pruned_B_count_map;
+				std::unordered_map<unsigned int, unsigned> m_atomic_dead_end_count_map;
+				std::unordered_map<unsigned int, unsigned> m_atomic_open_repl_count_map;
+				std::unordered_map<unsigned int, float> m_atomic_time_used_map;
+
 			};
 
 		}
