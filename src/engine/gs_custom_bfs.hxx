@@ -412,12 +412,22 @@ namespace aptk
 							continue;
 						}
 
-						if (m_problem.goal(*(head->state())))
+						if (has_additional_atomic_goal(*(head->state())))
 						{
-							close(head);
-							set_bound(head->gn());
-							return head;
+							if (achieved_all_atomic_goals())
+							{
+								close(head);
+								set_bound(head->gn());
+								return head;
+							}
 						}
+
+						// if (m_problem.goal(*(head->state())))
+						// {
+						// 	close(head);
+						// 	set_bound(head->gn());
+						// 	return head;
+						// }
 						if ((time_used() - m_t0) > m_time_budget)
 							return NULL;
 
@@ -493,6 +503,11 @@ namespace aptk
 					std::reverse(plan.begin(), plan.end());
 				}
 
+				bool achieved_all_atomic_goals()
+				{
+					return m_achieved_atomic_goals_set.size() == m_problem.task().goal().size();
+				}
+
 				void record_atomic_info(unsigned f) 
 				{
 					m_atomic_exp_count_map[f] = expanded();
@@ -507,9 +522,9 @@ namespace aptk
 				{
 					bool new_atomic_goal = false;
 					Fluent_Vec added = get_added_atoms(s);
-					STRIPS_Problem strips_model = m_problem.task();
+					// STRIPS_Problem strips_model = m_problem.task();
 					std::for_each(added.begin(), added.end(), [&](unsigned f) {
-						if (strips_model.is_in_goal(f)) {
+						if (m_problem.task().is_in_goal(f)) {
 							if (m_achieved_atomic_goals_set.find(f) == m_achieved_atomic_goals_set.end())
 							{
 								new_atomic_goal = true;
@@ -530,13 +545,13 @@ namespace aptk
 					}
 					else 
 					{
-						STRIPS_Problem strips_model = m_problem.task();
+						// STRIPS_Problem strips_model = m_problem.task();
 
 						Fluent_Vec new_atom_vec;
-						const Action *a = strips_model.actions()[n->action()];
+						const Action *a = m_problem.task().actions()[n->action()];
 						if (a->has_ceff())
 						{
-							static Fluent_Set new_atom_set(strips_model.num_fluents() + 1);
+							static Fluent_Set new_atom_set(m_problem.task().num_fluents() + 1);
 							new_atom_set.reset();
 							new_atom_vec.clear();
 							for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
