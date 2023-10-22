@@ -54,11 +54,13 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
 {
     std::ofstream details(m_log_filename);
 
-    std::vector<aptk::Action_Idx> plan;
-    float cost;
+    // std::vector<aptk::Action_Idx> plan;
+    // float cost;
 
     float ref = aptk::time_used();
     aptk::Fluent_Vec goals = plan_prob.goal();
+    aptk::search::custom_bfs::Atomic_Plan_Vec plans(goals.size());
+
     float total_time = 0;
 
     float max_bound = m_iw_bound;
@@ -68,60 +70,86 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
     engine.set_greedy( greedy );
 	engine.set_delay_eval( delayed );
 
-    for (unsigned i = 0; i < goals.size(); i++)
-    {
+    // std::cout<<"Number of single goals: "<<goals.size()<<std::endl;
+
+    // for (unsigned i = 0; i < goals.size(); i++)
+    // {
 
         // if (solved)
         // {
         //     engine.set_bound(1);
         // }
 
-        engine.start();
-        aptk::Fluent_Vec new_goals;
-        new_goals.push_back(goals[i]);
-        aptk::STRIPS_Problem::set_goal(plan_prob, new_goals);
+    engine.start();
+    // aptk::Fluent_Vec new_goals;
+    // new_goals.push_back(goals[i]);
+    // aptk::STRIPS_Problem::set_goal(plan_prob, new_goals);
+    // std::cout<<"Starting search for goal ["<<goals[i]<<"]"<<std::endl;
+        
+        /**
+         * TODO: modify or find_atomic_solution(plans)
+        */
+        // if (engine.find_solution(cost, plan))
+        engine.find_atomic_solution(plans);
 
-        if (engine.find_solution(cost, plan))
+        details << "Number of achieved atomic goals: " << plans.get_a_goals_achieved() << " of " << goals.size()<<std::endl;
+        std::cout << "Number of achieved atomic goals: " << plans.get_a_goals_achieved() << " of " << goals.size()<<std::endl;
+        
+        unsigned index = 0;
+        for (auto atom_tuple_it = plans.begin(); atom_tuple_it != plans.end(); atom_tuple_it++)
         {
-            details << "Plan found with cost: " << cost << std::endl;
-            std::cout << "Plan found with cost: " << cost << std::endl;
-            for (unsigned k = 0; k < plan.size(); k++)
+            auto &single_atom_goal = std::get<0>(*atom_tuple_it);
+            //if it is a found atomic goal
+            if (single_atom_goal != -1)
             {
-                details << k + 1 << ". ";
-                const aptk::Action &a = *(plan_prob.actions()[plan[k]]);
-                details << a.signature();
+                std::vector<aptk::Action_Idx> &plan = std::get<1>(*atom_tuple_it);
+                float &cost = std::get<2>(*atom_tuple_it);
                 details << std::endl;
-                plan_stream << a.signature() << std::endl;
+                details << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
+                std::cout << std::endl;
+                std::cout << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
+                
+                details << "Plan found with cost: " << cost << std::endl;
+                std::cout << "Plan found with cost: " << cost << std::endl;
+
+                for (int k=0; k < plan.size(); k++)
+                {
+                    details << k + 1 << ". ";
+                    const aptk::Action &a = *(plan_prob.actions()[plan[k]]);
+                    details << a.signature();
+                    details << std::endl;
+                    plan_stream << a.signature() << std::endl;
+                }
+                float a_time = engine.atomic_search_time(single_atom_goal);
+                unsigned a_expanded = engine.atomic_expanded(single_atom_goal);
+                unsigned a_generated = engine.atomic_generated(single_atom_goal);
+
+                details << "Time: " << (a_time) << std::endl;
+                details << "Generated: " << (a_generated) << std::endl;
+                details << "Expanded: " << (a_expanded) << std::endl;
+
+                std::cout << "Time: " << (a_time) << std::endl;
+                std::cout << "Generated: " << (a_generated) << std::endl;
+                std::cout << "Expanded: " << (a_expanded) << std::endl;
+                
+                plans.reset_tuple(single_atom_goal);
+
+                index++;
             }
-            plan.clear();
-            solved = true;
-        }
-        else
-        {
-            // solved = false;
-            // if (!(engine.bound() < max_bound &&
-            //       engine.set_bound(engine.bound() + 1)))
-            // {
-            //     details << ";; NOT I-REACHABLE ;;" << std::endl;
-            //     std::cout << ";; NOT I-REACHABLE ;;" << std::endl;
-            //     solved = true;
-            // }
-            // else
-            // {
-            //     i--;
-            //     continue;
-            // }
-            
-            /**
-             * This should never occur!
-            */
-            details << ";; NOT I-REACHABLE ;;" << std::endl;
-            std::cout << ";; NOT I-REACHABLE ;;" << std::endl;
+            else 
+            {
+                details << std::endl;
+                details << ";; NOT I-REACHABLE ;;" << std::endl;
+                std::cout << std::endl;
+                std::cout << ";; NOT I-REACHABLE ;;" << std::endl;
+                // solved = true;
+            }
             solved = true;
         }
 
         float partial_time = aptk::time_used() - ref;
         total_time = partial_time;
+        details << std::endl;
         details << "Total time: " << partial_time << std::endl;
         details << "Nodes generated during search: " << engine.generated() << std::endl;
         details << "Nodes expanded during search: " << engine.expanded() << std::endl;
@@ -131,11 +159,12 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
         // details << "Average ef. width: " << engine.avg_B() << std::endl;
         // details << "Max ef. width: " << engine.max_B() << std::endl;
 
+        std::cout << std::endl;
         std::cout << "Total time: " << partial_time << std::endl;
         std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
         std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
         std::cout << "Max novelty expanded: " << engine.bound() << std::endl;
-    }
+    // }
 
     details.close();
     return total_time;
@@ -229,13 +258,15 @@ void COUNT_BFS_Planner::solve()
     BFS_H_Count_Novelty bfs_engine(search_prob);
 
     /**
-     * TEMP find correct place to set m_atomic
+     * TODO: find correct place to set m_atomic
     */
     m_atomic = true;
 
     float bfs_t;
-    if (m_atomic)
+    if (m_atomic){
+        std::cout << "---Performing single goal search" << std::endl;
         bfs_t = do_search_single_goal(bfs_engine, search_prob.task(), plan_stream);
+    }
     else
         bfs_t = do_search(bfs_engine, search_prob.task(), plan_stream);
 
@@ -243,258 +274,3 @@ void COUNT_BFS_Planner::solve()
 
     plan_stream.close();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// /**
-//  * NIR: In this example, we'll show how to create a search problem out of
-//  * a planning problem we acquired from a PDDL file using FF-parser, 
-//  * and how to create a simple bfs (delayed/greedy/anytime) + h_max
-//  */
-// #include <iostream>
-// #include <fstream>
-
-// #include <ff_to_aptk.hxx>
-// #include <strips_prob.hxx>
-// #include <fluent.hxx>
-// #include <action.hxx>
-// #include <cond_eff.hxx>
-// #include <strips_state.hxx>
-// #include <fwd_search_prob.hxx>
-
-// #include <h_1.hxx>
-
-// #include <aptk/open_list.hxx>
-// #include <aptk/string_conversions.hxx>
-// #include <aptk/at_bfs.hxx>
-
-// #include <fstream>
-
-// #include <boost/program_options.hpp>
-
-
-// namespace po = boost::program_options;
-
-// using	aptk::STRIPS_Problem;
-
-// using	aptk::agnostic::Fwd_Search_Problem;
-// using	aptk::Action;
-
-// using 	aptk::agnostic::H1_Heuristic;
-// using	aptk::agnostic::H_Add_Evaluation_Function;
-// using	aptk::agnostic::H_Max_Evaluation_Function;
-
-// using 	aptk::search::Open_List;
-// using	aptk::search::bfs::AT_BFS_SQ_SH;
-// using	aptk::search::Node_Comparer;
-
-
-
-// //NIR: We start defining the type of nodes for our planner
-// typedef		aptk::search::bfs::Node< aptk::State >	Search_Node;
-
-// //NIR: Then we define the type of the tie-breaking algorithm
-// // for the open list we are going to use
-// typedef		Node_Comparer< Search_Node >					Tie_Breaking_Algorithm;
-
-
-// //NIR: Now we define the Open List type by combining the types we have defined before
-// typedef		Open_List< Tie_Breaking_Algorithm, Search_Node >		BFS_Open_List;
-
-
-// //NIR: Now we define the heuristics
-
-// typedef 	H1_Heuristic<Fwd_Search_Problem, H_Max_Evaluation_Function>	H_Max_Fwd;
-
-// //NIR: Now we're ready to define the BFS algorithm we're going to use
-// typedef		AT_BFS_SQ_SH< Fwd_Search_Problem, H_Max_Fwd, BFS_Open_List >		BFS_H_Max_Fwd;
-
-
-
-// float do_search(  Fwd_Search_Problem& search_prob, float& cost,std::ofstream& details, std::string plan_filename,  bool anytime, bool delayed, bool greedy  ) {
-
-
-
-// 	std::vector< aptk::Action_Idx > plan;
-// 	cost = infty;
-
-// 	float ref = aptk::time_used();
-// 	float t0 = aptk::time_used();
-
-// 	BFS_H_Max_Fwd engine( search_prob );
-// 	engine.set_greedy( greedy );
-// 	engine.set_delay_eval( delayed );
-// 	engine.start();
-
-// 	unsigned expanded_0 = engine.expanded();
-// 	unsigned generated_0 = engine.generated();
-
-// 	while ( engine.find_solution( cost, plan ) ) {
-// 		if ( !plan.empty() ) {
-// 			details << "Plan found with cost: " << cost << std::endl;
-// 			if( anytime ) std::cout << "Plan found with cost: " << cost << std::endl;
-// 			std::ofstream plan_stream( plan_filename.c_str() );
-// 			for ( unsigned k = 0; k < plan.size(); k++ ) {
-// 				details << k+1 << ". ";
-// 				const aptk::Action& a = *(search_prob.task().actions()[ plan[k] ]);
-// 				details << a.signature();
-// 				details << std::endl;
-// 				plan_stream << a.signature() << std::endl;
-// 			}
-// 			plan_stream.close();
-// 		}
-// 		else
-// 			details << "No plan found" << std::endl;
-// 		float tf = aptk::time_used();
-// 		unsigned expanded_f = engine.expanded();
-// 		unsigned generated_f = engine.generated();
-// 		details << "Time: " << tf - t0 << std::endl;
-// 		details << "Generated: " << generated_f - generated_0 << std::endl;
-// 		details << "Expanded: " << expanded_f - expanded_0 << std::endl;
-// 		if(anytime){
-// 			std::cout << "Time: " << tf - t0 << std::endl;
-// 			std::cout << "Generated: " << generated_f - generated_0 << std::endl;
-// 			std::cout << "Expanded: " << expanded_f - expanded_0 << std::endl << std::endl;
-// 		}
-// 		t0 = tf;
-// 		expanded_0 = expanded_f;
-// 		generated_0 = generated_f;
-// 		plan.clear();
-
-// 		if(!anytime) break;
-
-// 	}
-
-// 	float total_time = aptk::time_used() - ref;
-// 	std::cout << "Total time: " << total_time << std::endl;
-// 	std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
-// 	std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
-// 	std::cout << "Nodes pruned by bound: " << engine.pruned_by_bound() << std::endl;
-// 	std::cout  << "Dead-end nodes: " << engine.dead_ends() << std::endl;
-// 	std::cout << "Plan found with cost: " << cost << std::endl;
-
-// 	return total_time;
-
-
-// }
-
-// void report_no_solution( std::string reason, std::string plan_filename ) {
-// 	std::ofstream plan_stream( plan_filename.c_str() );
-// 	plan_stream << ";; No solution found" << std::endl;
-// 	plan_stream << ";; " << reason << std::endl;
-// 	plan_stream.close();
-// }
-
-
-// void process_command_line_options( int ac, char** av, po::variables_map& vars ) {
-// 	po::options_description desc( "Options:" );
-	
-// 	desc.add_options()
-// 		( "help", "Show help message" )
-// 		( "domain", po::value<std::string>(), "Input PDDL domain description" )
-// 		( "problem", po::value<std::string>(), "Input PDDL problem description" )
-// 		( "greedy", po::value<bool>()->default_value(false), "Greedy (default False)" )
-// 		( "delayed", po::value<bool>()->default_value(false), "Delayed Evaluation (default False)" )
-// 		( "anytime", po::value<bool>()->default_value(false), "Anytime (default False)" )
-// 		( "output", po::value<std::string>(), "Output file for plan" )
-// 	;
-	
-// 	try {
-// 		po::store( po::parse_command_line( ac, av, desc ), vars );
-// 		po::notify( vars );
-// 	}
-// 	catch ( std::exception& e ) {
-// 		std::cerr << "Error: " << e.what() << std::endl;
-// 		std::exit(1);
-// 	}
-// 	catch ( ... ) {
-// 		std::cerr << "Exception of unknown type!" << std::endl;
-// 		std::exit(1);
-// 	}
-
-// 	if ( vars.count("help") ) {
-// 		std::cout << desc << std::endl;
-// 		std::exit(0);
-// 	}
-
-// }
-
-// int main( int argc, char** argv ) {
-
-// 	po::variables_map vm;
-
-// 	process_command_line_options( argc, argv, vm );
-
-	
-// 	if ( !vm.count( "domain" ) ) {
-// 		std::cerr << "No PDDL domain was specified!" << std::endl;
-// 		std::exit(1);
-// 	}
-
-// 	if ( !vm.count( "problem" ) ) {
-// 		std::cerr << "No PDDL problem was specified!" << std::endl;
-// 		std::exit(1);
-// 	}
-
-// 	std::string plan_filename;	
-// 	if ( !vm.count( "output" ) ) {
-// 		std::cerr << "No output plan file specified, defaulting to 'plan.ipc'" << std::endl;
-// 		plan_filename = "plan.ipc";
-// 	}
-// 	else
-// 		plan_filename = vm["output"].as<std::string>();
-
-
-
-// 	bool anytime = vm["anytime"].as<bool>();
-// 	bool delayed = vm["delayed"].as<bool>();
-// 	bool greedy =  vm["greedy"].as<bool>();
-
-
-// 	std::ofstream details( "execution.details" );
-
-// 	STRIPS_Problem	prob;
-
-// 	//NIR: Load PDDL files and save info in our STRIPS_Problem
-// 	aptk::FF_Parser::get_problem_description( vm["domain"].as<std::string>(), vm["problem"].as<std::string>(), prob );
-
-// 	details << "PDDL problem description loaded: " << std::endl;
-// 	details << "\tDomain: " << prob.domain_name() << std::endl;
-// 	details << "\tProblem: " << prob.problem_name() << std::endl;
-// 	details << "\t#Actions: " << prob.num_actions() << std::endl;
-// 	details << "\t#Fluents: " << prob.num_fluents() << std::endl;
-
-// 	Fwd_Search_Problem	search_prob( &prob );
-
-// 	float cost = 0;
-// 	float at_search_t = do_search(search_prob, cost, details, plan_filename,  anytime, delayed, greedy );		
-
-// 	details << "Best First H_max search completed in " << at_search_t << " secs, found plan cost = " << cost << std::endl;
-// 	std::cout << "Best First H_max search completed in " << at_search_t << " secs, found plan cost = " << cost << std::endl;
-	
-// 	details.close();
-
-// 	return 0;
-// }

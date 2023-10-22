@@ -132,6 +132,33 @@ namespace aptk
 					return plan_vector.end();
 				}
 
+				/**
+				 * could be more efficient but doesn't really matter as its after the search
+				*/
+				void reset_tuple(unsigned atom)
+				{
+					unsigned i = 0;
+					for (auto it = plan_vector.begin(); it != plan_vector.end(); it++)
+					{
+						if (std::get<0>(*it) == atom)
+						{
+							auto t = plan_vector[i];
+							std::get<0>(t) = -1;
+							std::get<1>(t).clear();
+							std::get<2>(t) = 0;
+						}
+						i++;
+					}
+				}
+
+				// void reset_tuple(int i)
+				// {
+				// 	auto t = plan_vector[i];
+				// 	std::get<0>(t) = -1;
+				// 	std::get<1>(t).clear();
+				// 	std::get<2>(t) = 0;
+				// }
+
 				std::tuple<int, std::vector<Action_Idx>, float>& get_tuple(int i) {	return plan_vector[i]; }
 				std::vector<std::tuple<int, std::vector<Action_Idx>, float>>& get_vector() { return plan_vector; }
 				void increment_a_goals_achieved() {a_goals_achieved++;}
@@ -275,6 +302,10 @@ namespace aptk
 				float memory_budget() const {return m_memory_budget; }
 				void set_budget(float v) { m_time_budget = v; }
 				float time_budget() const { return m_time_budget; }
+
+				float atomic_search_time(unsigned atom) { return m_atomic_time_used_map[atom]; }
+				unsigned atomic_expanded(unsigned atom) { return m_atomic_exp_count_map[atom]; }
+				unsigned atomic_generated(unsigned atom) { return m_atomic_gen_count_map[atom]; }
 
 				float t0() const { return m_t0; }
 
@@ -499,7 +530,7 @@ namespace aptk
 						if (counter % 100000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
 							std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
-							if ((usage_report.ru_maxrss / 1024) > 2048) {
+							if ((usage_report.ru_maxrss / 1024) > 4096) {
 								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
 								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
 								std::cout << "Search: Memory limit exceeded." << std::endl;
@@ -515,7 +546,7 @@ namespace aptk
 							continue;
 						}
 
-						if (has_additional_atomic_goal(*(head->state())))
+						if (has_additional_atomic_goal(head))
 						{
 							if (achieved_all_atomic_goals())
 							{
@@ -622,6 +653,7 @@ namespace aptk
 						//set atom value
 						std::get<0>(this_atom_tuple) = *atom_i;
 						plan_list.increment_a_goals_achieved();
+						index++;
 					}
 				}
 
@@ -675,7 +707,7 @@ namespace aptk
 					return new_atomic_goal;
 				}
 
-				const Fluent_Vec& get_added_atoms(const Search_Node *n) const
+				const Fluent_Vec& get_added_atoms(Search_Node *n) const
 				{
 					if (n->action() == no_op) 
 					{
@@ -703,7 +735,7 @@ namespace aptk
 							for (unsigned i = 0; i < a->ceff_vec().size(); i++)
 							{
 								Conditional_Effect *ce = a->ceff_vec()[i];
-								if (ce->can_be_applied_on(*(n->parent()->state())))
+								if (ce->can_be_applied_on(*(n->parent()->state()))){
 									for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
 									{
 										{
@@ -714,6 +746,7 @@ namespace aptk
 											new_atom_set.set(*it);
 										}
 									}
+								}
 							}
 						}
 
