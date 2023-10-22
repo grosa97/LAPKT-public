@@ -82,6 +82,8 @@ public:
 
         bool greedy = true;
         bool delayed = true;
+
+        unsigned m_memory_budget;
         
 
 protected:

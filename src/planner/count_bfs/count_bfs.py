@@ -8,9 +8,10 @@ from tarski_parser.tarski_util import ground_generate_task
 DEFAULT_IW_BOUND    =   2
 DEFAULT_LOG_FILE    =   "iw.log"
 DEFAULT_PLAN_FILE   =   "plan.ipc"
+DEFAULT_MEMORY_BUDGET = 3900
 
 #---- MAIN -------------------------------------------------------------------#
-def main( domain_file, problem_file, plan_file, log_file, bound, atomic) :
+def main( domain_file, problem_file, plan_file, log_file, bound, atomic, memory_budget) :
     task    =   COUNT_BFS_Planner()
     ground_generate_task( domain_file, problem_file, task)
 
@@ -21,6 +22,8 @@ def main( domain_file, problem_file, plan_file, log_file, bound, atomic) :
     task.log_filename   =   log_file
 
     task.plan_filename  =   plan_file
+
+    task.memory_budget = memory_budget
 
     task.setup()
     task.solve()
@@ -43,7 +46,9 @@ if __name__ ==  "__main__" :
             default=DEFAULT_PLAN_FILE, help='name of the plan file')
     parser.add_argument( '-a', '--atomic', action='store_true', 
             help='Split problem into set of problems with atomic goals')
+    parser.add_argument( '-m', '--memory_budget', action='store', nargs='?',
+            default=DEFAULT_MEMORY_BUDGET, help='Memory budget for Count BFS algorithm')
 
     args    =   parser.parse_args()
 
-    main( args.domain, args.problem, args.outplan, args.log, args.bound, args.atomic)
+    main( args.domain, args.problem, args.outplan, args.log, args.bound, args.atomic, args.memory_budget)

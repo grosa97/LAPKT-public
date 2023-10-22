@@ -49,6 +49,15 @@ COUNT_BFS_Planner:
       action  : 'store_true'
       help    : 'run iw over each atom in goal separately'
     var_name: 'atomic'
+  memory_budget:
+    cmd_arg:
+      default  : 3900
+      required : False
+      nargs    : '?'
+      type     : 'int'
+      action   : 'store'
+      help     : 'Memory budget for Count BFS algorithm'
+    var_name   : 'memory_budget'
 
 
 #END - Leave this line a empty line as it is

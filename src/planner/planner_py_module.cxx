@@ -224,6 +224,7 @@ PYBIND11_MODULE(planner, m)
     .def_readwrite("iw_bound", &COUNT_BFS_Planner::m_iw_bound)
     .def_readwrite("log_filename", &COUNT_BFS_Planner::m_log_filename)
     .def_readwrite("plan_filename", &COUNT_BFS_Planner::m_plan_filename)
-    .def_readwrite("atomic", &COUNT_BFS_Planner::m_atomic);
+    .def_readwrite("atomic", &COUNT_BFS_Planner::m_atomic)
+    .def_readwrite("memory_budget", &COUNT_BFS_Planner::m_memory_budget);
 
 }

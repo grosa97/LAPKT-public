@@ -26,12 +26,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 COUNT_BFS_Planner::COUNT_BFS_Planner()
-        : STRIPS_Interface(), m_log_filename("count_bfs.log"), m_plan_filename("plan.ipc")
+        : STRIPS_Interface(), m_log_filename("count_bfs.log"), m_plan_filename("plan.ipc"), m_memory_budget(3900)
         {
         }
 
 COUNT_BFS_Planner::COUNT_BFS_Planner(std::string domain_file, std::string instance_file)
-        : STRIPS_Interface(domain_file, instance_file), m_iw_bound(1), m_log_filename("count_bfs.log"), m_plan_filename("plan.ipc")
+        : STRIPS_Interface(domain_file, instance_file), m_iw_bound(1), m_log_filename("count_bfs.log"), m_plan_filename("plan.ipc"), m_memory_budget(3900)
+        {
+        }
+COUNT_BFS_Planner::COUNT_BFS_Planner(std::string domain_file, std::string instance_file,
+                       unsigned bound, std::string log_file, std::string plan_file)
+        : STRIPS_Interface(domain_file, instance_file), m_iw_bound(1), m_log_filename("count_bfs.log"), m_plan_filename("plan.ipc"), m_memory_budget(3900)
         {
         }
 
@@ -70,6 +75,12 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
     engine.set_greedy( greedy );
 	engine.set_delay_eval( delayed );
 
+    /* 
+    Set the memory budget for the BFS algorithm, stops search when exceeds this limit. Necessary to keep process running and return 
+    data from previously achieved atomic goals when setting a limit with also an external wrapper library, e.g. lab.
+     */
+    engine.set_memory_budget_MB( m_memory_budget );
+
     // std::cout<<"Number of single goals: "<<goals.size()<<std::endl;
 
     // for (unsigned i = 0; i < goals.size(); i++)
@@ -85,86 +96,84 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
     // new_goals.push_back(goals[i]);
     // aptk::STRIPS_Problem::set_goal(plan_prob, new_goals);
     // std::cout<<"Starting search for goal ["<<goals[i]<<"]"<<std::endl;
-        
-        /**
-         * TODO: modify or find_atomic_solution(plans)
-        */
-        // if (engine.find_solution(cost, plan))
-        engine.find_atomic_solution(plans);
 
-        details << "Number of achieved atomic goals: " << plans.get_a_goals_achieved() << " of " << goals.size()<<std::endl;
-        std::cout << "Number of achieved atomic goals: " << plans.get_a_goals_achieved() << " of " << goals.size()<<std::endl;
+    std::cout << "Starting search for " << goals.size() << " atomic goals."<<std::endl;
         
-        unsigned index = 0;
-        for (auto atom_tuple_it = plans.begin(); atom_tuple_it != plans.end(); atom_tuple_it++)
+
+    // if (engine.find_solution(cost, plan))
+    engine.find_atomic_solution(plans);
+
+    details << "Number of achieved atomic goals: " << plans.get_a_goals_achieved() << " of " << goals.size()<<std::endl;
+    std::cout << "Number of achieved atomic goals: " << plans.get_a_goals_achieved() << " of " << goals.size()<<std::endl;
+    
+    unsigned index = 0;
+    for (auto atom_tuple_it = plans.begin(); atom_tuple_it != plans.end(); atom_tuple_it++)
+    {
+        auto &single_atom_goal = std::get<0>(*atom_tuple_it);
+        //if it is a found atomic goal
+        if (single_atom_goal != -1)
         {
-            auto &single_atom_goal = std::get<0>(*atom_tuple_it);
-            //if it is a found atomic goal
-            if (single_atom_goal != -1)
+            std::vector<aptk::Action_Idx> &plan = std::get<1>(*atom_tuple_it);
+            float &cost = std::get<2>(*atom_tuple_it);
+            details << std::endl;
+            details << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
+            std::cout << std::endl;
+            std::cout << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
+            
+            details << "Plan found with cost: " << cost << std::endl;
+            std::cout << "Plan found with cost: " << cost << std::endl;
+
+            for (int k=0; k < plan.size(); k++)
             {
-                std::vector<aptk::Action_Idx> &plan = std::get<1>(*atom_tuple_it);
-                float &cost = std::get<2>(*atom_tuple_it);
+                details << k + 1 << ". ";
+                const aptk::Action &a = *(plan_prob.actions()[plan[k]]);
+                details << a.signature();
                 details << std::endl;
-                details << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
-                std::cout << std::endl;
-                std::cout << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
-                
-                details << "Plan found with cost: " << cost << std::endl;
-                std::cout << "Plan found with cost: " << cost << std::endl;
-
-                for (int k=0; k < plan.size(); k++)
-                {
-                    details << k + 1 << ". ";
-                    const aptk::Action &a = *(plan_prob.actions()[plan[k]]);
-                    details << a.signature();
-                    details << std::endl;
-                    plan_stream << a.signature() << std::endl;
-                }
-                float a_time = engine.atomic_search_time(single_atom_goal);
-                unsigned a_expanded = engine.atomic_expanded(single_atom_goal);
-                unsigned a_generated = engine.atomic_generated(single_atom_goal);
-
-                details << "Time: " << (a_time) << std::endl;
-                details << "Generated: " << (a_generated) << std::endl;
-                details << "Expanded: " << (a_expanded) << std::endl;
-
-                std::cout << "Time: " << (a_time) << std::endl;
-                std::cout << "Generated: " << (a_generated) << std::endl;
-                std::cout << "Expanded: " << (a_expanded) << std::endl;
-                
-                plans.reset_tuple(single_atom_goal);
-
-                index++;
+                plan_stream << a.signature() << std::endl;
             }
-            else 
-            {
-                details << std::endl;
-                details << ";; NOT I-REACHABLE ;;" << std::endl;
-                std::cout << std::endl;
-                std::cout << ";; NOT I-REACHABLE ;;" << std::endl;
-                // solved = true;
-            }
-            solved = true;
+            float a_time = engine.atomic_search_time(single_atom_goal);
+            unsigned a_expanded = engine.atomic_expanded(single_atom_goal);
+            unsigned a_generated = engine.atomic_generated(single_atom_goal);
+
+            details << "Time: " << (a_time) << std::endl;
+            details << "Generated: " << (a_generated) << std::endl;
+            details << "Expanded: " << (a_expanded) << std::endl;
+
+            std::cout << "Time: " << (a_time) << std::endl;
+            std::cout << "Generated: " << (a_generated) << std::endl;
+            std::cout << "Expanded: " << (a_expanded) << std::endl;
+            
+            plans.reset_tuple(single_atom_goal);
+
+            index++;
         }
+        else 
+        {
+            details << std::endl;
+            details << ";; NOT I-REACHABLE ;;" << std::endl;
+            std::cout << std::endl;
+            std::cout << ";; NOT I-REACHABLE ;;" << std::endl;
+        }
+        solved = true;
+    }
 
-        float partial_time = aptk::time_used() - ref;
-        total_time = partial_time;
-        details << std::endl;
-        details << "Total time: " << partial_time << std::endl;
-        details << "Nodes generated during search: " << engine.generated() << std::endl;
-        details << "Nodes expanded during search: " << engine.expanded() << std::endl;
-        details << "Effective Width during search: " << engine.bound() << std::endl;
+    float partial_time = aptk::time_used() - ref;
+    total_time = partial_time;
+    details << std::endl;
+    details << "Total time: " << partial_time << std::endl;
+    details << "Nodes generated during search: " << engine.generated() << std::endl;
+    details << "Nodes expanded during search: " << engine.expanded() << std::endl;
+    details << "Effective Width during search: " << engine.bound() << std::endl;
 
-        // details << "Nodes pruned by bound: " << engine.sum_pruned_by_bound() << std::endl;
-        // details << "Average ef. width: " << engine.avg_B() << std::endl;
-        // details << "Max ef. width: " << engine.max_B() << std::endl;
+    // details << "Nodes pruned by bound: " << engine.sum_pruned_by_bound() << std::endl;
+    // details << "Average ef. width: " << engine.avg_B() << std::endl;
+    // details << "Max ef. width: " << engine.max_B() << std::endl;
 
-        std::cout << std::endl;
-        std::cout << "Total time: " << partial_time << std::endl;
-        std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
-        std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
-        std::cout << "Max novelty expanded: " << engine.bound() << std::endl;
-    // }
+    std::cout << std::endl;
+    std::cout << "Total time: " << partial_time << std::endl;
+    std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
+    std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
+    std::cout << "Max novelty expanded: " << engine.bound() << std::endl;
 
     details.close();
     return total_time;
@@ -253,6 +262,7 @@ void COUNT_BFS_Planner::solve()
     plan_stream.open(m_plan_filename);
 
     std::cout << "Starting search with COUNT_BFS ..." << std::endl;
+    std::cout << "Search algorithm memory budget: " << m_memory_budget << " MB"<<std::endl;
 
     // BFS_H_Max_Fwd bfs_engine(search_prob);
     BFS_H_Count_Novelty bfs_engine(search_prob);
