@@ -113,6 +113,30 @@ namespace aptk
 				float m_f;
 			};
 
+			class Atomic_Plan_List
+			{
+			public:
+				Atomic_Plan_List(unsigned n) : n_elements(n), a_goals_achieved(0)
+				{
+					for(int i = 0; i<n_elements; i++)
+						plan_vector.push_back(std::make_tuple(-1, std::vector<Action_Idx>(), 0));
+				}
+
+				std::tuple<int, std::vector<Action_Idx>, float>& get_tuple(int i)
+				{
+					return plan_vector[i];
+				}
+
+				void increment_a_goals_achieved() {a_goals_achieved++;}
+				int get_a_goals_achieved() {return a_goals_achieved;}
+				bool no_a_goals_achieved() {return a_goals_achieved == 0;}
+
+			public:
+				std::vector<std::tuple<int, std::vector<Action_Idx>, float>> plan_vector;
+				int n_elements;
+				int a_goals_achieved;
+			};
+
 			// Anytime best-first search, with one single open list and one single
 			// heuristic estimator, with delayed evaluation of states generated
 			template <typename Search_Model, typename Abstract_Heuristic, typename Open_List_Type>
@@ -211,6 +235,16 @@ namespace aptk
 						return false;
 					extract_plan(m_root, end, plan, cost);
 
+					return true;
+				}
+
+				bool find_atomic_solution(Atomic_Plan_List &plans)
+				{
+					m_t0 = time_used();
+					do_atomic_search();
+					extract_atomic_plans(m_root, plans);
+					if (plans.no_a_goals_achieved())
+						return false;
 					return true;
 				}
 
@@ -396,6 +430,68 @@ namespace aptk
 						if (counter % 100000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
 							std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							if ((usage_report.ru_maxrss / 1024) > 4096) {
+								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
+								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
+								std::cout << "Search: Memory limit exceeded." << std::endl;
+								return NULL;
+							}
+						}
+
+						if (head->gn() >= bound())
+						{
+							inc_pruned_bound();
+							close(head);
+							head = get_node();
+							continue;
+						}
+
+						if (m_problem.goal(*(head->state())))
+						{
+							close(head);
+							set_bound(head->gn());
+							return head;
+						}
+
+						if ((time_used() - m_t0) > m_time_budget)
+							return NULL;
+
+						if (m_delay_eval)
+							eval(head);
+
+						if (head->hn() < min_h)
+						{
+							min_h = head->hn();
+							std::cout << "\t Best h(n) = " << min_h << ", expanded: " << expanded() << ", generated: " << generated() << std::endl;
+						}
+
+						process(head);
+						close(head);
+						counter++;
+						head = get_node();
+					}
+					return NULL;
+				}
+
+				Search_Node *do_atomic_search()
+				{
+					std::cout << "Search starts: " << std::endl;
+					std::cout << "\t Bound: " << bound() << std::endl;
+					float min_h = infty;
+
+					Search_Node *head = get_node();
+					int counter = 0;
+
+					struct rusage usage_report;
+					while (head)
+					{
+						/**
+						 * check memory usage if > than threshold, if larger then throw exception or something
+						 * TODO: Set memory limit through a passed variable
+						*/
+						if (counter % 100000 == 0){
+							getrusage(RUSAGE_SELF, &usage_report);
+							std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
 							if ((usage_report.ru_maxrss / 1024) > 2048) {
 								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
 								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
@@ -487,9 +583,41 @@ namespace aptk
 						plan.push_back(tmp->action());
 						tmp = tmp->parent();
 					}
-
 					std::reverse(plan.begin(), plan.end());
 				}
+
+
+				// void extract_atomic_plans(Search_Node *root, std::vector<std::tuple<unsigned, std::vector<Action_Idx>, cost>> &atomic_plans, float std::vector<cost>)
+				// {
+				// 	unsigned index = 0;
+				// 	for (std::set<unsigned>::iterator atom_i = m_achieved_atomic_goals_set.begin(); atom_i != m_achieved_atomic_goals_set.end(); it++) {
+				// 		Search_Node* this_end_node = m_atomic_goals_state_map[*atom_i];
+				// 		std::tuple<unsigned, std::vector<Action_Idx>, cost> &this_atom_tuple = atomic_plans[i];
+				// 		std::vector<Action_Idx> &this_atom_plan = std::get<1>(this_atom_tuple);
+				// 		cost &this_atom_c = std::get<2>(this_atom_tuple);
+				// 		//set plan and cost by reference
+				// 		extract_plan(root, this_end_node, this_atom_plan, this_atom_c);
+				// 		//set atom value
+				// 		std::get<0>(this_atom_tuple) = *atom_i;
+				// 	}
+				// }
+				
+				void extract_atomic_plans(Search_Node *root, Atomic_Plan_List &plan_list)
+				{
+					unsigned index = 0;
+					for (std::set<unsigned>::iterator atom_i = m_achieved_atomic_goals_set.begin(); atom_i != m_achieved_atomic_goals_set.end(); atom_i++) {
+						Search_Node* this_end_node = m_atomic_goals_state_map[*atom_i];
+						std::tuple<int, std::vector<Action_Idx>, float> &this_atom_tuple = plan_list.get_tuple(index);
+						std::vector<Action_Idx> &this_atom_plan = std::get<1>(this_atom_tuple);
+						float &this_atom_c = std::get<2>(this_atom_tuple);
+						//set plan and cost by reference
+						extract_plan(root, this_end_node, this_atom_plan, this_atom_c);
+						//set atom value
+						std::get<0>(this_atom_tuple) = *atom_i;
+						plan_list.increment_a_goals_achieved();
+					}
+				}
+
 
 				void extract_path(Search_Node *s, Search_Node *t, std::vector<Search_Node *> &plan)
 				{
@@ -524,9 +652,12 @@ namespace aptk
 					Fluent_Vec added = get_added_atoms(s);
 					// STRIPS_Problem strips_model = m_problem.task();
 					std::for_each(added.begin(), added.end(), [&](unsigned f) {
+						//if atom is a goal atom
 						if (m_problem.task().is_in_goal(f)) {
+							//if not found in set of achieved goal atoms
 							if (m_achieved_atomic_goals_set.find(f) == m_achieved_atomic_goals_set.end())
 							{
+								std::cout<<"DEBUG: NEW ATOM GOAL ACHIEVED!: "<<f<<std::endl;
 								new_atomic_goal = true;
 								m_achieved_atomic_goals_set.insert(f);
 								m_atomic_goals_state_map[f] = s;
