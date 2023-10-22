@@ -113,20 +113,27 @@ namespace aptk
 				float m_f;
 			};
 
-			class Atomic_Plan_List
+			class Atomic_Plan_Vec
 			{
 			public:
-				Atomic_Plan_List(unsigned n) : n_elements(n), a_goals_achieved(0)
+				Atomic_Plan_Vec(unsigned n) : n_elements(n), a_goals_achieved(0)
 				{
 					for(int i = 0; i<n_elements; i++)
 						plan_vector.push_back(std::make_tuple(-1, std::vector<Action_Idx>(), 0));
 				}
 
-				std::tuple<int, std::vector<Action_Idx>, float>& get_tuple(int i)
+				std::vector<std::tuple<int, std::vector<Action_Idx>, float>>::iterator begin() 
 				{
-					return plan_vector[i];
+					return plan_vector.begin();
 				}
 
+				std::vector<std::tuple<int, std::vector<Action_Idx>, float>>::iterator end()
+				{
+					return plan_vector.end();
+				}
+
+				std::tuple<int, std::vector<Action_Idx>, float>& get_tuple(int i) {	return plan_vector[i]; }
+				std::vector<std::tuple<int, std::vector<Action_Idx>, float>>& get_vector() { return plan_vector; }
 				void increment_a_goals_achieved() {a_goals_achieved++;}
 				int get_a_goals_achieved() {return a_goals_achieved;}
 				bool no_a_goals_achieved() {return a_goals_achieved == 0;}
@@ -238,7 +245,7 @@ namespace aptk
 					return true;
 				}
 
-				bool find_atomic_solution(Atomic_Plan_List &plans)
+				bool find_atomic_solution(Atomic_Plan_Vec &plans)
 				{
 					m_t0 = time_used();
 					do_atomic_search();
@@ -602,7 +609,7 @@ namespace aptk
 				// 	}
 				// }
 				
-				void extract_atomic_plans(Search_Node *root, Atomic_Plan_List &plan_list)
+				void extract_atomic_plans(Search_Node *root, Atomic_Plan_Vec &plan_list)
 				{
 					unsigned index = 0;
 					for (std::set<unsigned>::iterator atom_i = m_achieved_atomic_goals_set.begin(); atom_i != m_achieved_atomic_goals_set.end(); atom_i++) {
