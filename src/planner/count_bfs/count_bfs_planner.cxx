@@ -118,6 +118,7 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
             details << std::endl;
             details << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
             std::cout << std::endl;
+            std::cout << "#singlegoalstart" <<std::endl;
             std::cout << "Plan found for single goal: [" << single_atom_goal << "]" <<std::endl;
             
             details << "Plan found with cost: " << cost << std::endl;
@@ -142,6 +143,7 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
             std::cout << "Time: " << (a_time) << std::endl;
             std::cout << "Generated: " << (a_generated) << std::endl;
             std::cout << "Expanded: " << (a_expanded) << std::endl;
+            std::cout << "#singlegoalend" << std::endl;
             
             plans.reset_tuple(single_atom_goal);
 
