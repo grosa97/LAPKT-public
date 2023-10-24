@@ -527,9 +527,9 @@ namespace aptk
 						 * check memory usage if > than threshold, if larger then throw exception or something
 						 * TODO: Set memory limit through a passed variable
 						*/
-						if (counter % 50000 == 0){
+						if (counter % 1000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
-							std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							//std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
 							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
 								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
