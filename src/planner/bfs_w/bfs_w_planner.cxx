@@ -73,7 +73,7 @@ float BFS_W_Planner::do_search_single_goal(Search_Engine &engine,
     bool solved = true;
 
     engine.set_greedy( greedy );
-	engine.set_delay_eval( delayed );
+	engine.set_delay_eval( false );
     std::cout<<"Setting Novelty arity: "<< m_iw_bound <<std::endl;
     engine.set_arity( m_iw_bound );
 
