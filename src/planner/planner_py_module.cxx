@@ -20,6 +20,7 @@
 
 #include <count_bfs_planner.hxx>
 #include <bfs_w_planner.hxx>
+#include <bfs_w_count_planner.hxx>
 
 #include <py_strips_interface.hxx>
 // #include <tarski_instantiator.hxx>
@@ -238,5 +239,16 @@ PYBIND11_MODULE(planner, m)
     .def_readwrite("plan_filename", &BFS_W_Planner::m_plan_filename)
     .def_readwrite("atomic", &BFS_W_Planner::m_atomic)
     .def_readwrite("memory_budget", &BFS_W_Planner::m_memory_budget);
+
+
+  py::class_<BFS_W_COUNT_Planner, STRIPS_Interface>(m, "BFS_W_COUNT_Planner")
+    .def(py::init<>())
+    .def("setup", &BFS_W_COUNT_Planner::setup)
+    .def("solve", &BFS_W_COUNT_Planner::solve)
+    .def_readwrite("iw_bound", &BFS_W_COUNT_Planner::m_iw_bound)
+    .def_readwrite("log_filename", &BFS_W_COUNT_Planner::m_log_filename)
+    .def_readwrite("plan_filename", &BFS_W_COUNT_Planner::m_plan_filename)
+    .def_readwrite("atomic", &BFS_W_COUNT_Planner::m_atomic)
+    .def_readwrite("memory_budget", &BFS_W_COUNT_Planner::m_memory_budget);
 
 }
