@@ -74,6 +74,8 @@ namespace aptk
 				float fn() const { return m_f; }
 				Node<State> *parent() { return m_parent; }
 				Action_Idx action() const { return m_action; }
+				bool has_state() const { return m_state != NULL; }
+				void set_state(State *s) { m_state = s; }
 				State *state() { return m_state; }
 				const State &state() const { return *m_state; }
 				void print(std::ostream &os) const
@@ -242,10 +244,7 @@ namespace aptk
 				}
 
 				void start()
-				{
-					reset();
-					m_B = infty;
-
+				{					
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL);
 #ifdef DEBUG
 					std::cout << "Initial search node: ";
@@ -284,6 +283,10 @@ namespace aptk
 
 				float bound() const { return m_B; }
 				void set_bound(float v) { m_B = v; }
+				void set_arity(float v) {
+					m_heuristic_func->set_arity(v);
+					
+				}
 				void set_greedy(bool b) { m_greedy = b; }
 				void set_delay_eval(bool b) { m_delay_eval = b; }
 
@@ -318,12 +321,14 @@ namespace aptk
 				void eval(Search_Node *candidate)
 				{
 					m_heuristic_func->eval(candidate, candidate->hn());
+					// std::cout << "DEBUG: "<<candidate->hn()<<std::endl;
 				}
 
 				bool is_closed(Search_Node *n)
 				{
 					Search_Node *n2 = this->closed().retrieve(n);
 
+					// std::cout <<"DEBUG: m_B: "<<m_B<<std::endl;
 					if (n2 != NULL)
 					{
 
@@ -529,7 +534,8 @@ namespace aptk
 						*/
 						if (counter % 1000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
-							//std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							if (counter % 100000 == 0)
+								std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
 							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
 								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
@@ -617,7 +623,8 @@ namespace aptk
 					cost = 0.0f;
 					while (tmp != s)
 					{
-						cost += m_problem.cost(*(tmp->state()), tmp->action());
+						// cost += m_problem.cost(*(tmp->state()), tmp->action());
+						cost += 1;
 						plan.push_back(tmp->action());
 						tmp = tmp->parent();
 					}
