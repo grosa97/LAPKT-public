@@ -707,7 +707,7 @@ namespace aptk
 					return new_atomic_goal;
 				}
 
-				const Fluent_Vec& get_added_atoms(Search_Node *n) const
+				const Fluent_Vec get_added_atoms(Search_Node *n) const
 				{
 					if (n->action() == no_op) 
 					{
