@@ -55,7 +55,7 @@ namespace aptk
 				typedef State State_Type;
 
 				Node(State *s, float cost, Action_Idx action, Node<State> *parent)
-						: m_state(s), m_parent(parent), m_action(action), m_g(0)
+						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_f(0), m_h(0)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 				}
@@ -321,7 +321,8 @@ namespace aptk
 				void eval(Search_Node *candidate)
 				{
 					m_heuristic_func->eval(candidate, candidate->hn());
-					// std::cout << "DEBUG: "<<candidate->hn()<<std::endl;
+					// if(candidate->hn() >= 3)
+						// std::cout << "DEBUG: "<<candidate->hn()<<" -- "<<expanded()<<" -- "<<candidate->gn()<<" -- "<<candidate->fn()<<std::endl;
 				}
 
 				bool is_closed(Search_Node *n)
@@ -331,30 +332,34 @@ namespace aptk
 					// std::cout <<"DEBUG: m_B: "<<m_B<<std::endl;
 					if (n2 != NULL)
 					{
-
-						if (n2->gn() <= n->gn())
-						{
-							// The node we generated is a worse path than
-							// the one we already found
-							return true;
-						}
-
-						// Otherwise, we put it into Open and remove
-						// n2 from closed
-						this->closed().erase(this->closed().retrieve_iterator(n2));
-
-						// MRJ: This solves the memory leak and updates children nodes
-						// incrementally
-						n2->m_parent = n->m_parent;
-						n2->gn() = n->gn();
-						n2->m_action = n->action();
-
-						if (!m_greedy)
-							n2->fn() = n2->hn() + n2->gn();
-						else
-							n2->fn() = n2->hn();
-						open_node(n2);
+						/*
+						* NOT REOPEN FOR NOW
+						*/
 						return true;
+
+						// if (n2->gn() <= n->gn())
+						// {
+						// 	// The node we generated is a worse path than
+						// 	// the one we already found
+						// 	return true;
+						// }
+
+						// // Otherwise, we put it into Open and remove
+						// // n2 from closed
+						// this->closed().erase(this->closed().retrieve_iterator(n2));
+
+						// // MRJ: This solves the memory leak and updates children nodes
+						// // incrementally
+						// n2->m_parent = n->m_parent;
+						// n2->gn() = n->gn();
+						// n2->m_action = n->action();
+
+						// if (!m_greedy)
+						// 	n2->fn() = n2->hn() + n2->gn();
+						// else
+						// 	n2->fn() = n2->hn();
+						// open_node(n2);
+						// return true;
 					}
 					return false;
 				}
@@ -430,10 +435,11 @@ namespace aptk
 						else
 							eval(n);
 
-						if (m_greedy)
-							n->fn() = n->hn();
-						else
-							n->fn() = n->hn() + n->gn();
+						// if (m_greedy)
+						// 	n->fn() = n->hn();
+						// else
+						// 	n->fn() = n->hn() + n->gn();
+						n->fn() = n->hn();
 
 						if (previously_hashed(n))
 						{

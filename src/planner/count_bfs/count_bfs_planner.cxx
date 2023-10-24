@@ -73,8 +73,9 @@ float COUNT_BFS_Planner::do_search_single_goal(Search_Engine &engine,
     bool solved = true;
 
     engine.set_greedy( greedy );
-	engine.set_delay_eval( delayed );
-
+	engine.set_delay_eval( false ); // !!!
+    // engine.set_change_bound(1);
+    engine.set_arity(m_iw_bound);
     /* 
     Set the memory budget for the BFS algorithm, stops search when exceeds this limit. Necessary to keep process running and return 
     data from previously achieved atomic goals when setting a limit with also an external wrapper library, e.g. lab.
@@ -197,6 +198,7 @@ float COUNT_BFS_Planner::do_search(Search_Engine &engine, aptk::STRIPS_Problem &
 
 	engine.set_greedy( greedy );
 	engine.set_delay_eval( delayed );
+    engine.set_arity(1);
 	engine.start();
 
     unsigned expanded_0 = engine.expanded();
