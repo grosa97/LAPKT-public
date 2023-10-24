@@ -29,6 +29,7 @@ add_subdirectory(siw_plus)
 add_subdirectory(siw_plus-then-bfs_f)
 
 add_subdirectory(count_bfs)
+add_subdirectory(bfs_w)
 
 target_include_directories(planner
     PUBLIC
@@ -53,6 +54,7 @@ install(
         ${PROJECT_SOURCE_DIR}/src/planner/siw_plus-then-bfs_f/siw_plus_bfs_f.hxx
 
         ${PROJECT_SOURCE_DIR}/src/planner/count_bfs/count_bfs_planner.hxx
+        ${PROJECT_SOURCE_DIR}/src/planner/bfs_w/bfs_w_planner.hxx
         
     DESTINATION
         ${CMAKE_INSTALL_PREFIX}/${REL_CORE_INC_DIR}/planner
