@@ -50,6 +50,7 @@ namespace aptk
 					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_verbose(true)
 			{
 				set_arity(max_arity);
+				init();
 			}
 
 			void set_verbose(bool v) { m_verbose = v; }
@@ -72,8 +73,8 @@ namespace aptk
 
 			unsigned set_arity(unsigned max_arity)
 			{
-                /*currently only supports arity of 1!!*/
-                assert(max_arity=1);
+                // /*currently only supports arity of 1!!*/
+                // assert(max_arity=1);
 
 				m_arity = max_arity;
 				m_num_tuples = 1;
@@ -124,6 +125,10 @@ namespace aptk
 				assert(true);
 			}
 
+            void update_counts(Search_Node *n) {
+                float redundant_variable = 0;
+                compute(n, redundant_variable);
+            }
 
 		protected:
 			/**
@@ -132,10 +137,6 @@ namespace aptk
 			 * where i ranges over 1 to max_arity
 			 */
 
-            void update_counts(Search_Node *n) {
-                float redundant_variable = 0;
-                compute(n, redundant_variable);
-            }
 
 			void compute(Search_Node *n, float &novelty)
 			{
@@ -507,8 +508,8 @@ namespace aptk
             void compute_count_metric(Search_Node *n, float &metric_value) {
                 
                 /*HARD CODED TO 1 FOR THIS METHOD*/
-                unsigned arity = 1;
-
+                // unsigned arity = 1;
+		
                 metric_value = 0;
 
                 // const bool has_state = n->has_state();
@@ -519,16 +520,16 @@ namespace aptk
 
                 Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
-                std::vector<unsigned> tuple(arity);
+                std::vector<unsigned> tuple(m_arity);
 
-                unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); /*unnecessary?*/
+                unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
 
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
 					 * get tuples from indexes
 					 */
-					idx2tuple(tuple, fl, idx, arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+					idx2tuple(tuple, fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
 
 					/**
 					 * Check if tuple is covered
@@ -537,11 +538,11 @@ namespace aptk
 					unsigned tuple_count;
 
                     /*if arity = 1*/
-                    tuple_idx = tuple2idx(tuple, arity);
+                    tuple_idx = tuple2idx(tuple, m_arity);
 
                     tuple_count = m_tuple_counts[tuple_idx];
 
-					float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                     metric_value -= (float)1 / (1 + tuple_count);
                 }

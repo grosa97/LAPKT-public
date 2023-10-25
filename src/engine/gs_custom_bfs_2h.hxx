@@ -338,10 +338,14 @@ namespace aptk
 					m_primary_h->eval(candidate, candidate->h1n());
 					if(m_blind_only_h2)
 					{
-					if(candidate->h1n() >= 3)
-						m_secondary_h->eval(candidate, candidate->h2n());
-					else
-						candidate->h2n() = candidate->gn();
+						if (candidate->h1n() >= 3)
+							m_secondary_h->eval(candidate, candidate->h2n());
+						else
+						{
+							candidate->h2n() = candidate->gn();
+							//If not using h2n to break ties, we still need to update counts
+							m_secondary_h->update_counts(candidate);
+						}
 					}
 					else
 						m_secondary_h->eval(candidate, candidate->h2n());
