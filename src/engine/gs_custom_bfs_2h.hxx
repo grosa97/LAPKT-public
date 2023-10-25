@@ -191,7 +191,7 @@ namespace aptk
 				AT_BFS_SQ_2H(const Search_Model &search_problem)
 						: m_problem(search_problem), m_primary_h(NULL), m_secondary_h(NULL),
 							m_exp_count(0), m_gen_count(0), m_pruned_B_count(0), m_dead_end_count(0), m_open_repl_count(0),
-							m_B(infty), m_time_budget(infty), m_greedy(false), m_delay_eval(true)
+							m_B(infty), m_time_budget(infty), m_greedy(false), m_delay_eval(true), m_blind_only_h2(false)
 				{
 					m_primary_h = new Primary_Heuristic(search_problem);
 					m_secondary_h = new Secondary_Heuristic(search_problem);
@@ -300,6 +300,7 @@ namespace aptk
 				}
 				void set_greedy(bool b) { m_greedy = b; }
 				void set_delay_eval(bool b) { m_delay_eval = b; }
+				void set_blind_only_h2(bool b) {m_blind_only_h2 = b; }
 
 				void inc_gen() { m_gen_count++; }
 				unsigned generated() const { return m_gen_count; }
@@ -335,10 +336,15 @@ namespace aptk
 					// // if(candidate->hn() >= 3)
 					// 	std::cout << "DEBUG: "<<candidate->hn()<<" -- "<<expanded()<<" -- "<<candidate->gn()<<" -- "<<candidate->fn()<<std::endl;
 					m_primary_h->eval(candidate, candidate->h1n());
+					if(m_blind_only_h2)
+					{
 					if(candidate->h1n() >= 3)
 						m_secondary_h->eval(candidate, candidate->h2n());
 					else
 						candidate->h2n() = candidate->gn();
+					}
+					else
+						m_secondary_h->eval(candidate, candidate->h2n());
 				}
 
 				bool is_closed(Search_Node *n)
@@ -893,6 +899,7 @@ namespace aptk
 				std::vector<Action_Idx> m_app_set;
 				bool m_greedy;
 				bool m_delay_eval;
+				bool m_blind_only_h2;
 
 				std::set<unsigned> m_achieved_atomic_goals_set; //Use Fluent_Set instead? is bitset it more efficient??
 				std::unordered_map<unsigned int, Search_Node*> m_atomic_goals_state_map;
