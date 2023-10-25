@@ -322,7 +322,7 @@ namespace aptk
 				{
 					m_heuristic_func->eval(candidate, candidate->hn());
 					// if(candidate->hn() >= 3)
-						// std::cout << "DEBUG: "<<candidate->hn()<<" -- "<<expanded()<<" -- "<<candidate->gn()<<" -- "<<candidate->fn()<<std::endl;
+					// std::cout << "DEBUG: "<<candidate->hn()<<" -- "<<expanded()<<" -- "<<candidate->gn()<<" -- "<<candidate->fn()<<std::endl;
 				}
 
 				bool is_closed(Search_Node *n)
@@ -522,7 +522,89 @@ namespace aptk
 					return NULL;
 				}
 
-				Search_Node *do_atomic_search()
+				/*
+			 	Process with atomic goal checking
+				*/
+				bool process_atomic(Search_Node *head)
+				{
+
+#ifdef DEBUG
+					std::cout << "Expanding:" << std::endl;
+					head->print(std::cout);
+					std::cout << std::endl;
+					head->state()->print(std::cout);
+					std::cout << std::endl;
+#endif
+					std::vector<aptk::Action_Idx> app_set;
+					this->problem().applicable_set_v2(*(head->state()), app_set);
+
+					for (unsigned i = 0; i < app_set.size(); ++i)
+					{
+						int a = app_set[i];
+
+						State *succ = m_problem.next(*(head->state()), a);
+
+						Search_Node *n = new Search_Node(succ, m_problem.cost(*(head->state()), a), a, head);
+
+#ifdef DEBUG
+						std::cout << "Successor:" << std::endl;
+						n->print(std::cout);
+						std::cout << std::endl;
+						n->state()->print(std::cout);
+						std::cout << std::endl;
+#endif
+
+						if (is_closed(n))
+						{
+#ifdef DEBUG
+							std::cout << "Already in CLOSED" << std::endl;
+#endif
+							delete n;
+							continue;
+						}
+						if (m_delay_eval)
+							n->hn() = head->hn();
+						else
+							eval(n);
+
+						// if (m_greedy)
+						// 	n->fn() = n->hn();
+						// else
+						// 	n->fn() = n->hn() + n->gn();
+						n->fn() = n->hn();
+
+						if (previously_hashed(n))
+						{
+#ifdef DEBUG
+							std::cout << "Already in OPEN" << std::endl;
+#endif
+							delete n;
+						}
+
+						else
+						{
+							//check if has atomic goal
+							if (has_additional_atomic_goal(n))
+							{
+								if (achieved_all_atomic_goals())
+								{
+									close(n);
+									set_bound(n->gn());
+									return true;
+								}
+							}
+#ifdef DEBUG
+							std::cout << "Inserted into OPEN" << std::endl;
+#endif
+							open_node(n);
+						}
+					}
+					inc_eval();
+					return false;
+				}
+
+				// Search_Node *do_atomic_search()
+				void do_atomic_search()
 				{
 					std::cout << "Search starts: " << std::endl;
 					std::cout << "\t Bound: " << bound() << std::endl;
@@ -532,21 +614,26 @@ namespace aptk
 					int counter = 0;
 
 					struct rusage usage_report;
+					int prev_gen_val = 0;
 					while (head)
 					{
 						/**
 						 * check memory usage if > than threshold, if larger then throw exception or something
 						 * TODO: Set memory limit through a passed variable
 						*/
-						if (counter % 1000 == 0){
+						std::cout << "DEBUG: "<<" -- "<<expanded()<<" -- "<<head->hn()<<head->gn()<<" -- "<<head->fn()<<std::endl;
+
+						if (generated() > prev_gen_val + 100000){
+							prev_gen_val = generated();
+						// if (counter % 1000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
-							if (counter % 100000 == 0)
-								std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							// if (counter % 100000 == 0)
+							std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
 							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 								// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
 								// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
 								std::cout << "Search: Memory limit exceeded." << std::endl;
-								return NULL;
+								return;
 							}
 						}
 
@@ -558,15 +645,15 @@ namespace aptk
 							continue;
 						}
 
-						if (has_additional_atomic_goal(head))
-						{
-							if (achieved_all_atomic_goals())
-							{
-								close(head);
-								set_bound(head->gn());
-								return head;
-							}
-						}
+						// if (has_additional_atomic_goal(head))
+						// {
+						// 	if (achieved_all_atomic_goals())
+						// 	{
+						// 		close(head);
+						// 		set_bound(head->gn());
+						// 		return head;
+						// 	}
+						// }
 
 						// if (m_problem.goal(*(head->state())))
 						// {
@@ -575,7 +662,7 @@ namespace aptk
 						// 	return head;
 						// }
 						if ((time_used() - m_t0) > m_time_budget)
-							return NULL;
+							return;
 
 						if (m_delay_eval)
 							eval(head);
@@ -586,12 +673,14 @@ namespace aptk
 							std::cout << "\t Best h(n) = " << min_h << ", expanded: " << expanded() << ", generated: " << generated() << std::endl;
 						}
 
-						process(head);
+						bool found_all_a_goals = process_atomic(head);
+						if (found_all_a_goals)
+							return;
 						close(head);
 						counter++;
 						head = get_node();
 					}
-					return NULL;
+					return;
 				}
 
 				virtual bool previously_hashed(Search_Node *n)
