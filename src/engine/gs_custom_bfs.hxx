@@ -615,13 +615,25 @@ namespace aptk
 
 					struct rusage usage_report;
 					int prev_gen_val = 0;
+
+					//Check for atomic goals in root node!!
+					if (has_additional_atomic_goal(head))
+					{
+						if (achieved_all_atomic_goals())
+						{
+							close(head);
+							set_bound(head->gn());
+							return;
+						}
+					}
+
 					while (head)
 					{
 						/**
 						 * check memory usage if > than threshold, if larger then throw exception or something
 						 * TODO: Set memory limit through a passed variable
 						*/
-						std::cout << "DEBUG: "<<" -- "<<expanded()<<" -- "<<head->hn()<<head->gn()<<" -- "<<head->fn()<<std::endl;
+						// std::cout << "DEBUG: "<<" -- "<<expanded()<<" -- "<<head->hn()<<head->gn()<<" -- "<<head->fn()<<std::endl;
 
 						if (generated() > prev_gen_val + 100000){
 							prev_gen_val = generated();
