@@ -249,6 +249,7 @@ PYBIND11_MODULE(planner, m)
     .def_readwrite("log_filename", &BFS_W_COUNT_Planner::m_log_filename)
     .def_readwrite("plan_filename", &BFS_W_COUNT_Planner::m_plan_filename)
     .def_readwrite("atomic", &BFS_W_COUNT_Planner::m_atomic)
-    .def_readwrite("memory_budget", &BFS_W_COUNT_Planner::m_memory_budget);
+    .def_readwrite("memory_budget", &BFS_W_COUNT_Planner::m_memory_budget)
+    .def_readwrite("h2_blind_only", &BFS_W_COUNT_Planner::m_h2_blind_only);
 
 }

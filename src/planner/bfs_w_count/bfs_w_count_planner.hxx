@@ -86,6 +86,7 @@ public:
         bool delayed = true;
 
         unsigned m_memory_budget;
+        bool m_h2_blind_only;
         
 
 protected:

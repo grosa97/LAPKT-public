@@ -58,6 +58,13 @@ BFS_W_COUNT_Planner:
       action   : 'store'
       help     : 'Memory budget for BFS W algorithm'
     var_name   : 'memory_budget'
+  h2_blind_only:
+    cmd_arg:
+      default  : False
+      required : False
+      action   : 'store_true'
+      help     : 'use h2 to break ties only for highest novelty nodes, otherwise use standard plan length for lower novelties'
+    var_name   : 'h2_blind_only'
 
 
 #END - Leave this line a empty line as it is

@@ -78,7 +78,8 @@ float BFS_W_COUNT_Planner::do_search_single_goal(Search_Engine &engine,
     engine.set_arity_h1( m_iw_bound );
     //hardcode to 1 for now
     engine.set_arity_h2( 1 );
-    engine.set_blind_only_h2(true);
+    // std::cout <<"DEBUG: blindonly: "<<m_h2_blind_only<<std::endl;
+    engine.set_blind_only_h2(m_h2_blind_only);
 
     /* 
     Set the memory budget for the BFS algorithm, stops search when exceeds this limit. Necessary to keep process running and return 

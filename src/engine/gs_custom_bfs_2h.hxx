@@ -338,7 +338,7 @@ namespace aptk
 					m_primary_h->eval(candidate, candidate->h1n());
 					if(m_blind_only_h2)
 					{
-						if (candidate->h1n() >= 3)
+						if ( candidate->h1n() >= (m_B+1) )
 							m_secondary_h->eval(candidate, candidate->h2n());
 							// m_secondary_h->eval_no_update(candidate, candidate->h2n());
 						else

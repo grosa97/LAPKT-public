@@ -11,7 +11,7 @@ DEFAULT_PLAN_FILE   =   "plan.ipc"
 DEFAULT_MEMORY_BUDGET = 3900
 
 #---- MAIN -------------------------------------------------------------------#
-def main( domain_file, problem_file, plan_file, log_file, bound, atomic, memory_budget) :
+def main( domain_file, problem_file, plan_file, log_file, bound, atomic, memory_budget, h2_blind_only) :
     task    =   BFS_W_COUNT_Planner()
     ground_generate_task( domain_file, problem_file, task)
 
@@ -24,6 +24,8 @@ def main( domain_file, problem_file, plan_file, log_file, bound, atomic, memory_
     task.plan_filename  =   plan_file
 
     task.memory_budget = memory_budget
+
+    task.h2_blind_only = h2_blind_only
 
     task.setup()
     task.solve()
@@ -48,7 +50,9 @@ if __name__ ==  "__main__" :
             help='Split problem into set of problems with atomic goals')
     parser.add_argument( '-m', '--memory_budget', action='store', nargs='?',
             default=DEFAULT_MEMORY_BUDGET, help='Memory budget for BFS W algorithm')
+    parser.add_argument( '-h', '--h2_blind_only', action='store_true',
+            help='Set count heuristic to only break ties for largest novelty nodes')
 
     args    =   parser.parse_args()
 
-    main( args.domain, args.problem, args.outplan, args.log, args.bound, args.atomic, args.memory_budget)
+    main( args.domain, args.problem, args.outplan, args.log, args.bound, args.atomic, args.memory_budget, args.h2_blind_only)
