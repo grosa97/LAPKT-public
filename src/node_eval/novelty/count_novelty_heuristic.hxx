@@ -130,6 +130,10 @@ namespace aptk
                 compute(n, redundant_variable);
             }
 
+			void eval_no_update(Search_Node *n, float &h_val) {
+				compute_count_metric(n, h_val);
+			}
+
 		protected:
 			/**
 			 * If can use add(op), the computation is F^i-1 aprox. FASTER!!!
