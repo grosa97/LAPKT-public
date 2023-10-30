@@ -191,7 +191,7 @@ namespace aptk
 				AT_BFS_SQ_2H(const Search_Model &search_problem)
 						: m_problem(search_problem), m_primary_h(NULL), m_secondary_h(NULL),
 							m_exp_count(0), m_gen_count(0), m_pruned_B_count(0), m_dead_end_count(0), m_open_repl_count(0),
-							m_B(infty), m_time_budget(infty), m_greedy(false), m_delay_eval(true), m_blind_only_h2(false)
+							m_B(infty), m_W_B(3), m_time_budget(infty), m_greedy(false), m_delay_eval(true), m_blind_only_h2(false)
 				{
 					m_primary_h = new Primary_Heuristic(search_problem);
 					m_secondary_h = new Secondary_Heuristic(search_problem);
@@ -292,8 +292,12 @@ namespace aptk
 				float bound() const { return m_B; }
 				void set_bound(float v) { m_B = v; }
 
+				float w_bound() const { return m_W_B; }
+				void set_w_bound(float v) { m_W_B = v; }
+
 				void set_arity_h1(float v) {
 					m_primary_h->set_arity(v);
+					set_w_bound(v);
 				}
 				void set_arity_h2(float v) {
 					m_secondary_h->set_arity(v);
@@ -338,7 +342,7 @@ namespace aptk
 					m_primary_h->eval(candidate, candidate->h1n());
 					if(m_blind_only_h2)
 					{
-						if ( candidate->h1n() >= (m_B+1) )
+						if ( candidate->h1n() >= (m_W_B+1) )
 							m_secondary_h->eval(candidate, candidate->h2n());
 							// m_secondary_h->eval_no_update(candidate, candidate->h2n());
 						else
@@ -909,6 +913,7 @@ namespace aptk
 				unsigned m_dead_end_count;
 				unsigned m_open_repl_count;
 				float m_B;
+				float m_W_B;
 				float m_time_budget;
 				float m_memory_budget;
 				float m_t0;
