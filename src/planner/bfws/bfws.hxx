@@ -47,6 +47,11 @@
 
 #include "new_node_comparer.hxx"
 
+//Custom
+#include <gs_bfws_3h.hxx>
+#include <count_novelty_heuristic.hxx>
+
+
 namespace po = boost::program_options;
 
 /**
@@ -91,6 +96,11 @@ using aptk::search::bfws_2h::BFWS_2H_Consistency_M;
 using aptk::search::bfws_2h::BFWS_2H_M;
 using aptk::search::bfws_4h::BFWS_4H;
 
+//CUSTOM
+using aptk::agnostic::Count_Novelty_Heuristic;
+using aptk::search::gs_bfws_3h::GS_BFWS_3H;
+using aptk::search::Node_Comparer_3H;
+
 /**
  * DEFINITIONS
  */
@@ -106,12 +116,14 @@ typedef aptk::search::bfws_4h::Node<Fwd_Search_Problem, aptk::State> Search_Node
 typedef aptk::search::bfws_2h::Node<Fwd_Search_Problem, aptk::State> Search_Node_2h;
 typedef aptk::search::ipc2014::Node<aptk::State> AT_Search_Node;
 
+
 // NIR: Novelty functions for each node type. Novelty partition expects class
 // node to define partition() function. '_2' version expects partition2() function.
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_4h> H_Novel_Fwd_4h;
 typedef Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h> H_Novel_2_Fwd_4h;
 
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_2h> H_Novel_Fwd_2h;
+
 
 // NIR: Then we define the type of the tie-breaking algorithm
 // for the open list we are going to use
@@ -148,6 +160,14 @@ typedef BFWS_2H_Consistency_M<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd,
 
 // NIR: Anytime RWA*
 typedef IPC2014_RWA<Fwd_Search_Problem, H_Add_Rp_Fwd_use_costs, H_Lmcount_Fwd, AT_BFS_Open_List> Anytime_RWA;
+
+
+//CUSTOM
+typedef aptk::search::gs_bfws_3h::Node<Fwd_Search_Problem, aptk::State> Search_Node_3h;
+typedef Count_Novelty_Heuristic<Fwd_Search_Problem, Search_Node_3h> H_Novel_Count_Blind;
+typedef Node_Comparer_3H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
+typedef Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> BFS_Open_List_3h;
+typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
 
 class BFWS : public STRIPS_Interface
 {

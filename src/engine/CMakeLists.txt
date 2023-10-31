@@ -2,6 +2,7 @@ target_sources(core
     PRIVATE
         at_bfs.hxx
         gs_custom_bfs.hxx
+        gs_bfws_3h.hxx
         at_bfs_dq.hxx
         at_bfs_dq_mh.hxx
         at_gbfs.hxx
@@ -79,6 +80,7 @@ install(
         ${PROJECT_SOURCE_DIR}/src/engine/approx_novelty_siw.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/approx_novelty_dfs_plus.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/approx_novelty_iw.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/gs_bfws_3h.hxx
     DESTINATION
         ${CMAKE_INSTALL_PREFIX}/lapkt/core/include/engine
     COMPONENT
