@@ -99,7 +99,7 @@ using aptk::search::bfws_4h::BFWS_4H;
 //CUSTOM
 using aptk::agnostic::Count_Novelty_Heuristic;
 using aptk::search::gs_bfws_3h::GS_BFWS_3H;
-using aptk::search::Node_Comparer_3H;
+using aptk::search::Node_Comparer_3H_gn_unit;
 
 /**
  * DEFINITIONS
@@ -167,7 +167,8 @@ typedef aptk::search::gs_bfws_3h::Node<Fwd_Search_Problem, aptk::State> Search_N
 typedef Count_Novelty_Heuristic<Fwd_Search_Problem, Search_Node_3h> H_Novel_Count_Blind;
 typedef Node_Comparer_3H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
 typedef Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> BFS_Open_List_3h;
-typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
+typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Fwd_3h;
+typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
 
 class BFWS : public STRIPS_Interface
 {

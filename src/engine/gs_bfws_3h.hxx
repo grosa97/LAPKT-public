@@ -59,7 +59,7 @@ namespace aptk
 				typedef typename std::vector<Node<Search_Model, State> *>::iterator Node_Vec_Ptr_It;
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
-						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_h1(0), m_h2(0), m_r(0), m_partition(0), m_M(0), m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false)
+						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -239,10 +239,11 @@ namespace aptk
 				typedef aptk::agnostic::Landmarks_Graph_Manager<Search_Model> Landmarks_Graph_Manager;
 
 				GS_BFWS_3H(const Search_Model &search_problem, bool verbose)
-						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false)
+						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), m_use_blind_h3n(false)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
+					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 				}
 
@@ -401,6 +402,9 @@ namespace aptk
 							eval_novel(m_root);
 
 						m_root->undo_land_graph(m_lgm);
+
+						if (m_use_blind_h3n)
+							eval_count_based(m_root);
 					}
 					else
 					{
@@ -414,6 +418,9 @@ namespace aptk
 
 						if (m_use_novelty)
 							eval_novel(m_root);
+						
+						if (m_use_blind_h3n)
+							eval_count_based(m_root);
 					}
 
 #ifdef DEBUG
@@ -476,6 +483,9 @@ namespace aptk
 						{
 							std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
 						}
+						//DEBUG
+						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
 				}
 
@@ -575,12 +585,15 @@ namespace aptk
 				void eval_count_based(Search_Node *candidate)
 				{
 					if (candidate->h1n() > m_max_novelty)
+					{
 						m_third_h->eval(candidate, candidate->h3n());
+					}
 					else
 					{
 						m_third_h->update_counts(candidate);
-						candidate->h3n() = 0.0;
 					}
+					
+					// m_third_h->eval(candidate, candidate->h3n());
 
 				}
 
@@ -624,6 +637,7 @@ namespace aptk
 				{
 
 #ifdef DEBUG
+					
 					if (m_verbose)
 					{
 						std::cout << "Expanding:" << std::endl;
@@ -727,6 +741,11 @@ namespace aptk
 					}
 					inc_eval();
 					m_expanded_count_by_novelty[head->h1n() - 1]++;
+
+					//DEBUG
+					if ( (m_exp_count % 10000) == 0 )
+						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << std::endl;
+						
 				}
 
 				virtual Search_Node *do_search()

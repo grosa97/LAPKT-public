@@ -1,3 +1,5 @@
+
+
 #include <bfws.hxx>
 #include <memory.hxx>
 
@@ -284,6 +286,41 @@ void BFWS::solve()
 
 		// Do not use #rp
 		bfs_engine.set_use_rp(false);
+
+		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+	}
+	// CUSTOM 1
+	else if (m_search_alg.compare("BFWS-goalcount-h3blind") == 0)
+	{
+		std::cout << "Starting search with BFWS(w_(#G), #G, [#C | nov>w])...";
+	
+		custom_BFWS bfs_engine(search_prob, m_verbose);
+
+		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+
+		// Do not use #rp
+		bfs_engine.set_use_rp(false);
+
+		// Use h3n for nodes with novelty > max_nov
+		bfs_engine.set_use_blind_h3n(true);
+
+		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+
+	}
+	else if (m_search_alg.compare("BFWS-f5-h3count") == 0)
+	{
+
+		std::cout << "Starting search with BFWS-f5-h3count..." << std::endl;
+
+		custom_BFWS bfs_engine(search_prob, m_verbose);
+
+		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+
+		bfs_engine.set_use_blind_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 

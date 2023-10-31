@@ -51,6 +51,8 @@ BFWS:
         - 'POLY-BFWS'
         - 'DUAL-C-BFWS'
         - 'DUAL-BFWS'
+        - 'BFWS-goalcount-h3blind'
+        - 'BFWS-f5-h3count'
       nargs   : '?'
       action  : 'store'
       help    : "specify a variant of BFWS - default 'DUAL-BFWS'"
