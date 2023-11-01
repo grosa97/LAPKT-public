@@ -239,7 +239,8 @@ namespace aptk
 				typedef aptk::agnostic::Landmarks_Graph_Manager<Search_Model> Landmarks_Graph_Manager;
 
 				GS_BFWS_3H(const Search_Model &search_problem, bool verbose)
-						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), m_use_blind_h3n(false)
+						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
+						m_use_h3n(false), m_h3_only_max_nov(true), m_h3_rp_fl_only(false)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -369,6 +370,7 @@ namespace aptk
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL, m_problem.num_actions());
 					// Init Novelty
 					m_first_h->init();
+					m_third_h->set_rp_fl_only(m_h3_rp_fl_only);
 
 					if (m_use_rp)
 						set_relplan(this->m_root, this->m_root->state());
@@ -403,7 +405,7 @@ namespace aptk
 
 						m_root->undo_land_graph(m_lgm);
 
-						if (m_use_blind_h3n)
+						if (m_use_h3n)
 							eval_count_based(m_root);
 					}
 					else
@@ -419,7 +421,7 @@ namespace aptk
 						if (m_use_novelty)
 							eval_novel(m_root);
 						
-						if (m_use_blind_h3n)
+						if (m_use_h3n)
 							eval_count_based(m_root);
 					}
 
@@ -489,29 +491,29 @@ namespace aptk
 					}
 				}
 
-				void eval_rp(Search_Node *candidate)
+			void eval_rp(Search_Node *candidate)
+			{
+				// If relevant fluents are in use
+				if (m_use_rp && !m_use_rp_from_init_only)
 				{
-					// If relevant fluents are in use
-					if (m_use_rp && !m_use_rp_from_init_only)
+					// if land/goal counter has decreased, then update relevant fluents
+					if (candidate->parent() && candidate->h2n() < candidate->parent()->h2n())
 					{
-						// if land/goal counter has decreased, then update relevant fluents
-						if (candidate->parent() && candidate->h2n() < candidate->parent()->h2n())
+						// If state hasn't been gereated, update the parent state with current op
+						if (!candidate->has_state())
 						{
-							// If state hasn't been gereated, update the parent state with current op
-							if (!candidate->has_state())
-							{
-								static Fluent_Vec added, deleted;
-								added.clear();
-								deleted.clear();
-								candidate->parent()->state()->progress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
-								set_relplan(candidate, candidate->parent()->state());
-								candidate->parent()->state()->regress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
-							}
-							else
-								set_relplan(candidate, candidate->state());
+							static Fluent_Vec added, deleted;
+							added.clear();
+							deleted.clear();
+							candidate->parent()->state()->progress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
+							set_relplan(candidate, candidate->parent()->state());
+							candidate->parent()->state()->regress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
 						}
+						else
+							set_relplan(candidate, candidate->state());
 					}
 				}
+			}
 
 				unsigned rp_fl_achieved(Search_Node *n)
 				{
@@ -590,7 +592,10 @@ namespace aptk
 					}
 					else
 					{
-						m_third_h->update_counts(candidate);
+						if (m_h3_only_max_nov)
+							m_third_h->update_counts(candidate);
+						else
+							m_third_h->eval(candidate, candidate->h3n());
 					}
 					
 					// m_third_h->eval(candidate, candidate->h3n());
@@ -730,7 +735,7 @@ namespace aptk
 								}
 						}
 
-						if (m_use_blind_h3n) 
+						if (m_use_h3n) 
 							eval_count_based(n);
 
 #ifdef DEBUG
@@ -824,7 +829,12 @@ namespace aptk
 				void set_use_novelty(bool v) { m_use_novelty = v; }
 				void set_use_novelty_pruning(bool v) { m_use_novelty_pruning = v; }
 
-				void set_use_blind_h3n(bool v) { m_use_blind_h3n = v; }
+				void set_use_h3n(bool v) { m_use_h3n = v; }
+				void set_use_h3_only_max_nov(bool v) { m_h3_only_max_nov = v; }
+				void set_use_h3_rp_fl_only(bool v) {
+					m_h3_rp_fl_only = true;
+					m_third_h->set_rp_fl_only(m_h3_rp_fl_only);
+				}
 
 				unsigned get_max_novelty_expanded()
 				{
@@ -948,7 +958,9 @@ namespace aptk
 				bool m_use_rp;
 				bool m_use_rp_from_init_only;
 
-				bool m_use_blind_h3n;
+				bool m_use_h3n;
+				bool m_h3_only_max_nov;
+				bool m_h3_rp_fl_only;
 			};
 
 		}

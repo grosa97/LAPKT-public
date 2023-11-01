@@ -55,6 +55,12 @@ namespace aptk
 
 			void set_verbose(bool v) { m_verbose = v; }
 
+			/*
+			 * useless function, just required because of compatibility with using Count_Novelty_Partition template in same engine
+			 * i should probably just design a new template for inheriting oh well
+			*/
+			void set_rp_fl_only(bool v) { return; }
+
 			virtual ~Count_Novelty_Heuristic()
 			{
 			}

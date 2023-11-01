@@ -48,7 +48,7 @@ namespace aptk
 		{
 		public:
 			Count_Novelty_Partition(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
-					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true)
+					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false)
 			{
 
 				set_arity(max_arity, 1);
@@ -76,6 +76,8 @@ namespace aptk
 			void set_full_state_computation(bool b) { m_always_full_state = b; }
 
 			void set_verbose(bool v) { m_verbose = v; }
+
+			void set_rp_fl_only(bool v) { m_rp_fl_only = v; }
 
 			unsigned &partition_size() { return m_partition_size; }
 			bool is_partition_empty(unsigned partition) { return m_nodes_tuples_by_partition[partition].empty(); }
@@ -121,7 +123,17 @@ namespace aptk
 
 			virtual void eval(Search_Node *n, float &h_val)
 			{
-				compute_count_metric(n, h_val);
+				if (m_rp_fl_only)
+					compute_count_metric_rp_fl_only(n, h_val);
+				else
+					compute_count_metric(n, h_val);
+				
+				update_counts(n);
+			}
+
+			void eval_rp_fl(Search_Node *n, float &h_val)
+			{
+				compute_count_metric_rp_fl_only(n, h_val);
 				update_counts(n);
 			}
 
@@ -346,6 +358,77 @@ namespace aptk
 
             }
 
+			void compute_count_metric_rp_fl_only(Search_Node *n, float &metric_value) {
+
+				if (n->partition() == std::numeric_limits<unsigned>::max())
+					return;
+
+				check_table_size(n);
+
+				/*HARD CODED TO 1 FOR THIS METHOD*/
+                unsigned arity = 1;
+		
+                metric_value = 0;
+
+
+				Fluent_Set* rp_f_set = get_rp_set(n);
+				static Fluent_Set counted(m_num_fluents);
+
+				const bool has_state = n_has_state(n);
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+				/*
+				 * Creating new Fluent_Vec with only fluents in rp_f_set, & then using that for getting metric value
+				 * Possibly more inefficient (?) but easier implementation for testing
+				*/
+				Fluent_Vec rp_fl;
+				for (unsigned f : fl) {
+					if (rp_f_set->isset(f) && !counted.isset(f))
+					{
+						rp_fl.push_back(f);
+						counted.set(f);
+					}
+				}
+			
+                std::vector<unsigned> tuple(m_arity);
+
+                unsigned n_combinations = aptk::unrolled_pow(rp_fl.size(), m_arity); 
+
+				for (unsigned idx = 0; idx < n_combinations; idx++)
+                {
+                    /**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, rp_fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					unsigned tuple_count;
+
+                    /*if arity = 1*/
+                    tuple_idx = tuple2idx(tuple, m_arity);
+
+                    tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+
+					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                    /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                    metric_value -= (float)1 / (1 + tuple_count);
+                }
+				counted.reset();
+			}
+
+			Fluent_Set* get_rp_set(Search_Node *n) 
+			{
+				Search_Node* n_start = n;
+				while (!n_start->rp_vec())
+				{
+					n_start = n_start->parent();
+				}	
+				return n_start->rp_set();
+			}
+
 
 			inline unsigned tuple2idx_size2(std::vector<unsigned> &indexes, unsigned arity) const
 			{
@@ -425,6 +508,7 @@ namespace aptk
 			bool m_always_full_state;
 			unsigned m_partition_size;
 			bool m_verbose;
+			bool m_rp_fl_only;
 		};
 
 	}
