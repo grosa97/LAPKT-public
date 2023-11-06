@@ -72,6 +72,13 @@ namespace aptk
 				float gn() const { return m_g; }
 				float &fn() { return m_f; }
 				float fn() const { return m_f; }
+
+				//for compatibility
+				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
+				Fluent_Set *&rp_set() { return m_rp_fl_set; }
+				Fluent_Vec *m_rp_fl_vec;
+				Fluent_Set *m_rp_fl_set;
+
 				Node<State> *parent() { return m_parent; }
 				Action_Idx action() const { return m_action; }
 				bool has_state() const { return m_state != NULL; }

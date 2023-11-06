@@ -321,6 +321,7 @@ void BFWS::solve()
 		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
 
 		bfs_engine.set_use_h3n(true);
+		// bfs_engine.set_use_h3_rp_fl_only(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
