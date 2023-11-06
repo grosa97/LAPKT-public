@@ -521,6 +521,7 @@ namespace aptk
                 unsigned arity = 1;
 		
                 metric_value = 0;
+				float state_value = 0;
 
                 // const bool has_state = n->has_state();
 				const bool has_state = n_has_state(n);
@@ -552,10 +553,27 @@ namespace aptk
 
                     tuple_count = m_tuple_counts[tuple_idx];
 
-					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+					metric_value += (float)1 / (1 + tuple_count);
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+                    // state_value += (float)1 / (1 + tuple_count);
                 }
+
+				// if (state_value >= 1)
+				// 	metric_value = 1;
+				// else if (state_value >= (float)1E-1)
+				// 	metric_value = 2;
+				// else if (state_value >= (float)1E-2)
+				// 	metric_value = 3;
+				// else if (state_value >= (float)1E-3)
+				// 	metric_value = 4;
+				// else if (state_value >= (float)1E-4)
+				// 	metric_value = 5;
+				// else if (state_value >= (float)1E-5)
+				// 	metric_value = 6;
+				// else if (state_value >= (float)1E-6)
+				// 	metric_value = 7;
+				// else 
+				// 	metric_value = 8;
 
                 // if (!has_state)
 				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);

@@ -414,7 +414,8 @@ namespace aptk
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+					// metric_value -= (float)1 / (1 + tuple_count);
+                    metric_value += (float)1 / (1 + tuple_count);
                 }
 				counted.reset();
 			}

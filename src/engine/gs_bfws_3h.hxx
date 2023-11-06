@@ -586,17 +586,39 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					if (candidate->h1n() > m_max_novelty)
-					{
-						m_third_h->eval(candidate, candidate->h3n());
-					}
-					else
-					{
-						if (m_h3_only_max_nov)
-							m_third_h->update_counts(candidate);
-						else
-							m_third_h->eval(candidate, candidate->h3n());
-					}
+					// m_third_h->eval(candidate, candidate->h3n());
+
+					float state_value;
+					unsigned metric_value;
+					m_third_h->eval(candidate, state_value);
+					if (state_value >= 1)
+						metric_value = 1;
+					else if (state_value >= (float)1E-1)
+						metric_value = 2;
+					else if (state_value >= (float)1E-2)
+						metric_value = 3;
+					else if (state_value >= (float)1E-3)
+						metric_value = 4;
+					else if (state_value >= (float)1E-4)
+						metric_value = 5;
+					else if (state_value >= (float)1E-5)
+						metric_value = 6;
+					else if (state_value >= (float)1E-6)
+						metric_value = 7;
+					else 
+						metric_value = 8;
+					candidate->h3n() = metric_value;
+					// if (candidate->h1n() > m_max_novelty)
+					// {
+					// 	m_third_h->eval(candidate, candidate->h3n());
+					// }
+					// else
+					// {
+					// 	if (m_h3_only_max_nov)
+					// 		m_third_h->update_counts(candidate);
+					// 	else
+					// 		m_third_h->eval(candidate, candidate->h3n());
+					// }
 					
 					// m_third_h->eval(candidate, candidate->h3n());
 

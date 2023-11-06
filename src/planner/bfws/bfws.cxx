@@ -316,11 +316,13 @@ void BFWS::solve()
 
 		std::cout << "Starting search with BFWS-f5-h3count..." << std::endl;
 
-		custom_BFWS bfs_engine(search_prob, m_verbose);
+		// custom_BFWS bfs_engine(search_prob, m_verbose);
+		custom_BFWS_count_width bfs_engine(search_prob, m_verbose);
 
 		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
 
 		bfs_engine.set_use_h3n(true);
+		bfs_engine.set_use_h3_rp_fl_only(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
@@ -351,7 +353,7 @@ void BFWS::solve()
 		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
 
 		bfs_engine.set_use_h3n(true);
-		bfs_engine.set_use_h3_rp_fl_only(true);
+		// bfs_engine.set_use_h3_rp_fl_only(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
@@ -359,7 +361,6 @@ void BFWS::solve()
 	}
 	else if (m_search_alg.compare("BFWS-f5-h3count-p-rp-allh3") == 0)
 	{
-
 		std::cout << "Starting search with BFWS-f5-h3count-p-rp-allh3..." << std::endl;
 
 		custom_BFWS_p bfs_engine(search_prob, m_verbose);
