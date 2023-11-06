@@ -711,6 +711,10 @@ namespace aptk
 
 						// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
 						/*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+						// if (atoms_arity == 1)
+						// 	metric_value -= 0.1 * (float)1 / (1 + tuple_count);
+						// else
+						// 	metric_value -= (float)1 / (1 + tuple_count);
 						metric_value -= (float)1 / (1 + tuple_count);
 					}
 				}
