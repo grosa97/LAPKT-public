@@ -912,6 +912,7 @@ namespace aptk
 				}
 
 				void set_arity(float v, unsigned g) { m_first_h->set_arity(v, g); }
+				void set_h3_arity(unsigned v) {m_third_h->set_arity(v); }
 				void set_max_novelty(unsigned v)
 				{
 					m_max_novelty = v;

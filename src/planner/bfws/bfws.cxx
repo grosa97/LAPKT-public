@@ -321,7 +321,7 @@ void BFWS::solve()
 		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
 
 		bfs_engine.set_use_h3n(true);
-		// bfs_engine.set_use_h3_rp_fl_only(true);
+		bfs_engine.set_use_h3_rp_fl_only(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
@@ -380,19 +380,34 @@ void BFWS::solve()
 
 		std::cout << "Starting search with BFWS-f5-h3count-test..." << std::endl;
 
-		custom_BFWS_p bfs_engine(search_prob, m_verbose);
+		std::cout << "Starting search with BFWS-f5-h3count..." << std::endl;
+
+		custom_BFWS bfs_engine(search_prob, m_verbose);
 
 		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
 
 		bfs_engine.set_use_h3n(true);
-		bfs_engine.set_use_h3_rp_fl_only(true);
-		bfs_engine.set_use_h3_only_max_nov(true); //use h3 to break all ties, not just max novelty ties
-		bfs_engine.set_use_quota(false);
-		// bfs_engine.set_quota_multiplier(10.0);
+		bfs_engine.set_h3_arity(2);
+		// bfs_engine.set_use_h3_rp_fl_only(true);
+		// bfs_engine.set_use_h3_only_max_nov(false);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+
+		// custom_BFWS_p bfs_engine(search_prob, m_verbose);
+
+		// bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+
+		// bfs_engine.set_use_h3n(true);
+		// bfs_engine.set_use_h3_rp_fl_only(true);
+		// bfs_engine.set_use_h3_only_max_nov(true); //use h3 to break all ties, not just max novelty ties
+		// bfs_engine.set_use_quota(false);
+		// // bfs_engine.set_quota_multiplier(10.0);
+
+		// float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+		// std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
 	else if (m_search_alg.compare("BFWS-f5") == 0)
 	{
