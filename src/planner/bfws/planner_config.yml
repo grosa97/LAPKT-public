@@ -56,6 +56,7 @@ BFWS:
         - 'BFWS-f5-h3count-p'
         - 'BFWS-f5-h3count-p-rp'
         - 'BFWS-f5-h3count-p-rp-allh3'
+        - 'BFWS-f5-h3count-test'
 
       nargs   : '?'
       action  : 'store'

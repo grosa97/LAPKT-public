@@ -416,6 +416,33 @@ namespace aptk
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                     metric_value -= (float)1 / (1 + tuple_count);
                 }
+
+				//TEST: compute for all, and add with 0.1 mulyiplier
+				n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
+
+				for (unsigned idx = 0; idx < n_combinations; idx++)
+                {
+                    /**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					unsigned tuple_count;
+
+                    /*if arity = 1*/
+                    tuple_idx = tuple2idx(tuple, m_arity);
+
+                    tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+
+					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                    /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                    metric_value -= 0.1 * ( (float)1 / (1 + tuple_count) );
+                }
+
 				counted.reset();
 			}
 

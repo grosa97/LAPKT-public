@@ -75,6 +75,7 @@ float BFS_W_COUNT_Planner::do_search_single_goal(Search_Engine &engine,
     engine.set_greedy( greedy );
 	engine.set_delay_eval( false );
     std::cout<<"Setting Novelty arity: "<< m_iw_bound <<std::endl;
+    
     engine.set_arity_h1( m_iw_bound );
     //hardcode to 1 for now
     engine.set_arity_h2( 1 );

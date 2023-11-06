@@ -219,6 +219,94 @@ namespace aptk
 				bool m_relaxed_deadend;
 			};
 
+
+			class Partition_Quota
+			{
+				std::unordered_map<int, unsigned> m_partition_novel_nodes_count;
+				std::unordered_map<int, unsigned> m_partition_used_quota;
+				float m_quota_multiplier;
+				
+				public:
+					Partition_Quota() : m_quota_multiplier(0) {}
+					Partition_Quota(float multiplier) : m_quota_multiplier(multiplier) {}
+
+					void set_multiplier(float m) { m_quota_multiplier = m; }
+					void increment_novel_nodes_count(int partition) 
+					{
+						if (m_partition_novel_nodes_count.find(partition) != m_partition_novel_nodes_count.end())
+							m_partition_novel_nodes_count[partition]++;
+						else
+							m_partition_novel_nodes_count[partition] = 1;
+					}
+
+					void increment_used_quota(int partition)
+					{
+						if (m_partition_used_quota.find(partition) != m_partition_used_quota.end())
+							m_partition_used_quota[partition]++;
+						else
+							m_partition_used_quota[partition] = 1;
+					}
+
+					bool over_quota(int partition)
+					{
+						if (m_partition_novel_nodes_count.find(partition) != m_partition_novel_nodes_count.end())
+						{
+							if (m_partition_used_quota.find(partition) != m_partition_used_quota.end())
+							{
+								if (m_partition_used_quota[partition] < m_quota_multiplier * m_partition_novel_nodes_count[partition])
+									return false;
+							}
+						}
+						return true;
+					}
+			};
+
+			// class Global_Quota
+			// {
+			// 	// std::unordered_map<int, unsigned> m_partition_novel_nodes_count;
+			// 	// std::unordered_map<int, unsigned> m_partition_used_quota;
+			// 	unsigned m_novel_nodes_count;
+			// 	unsigned m_novel_nodes_count;
+			// 	float m_quota_multiplier;
+				
+			// 	public:
+			// 		Global_Quota() : m_quota_multiplier(0) {}
+			// 		Global_Quota(float multiplier) : m_quota_multiplier(multiplier) {}
+
+			// 		void set_multiplier(float m) { m_quota_multiplier = m; }
+			// 		void increment_novel_nodes_count(int partition) 
+			// 		{
+			// 			if (m_partition_novel_nodes_count.find(partition) != m_partition_novel_nodes_count.end())
+			// 				m_partition_novel_nodes_count[partition]++;
+			// 			else
+			// 				m_partition_novel_nodes_count[partition] = 1;
+			// 		}
+
+			// 		void increment_used_quota(int partition)
+			// 		{
+			// 			if (m_partition_used_quota.find(partition) != m_partition_used_quota.end())
+			// 				m_partition_used_quota[partition]++;
+			// 			else
+			// 				m_partition_used_quota[partition] = 1;
+			// 		}
+
+			// 		bool over_quota(int partition)
+			// 		{
+			// 			if (m_partition_novel_nodes_count.find(partition) != m_partition_novel_nodes_count.end())
+			// 			{
+			// 				if (m_partition_used_quota.find(partition) != m_partition_used_quota.end())
+			// 				{
+			// 					if (m_partition_used_quota[partition] < m_quota_multiplier * m_partition_novel_nodes_count[partition])
+			// 						return false;
+			// 				}
+			// 			}
+			// 			return true;
+			// 		}
+			// };
+
+
+
+
 			/**
 			 * @brief
 			 *
@@ -240,12 +328,13 @@ namespace aptk
 
 				GS_BFWS_3H(const Search_Model &search_problem, bool verbose)
 						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
-						m_use_h3n(false), m_h3_only_max_nov(true), m_h3_rp_fl_only(false)
+						m_use_h3n(false), m_h3_only_max_nov(true), m_h3_rp_fl_only(false), m_use_quota(false)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
 					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
+					m_p_quota = new Partition_Quota();
 				}
 
 				virtual ~GS_BFWS_3H()
@@ -735,13 +824,23 @@ namespace aptk
 								}
 						}
 
-						if (m_use_h3n) 
+						if (m_use_quota && n->h1n() <= m_max_novelty)
+							m_p_quota->increment_novel_nodes_count(n->partition());
+
+
+						if (m_use_h3n)
 							eval_count_based(n);
 
 #ifdef DEBUG
 						if (m_verbose)
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
+						// if (n->h1n() > m_max_novelty && n->h3n() >= -(double)1.0E-4)
+						// {
+						// 	inc_dead_end();
+						// 	delete n;
+						// 	continue;
+						// }
 						open_node(n);
 					}
 					inc_eval();
@@ -765,6 +864,22 @@ namespace aptk
 							head = get_node();
 							continue;
 						}
+
+					if (m_use_quota)
+					{
+						if (head->h1n() > m_max_novelty)
+						{
+							m_p_quota->increment_used_quota(head->partition());
+							//if over quota, prune node at expansion 
+							if (m_p_quota->over_quota(head->partition()))
+							{
+								// std::cout<<"DEBUG: quota exceeded: pruned -- "<<head->partition()<<std::endl;
+								close(head);
+								head = get_node();
+								continue;
+							}
+						}
+					}
 
 						// Generate state
 						if (!head->has_state())
@@ -835,6 +950,8 @@ namespace aptk
 					m_h3_rp_fl_only = true;
 					m_third_h->set_rp_fl_only(m_h3_rp_fl_only);
 				}
+				void set_use_quota(bool v) { m_use_quota=v; }
+				void set_quota_multiplier(float v) { m_p_quota->set_multiplier(v); }
 
 				unsigned get_max_novelty_expanded()
 				{
@@ -927,6 +1044,7 @@ namespace aptk
 				Second_Heuristic *m_second_h;
 				Third_Heuristic *m_third_h;
 				Relevant_Fluents_Heuristic *m_relevant_fluents_h;
+				Partition_Quota* m_p_quota;
 
 				Open_List_Type m_open;
 				Closed_List_Type m_closed;
@@ -961,6 +1079,8 @@ namespace aptk
 				bool m_use_h3n;
 				bool m_h3_only_max_nov;
 				bool m_h3_rp_fl_only;
+
+				bool m_use_quota;
 			};
 
 		}

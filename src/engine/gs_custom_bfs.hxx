@@ -187,7 +187,7 @@ namespace aptk
 				AT_BFS_SQ_SH(const Search_Model &search_problem)
 						: m_problem(search_problem), m_heuristic_func(NULL),
 							m_exp_count(0), m_gen_count(0), m_pruned_B_count(0), m_dead_end_count(0), m_open_repl_count(0),
-							m_B(infty), m_time_budget(infty), m_greedy(false), m_delay_eval(true)
+							m_B(infty), m_time_budget(infty), m_greedy(true), m_delay_eval(false), m_n_achieved_atoms(0)
 				{
 					m_heuristic_func = new Abstract_Heuristic(search_problem);
 				}
@@ -635,6 +635,11 @@ namespace aptk
 						*/
 						// std::cout << "DEBUG: "<<" -- "<<expanded()<<" -- "<<head->hn()<<head->gn()<<" -- "<<head->fn()<<std::endl;
 
+						add_new_achieved_atoms(head);
+						float h2 = 0;
+						std::cout << "measurement_vals: " << head->gn() << " -- "<<head->hn()<<" -- "<<h2<<" -- "<<m_n_achieved_atoms<<std::endl;
+
+
 						if (generated() > prev_gen_val + 100000){
 							prev_gen_val = generated();
 						// if (counter % 1000 == 0){
@@ -821,6 +826,21 @@ namespace aptk
 					return new_atomic_goal;
 				}
 
+
+				void add_new_achieved_atoms(Search_Node *s) 
+				{
+					Fluent_Vec added = get_added_atoms(s);
+					// STRIPS_Problem strips_model = m_problem.task();
+					std::for_each(added.begin(), added.end(), [&](unsigned f) {
+						//if not found in set of achieved goal atoms
+						if (m_achieved_atoms_set.find(f) == m_achieved_atoms_set.end())
+						{
+							m_achieved_atoms_set.insert(f);
+							m_n_achieved_atoms++;
+						}
+					});
+				}
+
 				const Fluent_Vec get_added_atoms(Search_Node *n) const
 				{
 					if (n->action() == no_op) 
@@ -890,6 +910,9 @@ namespace aptk
 				bool m_delay_eval;
 
 				std::set<unsigned> m_achieved_atomic_goals_set; //Use Fluent_Set instead? is bitset it more efficient??
+				std::set<unsigned> m_achieved_atoms_set; //for measurement
+				int m_n_achieved_atoms;
+
 				std::unordered_map<unsigned int, Search_Node*> m_atomic_goals_state_map;
 				std::unordered_map<unsigned int, unsigned> m_atomic_exp_count_map;
 				std::unordered_map<unsigned int, unsigned> m_atomic_gen_count_map;
