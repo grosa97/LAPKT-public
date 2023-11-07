@@ -675,19 +675,19 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					if (candidate->h1n() > m_max_novelty)
-					{
-						m_third_h->eval(candidate, candidate->h3n());
-					}
-					else
-					{
-						if (m_h3_only_max_nov)
-							m_third_h->update_counts(candidate);
-						else
-							m_third_h->eval(candidate, candidate->h3n());
-					}
+					// if (candidate->h1n() > m_max_novelty)
+					// {
+					// 	m_third_h->eval(candidate, candidate->h3n());
+					// }
+					// else
+					// {
+					// 	if (m_h3_only_max_nov)
+					// 		m_third_h->update_counts(candidate);
+					// 	else
+					// 		m_third_h->eval(candidate, candidate->h3n());
+					// }
 					
-					// m_third_h->eval(candidate, candidate->h3n());
+					m_third_h->eval(candidate, candidate->h3n());
 
 				}
 

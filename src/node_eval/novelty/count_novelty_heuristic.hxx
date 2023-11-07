@@ -119,11 +119,19 @@ namespace aptk
 
 			virtual void eval(Search_Node *n, float &h_val)
 			{
+				float a1_val = 0;
+				float a2_val = 0;
 				if (m_rp_fl_only)
 					compute_count_metric_rp_fl_only(n, h_val);
 				else
-					// compute_count_metric_no_op(n, h_val); //testing
-					n->action() == no_op ? compute_count_metric_no_op(n, h_val) : compute_count_metric(n, h_val);
+				{
+					if (m_arity == 2)
+						n->action() == no_op ? compute_count_metric_only_2_no_op(n, a2_val) : compute_count_metric_only_2(n, a2_val);
+						// compute_count_metric_no_op(n, h_val); //testing
+					compute_count_metric_only_1(n, a1_val);
+					h_val = a1_val + a2_val;
+				}
+
 				
 				update_counts(n);
 			}
@@ -140,8 +148,8 @@ namespace aptk
 
             void update_counts(Search_Node *n) {
                 float redundant_variable = 0;
-                compute(n, redundant_variable);
-				// compute_no_op(n, redundant_variable); //testing
+                // compute(n, redundant_variable);
+				compute_no_op(n, redundant_variable); //testing
             }
 
 			void eval_no_update(Search_Node *n, float &h_val) {
@@ -228,6 +236,9 @@ namespace aptk
 
 			bool cover_tuples_op(Search_Node *n, unsigned arity)
 			{
+				//cover all if arity = 1
+				if (arity == 1)
+					return cover_tuples(n, arity);
 
 				// const bool has_state = n->has_state();
 				const bool has_state = n_has_state(n);
@@ -557,10 +568,10 @@ namespace aptk
 				// return false;
 			}
 
-            /* currently designed for width=1, behavior for w>1 undefined*/
-            void compute_count_metric(Search_Node *n, float &metric_value) {
+            
+            void compute_count_metric_only_2(Search_Node *n, float &metric_value) {
                 
-                unsigned arity = m_arity;
+                unsigned arity = 2;
 		
                 metric_value = 0;
 
@@ -718,11 +729,10 @@ namespace aptk
 						metric_value -= (float)1 / (1 + tuple_count);
 					}
 				}
-
             }
 
-			void compute_count_metric_no_op(Search_Node *n, float &metric_value) {
-                unsigned arity = m_arity;
+			void compute_count_metric_only_2_no_op(Search_Node *n, float &metric_value) {
+                unsigned arity = 2;
 		
                 metric_value = 0;
 
@@ -736,16 +746,16 @@ namespace aptk
 
                 Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
-                std::vector<unsigned> tuple(m_arity);
+                std::vector<unsigned> tuple(arity);
 
-                unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
+                unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
 
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
 					 * get tuples from indexes
 					 */
-					idx2tuple(tuple, fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+					idx2tuple(tuple, fl, idx, arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
 
 					/**
 					 * Check if tuple is covered
@@ -754,7 +764,54 @@ namespace aptk
 					unsigned tuple_count;
 
                     /*if arity = 1*/
-                    tuple_idx = tuple2idx(tuple, m_arity);
+                    tuple_idx = tuple2idx(tuple, arity);
+
+                    tuple_count = m_tuple_counts[tuple_idx];
+
+					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                    /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                    metric_value -= (float)1 / (1 + tuple_count);
+                }
+
+                // if (!has_state)
+				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+			}
+
+
+			void compute_count_metric_only_1(Search_Node *n, float &metric_value) {
+                unsigned arity = 1;
+		
+                metric_value = 0;
+
+				const bool has_state = n_has_state(n);
+
+                // const bool has_state = n->has_state();
+
+
+                // if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+
+                Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+                std::vector<unsigned> tuple(arity);
+
+                unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
+
+                for (unsigned idx = 0; idx < n_combinations; idx++)
+                {
+                    /**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, fl, idx, arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					unsigned tuple_count;
+
+                    /*if arity = 1*/
+                    tuple_idx = tuple2idx(tuple, arity);
 
                     tuple_count = m_tuple_counts[tuple_idx];
 
