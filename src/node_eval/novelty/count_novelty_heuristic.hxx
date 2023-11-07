@@ -54,6 +54,8 @@ namespace aptk
 			}
 
 			void set_verbose(bool v) { m_verbose = v; }
+			unsigned get_num_fluents() {return m_num_fluents;}
+			std::vector<int>& get_tuple_count_vector() {return m_tuple_counts;}
 
 			/*
 			 * useless function, just required because of compatibility with using Count_Novelty_Partition template in same engine
@@ -64,6 +66,7 @@ namespace aptk
 			virtual ~Count_Novelty_Heuristic()
 			{
 			}
+			
 
 			void init()
 			{
@@ -553,7 +556,7 @@ namespace aptk
 
                     tuple_count = m_tuple_counts[tuple_idx];
 
-					metric_value += (float)1 / (1 + tuple_count);
+					metric_value -= (float)1 / (1 + tuple_count);
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                     // state_value += (float)1 / (1 + tuple_count);
                 }

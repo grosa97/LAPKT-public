@@ -53,7 +53,8 @@ namespace aptk
 
 				set_arity(max_arity, 1);
 			}
-
+			unsigned get_num_fluents() {return m_num_fluents;}
+			std::vector<int>& get_tuple_count_vector() {return m_tuple_counts_by_partition[0];}
 			virtual ~Count_Novelty_Partition()
 			{
 			}
@@ -415,7 +416,7 @@ namespace aptk
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
 					// metric_value -= (float)1 / (1 + tuple_count);
-                    metric_value += (float)1 / (1 + tuple_count);
+                    metric_value -= (float)1 / (1 + tuple_count);
                 }
 				counted.reset();
 			}
@@ -498,6 +499,7 @@ namespace aptk
 				// return false;
 				return new_n->is_better(n);
 			}
+
 
 			const STRIPS_Problem &m_strips_model;
 			std::vector<std::vector<Search_Node *>> m_nodes_tuples_by_partition;

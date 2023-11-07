@@ -36,6 +36,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <algorithm>
 #include <iostream>
 #include <hash_table.hxx>
+#include <functional>
 
 namespace aptk
 {
@@ -246,6 +247,7 @@ namespace aptk
 					m_second_h = new Second_Heuristic(search_problem);
 					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
+					m_num_goal_atoms = m_problem.task().goal().size();
 				}
 
 				virtual ~GS_BFWS_3H()
@@ -489,7 +491,76 @@ namespace aptk
 						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
 						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
+
+					// unsigned h2n_val;
+					// m_second_h->eval(*(candidate->state()), h2n_val);
+					// candidate->h2n() = m_num_goal_atoms - h2n_val;
+					// if (candidate->h2n() > m_max_h2n)
+					// {
+					// 	m_max_h2n = candidate->h2n();
+					// 	m_max_r = 0;
+					// 	if (m_verbose)
+					// 	{
+					// 		std::cout << "--[" << m_max_h2n << " / " << m_num_goal_atoms << "]--" << std::endl;
+					// 	}
+					// 	//DEBUG
+					// 	std::cout << "--[" << m_max_h2n << " / " << m_num_goal_atoms << "]--" << std::endl;
+					// 	std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+					// }
 				}
+
+			// Define a custom hash function for a vector of integers
+			struct IntVectorHash {
+				std::size_t operator()(const Fluent_Vec& vec) const {
+					std::size_t seed = 0;
+					for (const int& value : vec) {
+						seed ^= std::hash<int>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+					}
+					return seed;
+				}
+			};
+
+
+			std::size_t extract_pgoal_node(Search_Node* candidate)
+			{
+				// Create a hash function object
+				IntVectorHash hashFunction;
+
+				std::vector<unsigned> commonElements;
+				Fluent_Vec g = m_problem.task().goal();
+				Fluent_Vec s = candidate->state()->fluent_vec();
+				
+				// Sort the vectors for efficient comparison
+				std::sort(s.begin(), s.end());
+				std::sort(g.begin(), g.end());
+
+				// Find common elements
+				std::set_intersection(
+					s.begin(), s.end(),
+					g.begin(), g.end(),
+					std::back_inserter(commonElements)
+				);
+
+				//common elements is sorted
+				return hashFunction(commonElements);
+			}
+
+			void record_subgoal_info_tuple(Search_Node* candidate)
+			{
+				std::size_t sg_c = extract_pgoal_node(candidate);
+				std::size_t sg_p = extract_pgoal_node(candidate->parent());
+				m_subgoals_tuples.push_back(std::make_tuple(sg_p, sg_c));
+			}
+
+			void print_subgoal_info()
+			{
+				std::cout<<"\n---SUBGOAL TUPLES INFO"<<std::endl;
+				for (const auto& tuple : m_subgoals_tuples) {
+					size_t first = std::get<0>(tuple);
+					size_t second = std::get<1>(tuple);
+					std::cout << "(" << first << ", " << second <<")"<< std::endl;
+    			}
+			}
 
 			void eval_rp(Search_Node *candidate)
 			{
@@ -511,6 +582,9 @@ namespace aptk
 						}
 						else
 							set_relplan(candidate, candidate->state());
+
+
+						record_subgoal_info_tuple(candidate);
 					}
 				}
 			}
@@ -580,17 +654,18 @@ namespace aptk
 
 				void eval_novel(Search_Node *candidate)
 				{
+					// unsigned val = extract_h3_discrete(candidate->h3n());
 					candidate->partition() = (1000 * candidate->h2n()) + candidate->r();
+					// candidate->partition() = (10000 * candidate->h2n()) + candidate->h3n();
+					// candidate->partition() = (10000 * candidate->h2n()) + val;
+					// candidate->partition() = (1000 * val) + candidate->r();
 					m_first_h->eval(candidate, candidate->h1n());
 				}
 
-				void eval_count_based(Search_Node *candidate)
+				unsigned extract_h3_discrete(float state_value)
 				{
-					// m_third_h->eval(candidate, candidate->h3n());
-
-					float state_value;
 					unsigned metric_value;
-					m_third_h->eval(candidate, state_value);
+					state_value *= -1;
 					if (state_value >= 1)
 						metric_value = 1;
 					else if (state_value >= (float)1E-1)
@@ -607,7 +682,40 @@ namespace aptk
 						metric_value = 7;
 					else 
 						metric_value = 8;
-					candidate->h3n() = metric_value;
+					return metric_value;
+				}
+
+				void eval_count_based(Search_Node *candidate)
+				{
+					float state_value;
+					m_third_h->eval(candidate, state_value);
+					// candidate->h3n() = extract_h3_discrete(state_value);
+					candidate->h3n() = state_value;
+					// unsigned metric_value;
+					// m_third_h->eval(candidate, state_value);
+					// if (state_value >= 1)
+					// 	metric_value = 1;
+					// else if (state_value >= (float)1E-1)
+					// 	metric_value = 2;
+					// else if (state_value >= (float)1E-2)
+					// 	metric_value = 3;
+					// else if (state_value >= (float)1E-3)
+					// 	metric_value = 4;
+					// else if (state_value >= (float)1E-4)
+					// 	metric_value = 5;
+					// else if (state_value >= (float)1E-5)
+					// 	metric_value = 6;
+					// else if (state_value >= (float)1E-6)
+					// 	metric_value = 7;
+					// else 
+					// 	metric_value = 8;
+					// candidate->h3n() = metric_value;
+
+
+					// if (m_h3_bins_counts_map_generated.find(metric_value) != m_h3_bins_counts_map_generated.end())
+					// 	m_h3_bins_counts_map_generated[metric_value]++;
+					// else
+					// 	m_h3_bins_counts_map_generated[metric_value] = 1;
 					// if (candidate->h1n() > m_max_novelty)
 					// {
 					// 	m_third_h->eval(candidate, candidate->h3n());
@@ -675,6 +783,15 @@ namespace aptk
 					}
 #endif
 
+					// if (head->h1n() == 1)
+					// std::cout << head->h1n()*10 + head->h3n()<<"\t"<<head->h2n()<<"\t"<<head->gn()<<std::endl;
+					
+					// if (m_h3_bins_counts_map_expanded.find(head->h3n()) != m_h3_bins_counts_map_expanded.end())
+					// 	m_h3_bins_counts_map_expanded[head->h3n()]++;
+					// else
+					// 	m_h3_bins_counts_map_expanded[head->h3n()] = 1;	
+
+										
 					if (m_lgm)
 						head->update_land_graph(m_lgm);
 
@@ -771,7 +888,7 @@ namespace aptk
 
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
-						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << std::endl;
+						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << " -- "<< head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "<< head->gn() << std::endl;
 						
 				}
 
@@ -796,10 +913,16 @@ namespace aptk
 						{
 							close(head);
 							set_max_depth(head->gn());
+							// print_bin_measures();
+							// print_h3_measures();
+							// print_subgoal_info();
 							return head;
 						}
 						if ((time_used() - m_t0) > m_time_budget)
+						{
+							print_bin_measures();
 							return NULL;
+						}
 
 						if (is_closed(head))
 						{
@@ -811,11 +934,57 @@ namespace aptk
 							head = get_node();
 							continue;
 						}
+
+						// if (generated() > 1000000)
+						// {
+						// 	close(head);
+						// 	print_bin_measures();
+						// 	print_h3_measures();
+						// 	return head;
+						// }
+
 						process(head);
 						close(head);
 						head = get_node();
 					}
+					print_bin_measures();
+
 					return NULL;
+				}
+
+				void print_bin_measures()
+				{
+					std::cout << "---DATA MEASUREMENTS"<<std::endl<<std::endl;
+					std::cout << "generated h3 bins" <<std::endl;
+					for (auto it = m_h3_bins_counts_map_generated.begin(); it != m_h3_bins_counts_map_generated.end(); it++) {
+						int key = it->first;
+						int value = it->second;
+						std::cout <<"Value: "<<key<<", Count: "<<value<<std::endl;
+					}
+					std::cout<<std::endl;
+					std::cout << "expanded h3 bins" <<std::endl;
+					for (auto it = m_h3_bins_counts_map_expanded.begin(); it != m_h3_bins_counts_map_expanded.end(); it++) {
+						int key = it->first;
+						int value = it->second;
+						std::cout <<"Value: "<<key<<", Count: "<<value<<std::endl;
+					}
+					std::cout<<"---------------------------"<<std::endl;
+					std::cout<<std::endl;
+				}
+
+				void print_h3_measures()
+				{
+					for (int i=0; i<m_third_h->get_num_fluents(); i++)
+					{
+						m_fluent_counts_map_generated[i] = m_third_h->get_tuple_count_vector()[i];
+					}
+
+					std::cout << "---FLUENT COUNTS"<<std::endl<<std::endl;
+					for (auto it = m_fluent_counts_map_generated.begin(); it != m_fluent_counts_map_generated.end(); it++) {
+						int key = it->first;
+						int value = it->second;
+						std::cout <<"Value: "<<key<<", Count: "<<value<<std::endl;
+					}
 				}
 
 				void set_arity(float v, unsigned g) { m_first_h->set_arity(v, g); }
@@ -983,6 +1152,15 @@ namespace aptk
 				bool m_use_h3n;
 				bool m_h3_only_max_nov;
 				bool m_h3_rp_fl_only;
+
+				std::unordered_map<unsigned, unsigned> m_h3_bins_counts_map_generated;
+				std::unordered_map<unsigned, unsigned> m_h3_bins_counts_map_expanded;
+				std::unordered_map<unsigned, unsigned> m_fluent_counts_map_generated;
+				std::unordered_map<unsigned, unsigned> m_fluent_counts_map_expanded;
+
+				std::vector<std::tuple<std::size_t, std::size_t>> m_subgoals_tuples;
+
+				unsigned m_num_goal_atoms;
 			};
 
 		}

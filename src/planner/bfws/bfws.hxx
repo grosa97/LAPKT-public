@@ -176,8 +176,9 @@ typedef Open_List<Tie_Breaking_Algorithm_3h_count_width, Search_Node_3h> BFS_Ope
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Fwd_3h;
 typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Heuristic, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
 typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Partition, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS_p;
-// typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Heuristic, H_Add_Rp_Fwd, BFS_Open_List_count_width> custom_BFWS_count_width;
-typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Partition, H_Add_Rp_Fwd, BFS_Open_List_count_width> custom_BFWS_count_width;
+typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Heuristic, H_Add_Rp_Fwd, BFS_Open_List_count_width> custom_BFWS_count_width;
+// typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Partition, H_Add_Rp_Fwd, BFS_Open_List_count_width> custom_BFWS_count_width;
+
 
 class BFWS : public STRIPS_Interface
 {
