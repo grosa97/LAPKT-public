@@ -114,6 +114,41 @@ namespace aptk
 			}
 		};
 
+
+		template <typename Node>
+		class Node_Comparer_3H_gn_unit_custom
+		{
+		public:
+			bool operator()(Node *a, Node *b) const
+			{
+				unsigned val_1_b = b->h1n();
+				unsigned val_1_a = a->h1n();
+
+				if (dless(val_1_b, val_1_a))
+					return true;
+				if (dequal(val_1_b, val_1_a))
+				{
+					// if (dless(b->h2n(), a->h2n()))
+					// 	return true;
+					// if (dequal(b->h2n(), a->h2n()))
+					// {
+						if (dless(b->h3n(), a->h3n()))
+							return true;
+						if (dequal(b->h3n(), a->h3n()))
+						{
+							if (dless(b->gn_unit(), a->gn_unit()))
+								return true;
+						}
+					// }
+				}
+				// if ( dless( b->gn(), a->gn() ) )  return true;
+				return false;
+
+				// return (dless(b->fn(), a->fn()) || (dequal(a->fn(), b->fn()) && dless(b->hn(), a->hn())));
+			}
+		};
+
+
 		template <typename Node>
 		class Node_Comparer_2H_gn_unit
 		{

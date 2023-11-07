@@ -102,6 +102,7 @@ using aptk::agnostic::Count_Novelty_Heuristic;
 using aptk::agnostic::Count_Novelty_Partition;
 using aptk::search::gs_bfws_3h::GS_BFWS_3H;
 using aptk::search::Node_Comparer_3H_gn_unit;
+using aptk::search::Node_Comparer_3H_gn_unit_custom;
 
 /**
  * DEFINITIONS
@@ -168,7 +169,8 @@ typedef IPC2014_RWA<Fwd_Search_Problem, H_Add_Rp_Fwd_use_costs, H_Lmcount_Fwd, A
 typedef aptk::search::gs_bfws_3h::Node<Fwd_Search_Problem, aptk::State> Search_Node_3h;
 typedef Count_Novelty_Heuristic<Fwd_Search_Problem, Search_Node_3h> H_Novel_Count_Blind;
 typedef Count_Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Count_Partition;
-typedef Node_Comparer_3H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
+// typedef Node_Comparer_3H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
+typedef Node_Comparer_3H_gn_unit_custom<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
 typedef Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> BFS_Open_List_3h;
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Fwd_3h;
 typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
