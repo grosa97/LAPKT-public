@@ -369,9 +369,18 @@ namespace aptk
 				// const bool has_state = n->has_state();
 				const bool has_state = n_has_state(n);
 
-				// if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted;
 
+				if (!has_state)
+				{
+					added.clear();
+					deleted.clear();
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				
+
+				
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
 				// /*debug*/
@@ -452,7 +461,9 @@ namespace aptk
 #endif
 					}
 				}
-				// if (!has_state)
+				if (!has_state)
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
 				return new_covers;

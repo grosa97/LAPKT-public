@@ -520,7 +520,6 @@ namespace aptk
 				}
 			};
 
-
 			std::size_t extract_pgoal_node(Search_Node* candidate)
 			{
 				// Create a hash function object
@@ -540,17 +539,15 @@ namespace aptk
 					g.begin(), g.end(),
 					std::back_inserter(commonElements)
 				);
-
+				// std::cout << "Common elements: "<< "[";
+				// for (size_t i = 0; i < commonElements.size(); ++i) {
+				// 	std::cout <<  commonElements[i] <<", ";
+				// }
+				// std::cout <<"]"<<std::endl;
 				//common elements is sorted
 				return hashFunction(commonElements);
 			}
 
-			void record_subgoal_info_tuple(Search_Node* candidate)
-			{
-				std::size_t sg_c = extract_pgoal_node(candidate);
-				std::size_t sg_p = extract_pgoal_node(candidate->parent());
-				m_subgoals_tuples.push_back(std::make_tuple(sg_p, sg_c));
-			}
 
 			void print_subgoal_info()
 			{
@@ -583,8 +580,7 @@ namespace aptk
 						else
 							set_relplan(candidate, candidate->state());
 
-
-						record_subgoal_info_tuple(candidate);
+						// record_subgoal_info_tuple(candidate);
 					}
 				}
 			}
@@ -877,19 +873,53 @@ namespace aptk
 						if (m_use_h3n) 
 							eval_count_based(n);
 
+						check_subgoal_info(n);
+
 #ifdef DEBUG
 						if (m_verbose)
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 						open_node(n);
 					}
+
+
+
 					inc_eval();
 					m_expanded_count_by_novelty[head->h1n() - 1]++;
-
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
 						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << " -- "<< head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "<< head->gn() << std::endl;
 						
+				}
+
+				void record_subgoal_info_tuple(Search_Node* candidate)
+				{
+					std::size_t sg_c;
+					std::size_t sg_p;
+
+					if (!candidate->has_state())
+					{
+						static Fluent_Vec added, deleted;
+						added.clear();
+						deleted.clear();
+						candidate->parent()->state()->progress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
+						sg_c = extract_pgoal_node(candidate->parent());
+						candidate->parent()->state()->regress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
+						sg_p = extract_pgoal_node(candidate->parent());
+					}
+					else
+					{
+						sg_c = extract_pgoal_node(candidate);
+						sg_p = extract_pgoal_node(candidate->parent());
+					}
+					m_subgoals_tuples.push_back(std::make_tuple(sg_p, sg_c));
+				}
+
+				void check_subgoal_info(Search_Node* candidate)
+				{
+					// if land/goal counter has changed, to account for negative changes
+					if (candidate->parent() && candidate->h2n() != candidate->parent()->h2n())
+							record_subgoal_info_tuple(candidate);
 				}
 
 				virtual Search_Node *do_search()
@@ -915,7 +945,7 @@ namespace aptk
 							set_max_depth(head->gn());
 							// print_bin_measures();
 							// print_h3_measures();
-							// print_subgoal_info();
+							print_subgoal_info();
 							return head;
 						}
 						if ((time_used() - m_t0) > m_time_budget)
