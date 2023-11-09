@@ -683,10 +683,11 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					float state_value;
-					m_third_h->eval(candidate, state_value);
-					// candidate->h3n() = extract_h3_discrete(state_value);
-					candidate->h3n() = state_value;
+					// float state_value;
+					// m_third_h->eval(candidate, state_value);
+					// // candidate->h3n() = extract_h3_discrete(state_value);
+					// candidate->h3n() = state_value;
+					// candidate->h3n() = 0;
 					// unsigned metric_value;
 					// m_third_h->eval(candidate, state_value);
 					// if (state_value >= 1)
@@ -712,17 +713,17 @@ namespace aptk
 					// 	m_h3_bins_counts_map_generated[metric_value]++;
 					// else
 					// 	m_h3_bins_counts_map_generated[metric_value] = 1;
-					// if (candidate->h1n() > m_max_novelty)
-					// {
-					// 	m_third_h->eval(candidate, candidate->h3n());
-					// }
-					// else
-					// {
-					// 	if (m_h3_only_max_nov)
-					// 		m_third_h->update_counts(candidate);
-					// 	else
-					// 		m_third_h->eval(candidate, candidate->h3n());
-					// }
+					if (candidate->h1n() > m_max_novelty)
+					{
+						m_third_h->eval(candidate, candidate->h3n());
+					}
+					else
+					{
+						if (m_h3_only_max_nov)
+							m_third_h->update_counts(candidate);
+						else
+							m_third_h->eval(candidate, candidate->h3n());
+					}
 					
 					// m_third_h->eval(candidate, candidate->h3n());
 
@@ -870,10 +871,12 @@ namespace aptk
 								}
 						}
 
+						// debug(n);
+						
+						// check_subgoal_info(n);
+
 						if (m_use_h3n) 
 							eval_count_based(n);
-
-						check_subgoal_info(n);
 
 #ifdef DEBUG
 						if (m_verbose)
@@ -891,6 +894,40 @@ namespace aptk
 						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << " -- "<< head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "<< head->gn() << std::endl;
 						
 				}
+
+			void removeDuplicates(std::vector<unsigned int>& input) {
+				std::vector<unsigned int> result = input;
+
+				// Step 1: Sort the vector
+				std::sort(result.begin(), result.end());
+
+				// Step 2: Remove duplicates using std::unique
+				auto it = std::unique(result.begin(), result.end());
+
+				// Step 3: Erase the duplicates
+				result.erase(it, result.end());
+
+				input = result;
+			}
+			
+			bool debug(Search_Node *n)
+			{
+				// const bool has_state = n_has_state(n);
+				const bool has_state = n->has_state();
+				if (!has_state)
+				{
+					static Fluent_Vec added, deleted;
+					added.clear();
+					deleted.clear();
+					std::vector<unsigned> temp;
+					temp.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp.begin(), temp.end());
+				}
+				// removeDuplicates(n->parent()->state()->fluent_vec());
+				return true;
+			}
 
 				void record_subgoal_info_tuple(Search_Node* candidate)
 				{
@@ -918,7 +955,8 @@ namespace aptk
 				void check_subgoal_info(Search_Node* candidate)
 				{
 					// if land/goal counter has changed, to account for negative changes
-					if (candidate->parent() && candidate->h2n() != candidate->parent()->h2n())
+					// if (candidate->parent() && candidate->h2n() != candidate->parent()->h2n())
+					if (candidate->parent() && candidate->h2n() < candidate->parent()->h2n())
 							record_subgoal_info_tuple(candidate);
 				}
 
@@ -981,6 +1019,9 @@ namespace aptk
 
 					return NULL;
 				}
+				
+
+
 
 				void print_bin_measures()
 				{

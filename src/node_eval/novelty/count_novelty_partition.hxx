@@ -224,8 +224,17 @@ namespace aptk
 
 				const bool has_state = n->has_state();
 
-				// if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
 
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
@@ -300,9 +309,11 @@ namespace aptk
 					}
 				}
 
-				// if (!has_state)
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
-
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
 				return new_covers;
 			}
 
@@ -322,8 +333,17 @@ namespace aptk
                 // const bool has_state = n->has_state();
 				const bool has_state = n_has_state(n);
 
-                // if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
 
                 Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
@@ -354,9 +374,11 @@ namespace aptk
                     metric_value -= (float)1 / (1 + tuple_count);
                 }
 
-                // if (!has_state)
-				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
-
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
             }
 
 			void compute_count_metric_rp_fl_only(Search_Node *n, float &metric_value) {
