@@ -107,25 +107,25 @@ float BFWS::do_search(Search_Engine &engine, aptk::STRIPS_Problem &plan_prob, st
 		aptk::report_memory_usage();
 #endif
 
-		const unsigned *generated_nov = engine.generated_by_novelty();
-		const unsigned *expanded_nov = engine.expanded_by_novelty();
-		const unsigned *count_sol_nodes_by_nov =
-				engine.count_solution_nodes_by_novelty();
-		if (generated_nov != nullptr)
-			for (unsigned i = 0; i < m_max_novelty + 2; i++)
-			{
-				std::cout << "Count novelty " << i + 1 << " generated nodes: " << generated_nov[i] << std::endl;
-			}
-		if (expanded_nov != nullptr)
-			for (unsigned i = 0; i < m_max_novelty + 2; i++)
-			{
-				std::cout << "Count novelty " << i + 1 << " expanded nodes: " << expanded_nov[i] << std::endl;
-			}
-		if (count_sol_nodes_by_nov != nullptr)
-			for (unsigned i = 0; i < m_max_novelty + 2; i++)
-			{
-				std::cout << "Solution nodes of novelty " << i + 1 << ": " << count_sol_nodes_by_nov[i] << std::endl;
-			}
+		// const unsigned *generated_nov = engine.generated_by_novelty();
+		// const unsigned *expanded_nov = engine.expanded_by_novelty();
+		// const unsigned *count_sol_nodes_by_nov =
+		// 		engine.count_solution_nodes_by_novelty();
+		// if (generated_nov != nullptr)
+		// 	for (unsigned i = 0; i < m_max_novelty + 2; i++)
+		// 	{
+		// 		std::cout << "Count novelty " << i + 1 << " generated nodes: " << generated_nov[i] << std::endl;
+		// 	}
+		// if (expanded_nov != nullptr)
+		// 	for (unsigned i = 0; i < m_max_novelty + 2; i++)
+		// 	{
+		// 		std::cout << "Count novelty " << i + 1 << " expanded nodes: " << expanded_nov[i] << std::endl;
+		// 	}
+		// if (count_sol_nodes_by_nov != nullptr)
+		// 	for (unsigned i = 0; i < m_max_novelty + 2; i++)
+		// 	{
+		// 		std::cout << "Solution nodes of novelty " << i + 1 << ": " << count_sol_nodes_by_nov[i] << std::endl;
+		// 	}
 
 		details.close();
 		return total_time;
@@ -292,88 +292,123 @@ void BFWS::solve()
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
 	// CUSTOM 1
-	else if (m_search_alg.compare("BFWS-goalcount-h3blind") == 0)
-	{
-		std::cout << "Starting search with BFWS(w_(#G), #G, [#C | nov>w])...";
+	// else if (m_search_alg.compare("BFWS-goalcount-h3blind") == 0)
+	// {
+	// 	std::cout << "Starting search with BFWS(w_(#G), #G, [#C | nov>w])...";
 	
-		custom_BFWS bfs_engine(search_prob, m_verbose);
+	// 	custom_BFWS bfs_engine(search_prob, m_verbose);
 
-		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+	// 	bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
 
-		// Do not use #rp
-		bfs_engine.set_use_rp(false);
+	// 	// Do not use #rp
+	// 	bfs_engine.set_use_rp(false);
 
-		// Use h3n for nodes with novelty > max_nov
-		bfs_engine.set_use_h3n(true);
+	// 	// Use h3n for nodes with novelty > max_nov
+	// 	bfs_engine.set_use_h3n(true);
 
-		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+	// 	float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
-		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+	// 	std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
-	}
-	else if (m_search_alg.compare("BFWS-f5-h3count") == 0)
+	// }
+	else if (m_search_alg.compare("BFCS-1") == 0)
 	{
+		std::cout << "Starting search with BFCS-1..." << std::endl;
 
-		std::cout << "Starting search with BFWS-f5-h3count..." << std::endl;
+		BFCS_1 bfs_engine(search_prob, m_verbose);
 
-		custom_BFWS bfs_engine(search_prob, m_verbose);
-
-		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
-
-		bfs_engine.set_use_h3n(true);
-
+		unsigned max_width = 1;
+		bfws_options(search_prob, bfs_engine, max_width, graph);
+		
+		// bfs_engine.set_use_h3n(true);
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
-	else if (m_search_alg.compare("BFWS-f5-h3count-p") == 0)
+	else if (m_search_alg.compare("BFCS-1-rp") == 0)
 	{
 
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		custom_BFWS_p bfs_engine(search_prob, m_verbose);
+		BFCS_1 bfs_engine(search_prob, m_verbose);
 
-		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+		unsigned max_width = 1;
+		bfws_options(search_prob, bfs_engine, max_width, graph);
 
-		bfs_engine.set_use_h3n(true);
+		bfs_engine.set_use_count_rp_fl_only(true);
+		// bfs_engine.set_use_h3n(true);
+
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
-	else if (m_search_alg.compare("BFWS-f5-h3count-p-rp") == 0)
+	else if (m_search_alg.compare("BFCS-1-p") == 0)
 	{
 
-		std::cout << "Starting search with BFWS-f5-h3count-p-rp..." << std::endl;
+		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		custom_BFWS_p bfs_engine(search_prob, m_verbose);
+		BFCS_1_p bfs_engine(search_prob, m_verbose);
 
-		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+		unsigned max_width = 1;
+		bfws_options(search_prob, bfs_engine, max_width, graph);
 
-		bfs_engine.set_use_h3n(true);
-		bfs_engine.set_use_h3_rp_fl_only(true);
+		// bfs_engine.set_use_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
-	else if (m_search_alg.compare("BFWS-f5-h3count-p-rp-allh3") == 0)
+	else if (m_search_alg.compare("BFCS-1-p-rp") == 0)
 	{
 
-		std::cout << "Starting search with BFWS-f5-h3count-p-rp-allh3..." << std::endl;
+		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		custom_BFWS_p bfs_engine(search_prob, m_verbose);
+		BFCS_1_p bfs_engine(search_prob, m_verbose);
 
-		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+		unsigned max_width = 1;
+		bfws_options(search_prob, bfs_engine, max_width, graph);
 
-		bfs_engine.set_use_h3n(true);
-		bfs_engine.set_use_h3_rp_fl_only(true);
-		bfs_engine.set_use_h3_only_max_nov(false); //use h3 to break all ties, not just max novelty ties
+		bfs_engine.set_use_count_rp_fl_only(true);
+		// bfs_engine.set_use_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
+	// else if (m_search_alg.compare("BFWS-f5-h3count-p-rp") == 0)
+	// {
+
+	// 	std::cout << "Starting search with BFWS-f5-h3count-p-rp..." << std::endl;
+
+	// 	custom_BFWS_p bfs_engine(search_prob, m_verbose);
+
+	// 	bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+
+	// 	bfs_engine.set_use_h3n(true);
+	// 	bfs_engine.set_use_h3_rp_fl_only(true);
+
+	// 	float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+	// 	std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+	// }
+	// else if (m_search_alg.compare("BFWS-f5-h3count-p-rp-allh3") == 0)
+	// {
+
+	// 	std::cout << "Starting search with BFWS-f5-h3count-p-rp-allh3..." << std::endl;
+
+	// 	custom_BFWS_p bfs_engine(search_prob, m_verbose);
+
+	// 	bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+
+	// 	bfs_engine.set_use_h3n(true);
+	// 	bfs_engine.set_use_h3_rp_fl_only(true);
+	// 	bfs_engine.set_use_h3_only_max_nov(false); //use h3 to break all ties, not just max novelty ties
+
+	// 	float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+	// 	std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+	// }
 	else if (m_search_alg.compare("BFWS-f5") == 0)
 	{
 

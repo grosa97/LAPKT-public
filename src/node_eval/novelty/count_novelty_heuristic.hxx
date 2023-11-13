@@ -73,7 +73,7 @@ namespace aptk
 
 			unsigned arity() const { return m_arity; }
 
-			unsigned set_arity(unsigned max_arity)
+			unsigned set_arity(unsigned max_arity, unsigned partition_size = 0)
 			{
                 // /*currently only supports arity of 1!!*/
                 // assert(max_arity=1);
@@ -122,11 +122,11 @@ namespace aptk
 				float a1_val = 0;
 				float a2_val = 0;
 				if (m_rp_fl_only)
-					compute_count_metric_rp_fl_only(n, h_val);
+					compute_count_metric_rp_fl_only_1(n, h_val);
 				else
 				{
-					if (m_arity == 2)
-						n->action() == no_op ? compute_count_metric_only_2_no_op(n, a2_val) : compute_count_metric_only_2(n, a2_val);
+					// if (m_arity == 2)
+					// 	n->action() == no_op ? compute_count_metric_only_2_no_op(n, a2_val) : compute_count_metric_only_2(n, a2_val);
 						// compute_count_metric_no_op(n, h_val); //testing
 					compute_count_metric_only_1(n, a1_val);
 					h_val = a1_val + a2_val;
@@ -898,7 +898,87 @@ namespace aptk
 				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 			}
 
-			void compute_count_metric_rp_fl_only(Search_Node *n, float &metric_value) {
+			void compute_count_metric_rp_fl_only_1(Search_Node *n, float &metric_value) {
+                unsigned arity = 1;
+		
+                metric_value = 0;
+
+				const bool has_state = n_has_state(n);
+
+
+
+                // if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+
+				Fluent_Set* rp_f_set = get_rp_set(n);
+				static Fluent_Set counted(m_num_fluents);
+                Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+                /*
+				 * Creating new Fluent_Vec with only fluents in rp_f_set, & then using that for getting metric value
+				 * Possibly more inefficient (?) but easier implementation for testing
+				*/
+				Fluent_Vec rp_fl;
+				for (unsigned f : fl) {
+					if (rp_f_set->isset(f) && !counted.isset(f))
+					{
+						rp_fl.push_back(f);
+						counted.set(f);
+					}
+				}
+
+
+                std::vector<unsigned> tuple(arity);
+
+                unsigned n_combinations = aptk::unrolled_pow(rp_fl.size(), arity); 
+
+                for (unsigned idx = 0; idx < n_combinations; idx++)
+                {
+                    /**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, rp_fl, idx, arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					unsigned tuple_count;
+
+                    /*if arity = 1*/
+                    tuple_idx = tuple2idx(tuple, arity);
+
+                    tuple_count = m_tuple_counts[tuple_idx];
+
+					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                    /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                    metric_value -= (float)1 / (1 + tuple_count);
+                }
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+                // if (!has_state)
+				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+				counted.reset();
+			}
+
+			void compute_count_metric_rp_fl_only_2_WIP(Search_Node *n, float &metric_value) {
+				
+				// TODO: Check functioning before using for width 2 
+
+
 
 				// /*HARD CODED TO 1 FOR THIS METHOD*/
                 // unsigned arity = 1;
@@ -912,6 +992,7 @@ namespace aptk
 
 				const bool has_state = n_has_state(n);
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
 
 				/*
 				 * Creating new Fluent_Vec with only fluents in rp_f_set, & then using that for getting metric value
@@ -927,6 +1008,11 @@ namespace aptk
 				}
 
 				//---
+				if(n->action() == -1)
+				{
+					compute_count_metric_only_1(n, metric_value);
+					return;
+				}
 
 				static Fluent_Vec new_atom_vec;
 				const Action *a = m_strips_model.actions()[n->action()];

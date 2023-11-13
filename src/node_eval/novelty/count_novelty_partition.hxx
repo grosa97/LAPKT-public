@@ -403,6 +403,17 @@ namespace aptk
 				static Fluent_Set counted(m_num_fluents);
 
 				const bool has_state = n_has_state(n);
+				
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
 				/*
@@ -470,7 +481,11 @@ namespace aptk
                 //     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                 //     metric_value -= 0.1 * ( (float)1 / (1 + tuple_count) );
                 // }
-
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
 				counted.reset();
 			}
 

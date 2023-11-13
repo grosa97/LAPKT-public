@@ -52,10 +52,14 @@ BFWS:
         - 'DUAL-C-BFWS'
         - 'DUAL-BFWS'
         - 'BFWS-goalcount-h3blind'
-        - 'BFWS-f5-h3count'
-        - 'BFWS-f5-h3count-p'
-        - 'BFWS-f5-h3count-p-rp'
-        - 'BFWS-f5-h3count-p-rp-allh3'
+        - 'BFCS-1'
+        - 'BFCS-1-rp'
+        - 'BFCS-1-p'
+        - 'BFCS-1-p-rp'
+
+        # - 'BFWS-f5-h3count-p'
+        # - 'BFWS-f5-h3count-p-rp'
+        # - 'BFWS-f5-h3count-p-rp-allh3'
 
       nargs   : '?'
       action  : 'store'
