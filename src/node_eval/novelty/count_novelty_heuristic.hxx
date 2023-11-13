@@ -47,7 +47,7 @@ namespace aptk
 		{
 		public:
 			Count_Novelty_Heuristic(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
-					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_verbose(true)
+					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_verbose(true), m_rp_fl_only(false)
 			{
 				set_arity(max_arity);
 				init();
@@ -55,11 +55,7 @@ namespace aptk
 
 			void set_verbose(bool v) { m_verbose = v; }
 
-			/*
-			 * useless function, just required because of compatibility with using Count_Novelty_Partition template in same engine
-			 * i should probably just design a new template for inheriting oh well
-			*/
-			void set_rp_fl_only(bool v) { return; }
+			void set_rp_fl_only(bool v) { m_rp_fl_only = v; }
 
 			virtual ~Count_Novelty_Heuristic()
 			{
@@ -116,10 +112,29 @@ namespace aptk
 			// 	eval(n, h_val);
 			// }
 
-            void eval(Search_Node *n, float &h_val) {
-                compute_count_metric(n, h_val);
-                update_counts(n);
-            }
+            // void eval(Search_Node *n, float &h_val) {
+            //     compute_count_metric(n, h_val);
+            //     update_counts(n);
+            // }
+
+			virtual void eval(Search_Node *n, float &h_val)
+			{
+				float a1_val = 0;
+				float a2_val = 0;
+				if (m_rp_fl_only)
+					compute_count_metric_rp_fl_only(n, h_val);
+				else
+				{
+					if (m_arity == 2)
+						n->action() == no_op ? compute_count_metric_only_2_no_op(n, a2_val) : compute_count_metric_only_2(n, a2_val);
+						// compute_count_metric_no_op(n, h_val); //testing
+					compute_count_metric_only_1(n, a1_val);
+					h_val = a1_val + a2_val;
+				}
+
+				
+				update_counts(n);
+			}
 
 			virtual void eval(const State &s, float &h_val)
 			{
@@ -133,7 +148,8 @@ namespace aptk
 
             void update_counts(Search_Node *n) {
                 float redundant_variable = 0;
-                compute(n, redundant_variable);
+                // compute(n, redundant_variable);
+				compute_no_op(n, redundant_variable); //testing
             }
 
 			void eval_no_update(Search_Node *n, float &h_val) {
@@ -165,8 +181,41 @@ namespace aptk
 					 * Ensure only using cover_tuples for incrementing counts because need to increment also fluents already present
 					 * in state and not on added list.
 					*/
-					bool new_covers = cover_tuples(n, i);
+					// bool new_covers = cover_tuples(n, i);
+					// bool new_covers = cover_tuples_op(n, i);
+					bool new_covers = n->action() == no_op ? cover_tuples(n, i) : cover_tuples_op(n, i);
 
+#ifdef DEBUG
+					if (m_verbose && !new_covers)
+						std::cout << "\t \t PRUNE! search node: " << n << std::endl;
+#endif
+					if (new_covers)
+						if (i < novelty)
+							novelty = i;
+				}
+			}
+
+			void compute_no_op(Search_Node *n, float &novelty)
+			{
+
+				novelty = (float)m_arity + 1;
+				for (unsigned i = 1; i <= m_arity; i++)
+				{
+
+#ifdef DEBUG
+					if (m_verbose)
+						std::cout << "search node: " << n << std::endl;
+#endif
+					
+                    // bool new_covers = n->action() == no_op ? cover_tuples(n, i) : cover_tuples_op(n, i);
+					/**
+					 * Ensure only using cover_tuples for incrementing counts because need to increment also fluents already present
+					 * in state and not on added list.
+					*/
+					// bool new_covers = cover_tuples(n, i);
+					// bool new_covers = cover_tuples_op(n, i);
+					bool new_covers =  cover_tuples(n, i);
+					
 #ifdef DEBUG
 					if (m_verbose && !new_covers)
 						std::cout << "\t \t PRUNE! search node: " << n << std::endl;
@@ -185,181 +234,200 @@ namespace aptk
 			 * Instead of checking the whole state, checks the new atoms permutations only!
 			 */
 
-// 			bool cover_tuples_op(Search_Node *n, unsigned arity)
-// 			{
+			bool cover_tuples_op(Search_Node *n, unsigned arity)
+			{
+				//cover all if arity = 1
+				if (arity == 1)
+					return cover_tuples(n, arity);
 
-// 				// const bool has_state = n->has_state();
-// 				const bool has_state = n_has_state(n);
+				// const bool has_state = n->has_state();
+				const bool has_state = n_has_state(n);
 
-// 				static Fluent_Vec new_atom_vec;
-// 				const Action *a = m_strips_model.actions()[n->action()];
-// 				if (a->has_ceff())
-// 				{
-// 					static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
-// 					new_atom_set.reset();
-// 					new_atom_vec.clear();
-// 					for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
-// 					{
-// 						if (new_atom_set.isset(*it))
-// 							continue;
+				static Fluent_Vec new_atom_vec;
+				const Action *a = m_strips_model.actions()[n->action()];
+				if (a->has_ceff())
+				{
+					static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
+					new_atom_set.reset();
+					new_atom_vec.clear();
+					for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
+					{
+						if (new_atom_set.isset(*it))
+							continue;
 
-// 						new_atom_vec.push_back(*it);
-// 						new_atom_set.set(*it);
-// 					}
-// 					for (unsigned i = 0; i < a->ceff_vec().size(); i++)
-// 					{
-// 						Conditional_Effect *ce = a->ceff_vec()[i];
-// 						if (ce->can_be_applied_on(*(n->parent()->state())))
-// 							for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
-// 							{
-// 								{
-// 									if (new_atom_set.isset(*it))
-// 										continue;
+						new_atom_vec.push_back(*it);
+						new_atom_set.set(*it);
+					}
+					for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+					{
+						Conditional_Effect *ce = a->ceff_vec()[i];
+						if (ce->can_be_applied_on(*(n->parent()->state())))
+							for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
+							{
+								{
+									if (new_atom_set.isset(*it))
+										continue;
 
-// 									new_atom_vec.push_back(*it);
-// 									new_atom_set.set(*it);
-// 								}
-// 							}
-// 					}
-// 				}
+									new_atom_vec.push_back(*it);
+									new_atom_set.set(*it);
+								}
+							}
+					}
+				}
 
-// 				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
+				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
 
-// 				// if (!has_state)
-// 				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				// if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
 
-// 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
-// 				bool new_covers = false;
+				bool new_covers = false;
 
-// 				assert(arity > 0);
+				assert(arity > 0);
 
-// 				std::vector<unsigned> tuple(arity);
+				std::vector<unsigned> tuple(arity);
 
-// 				unsigned atoms_arity = arity - 1;
-// 				unsigned n_combinations = aptk::unrolled_pow(fl.size(), atoms_arity);
+				unsigned atoms_arity = arity - 1;
+				unsigned n_combinations = aptk::unrolled_pow(fl.size(), atoms_arity);
 
-// 				// std::cout << "ARITY_OP" << arity << std::endl;
-// 				// for( unsigned i = 0; i < fl.size(); i++ ){
-// 				//     std::cout<< i << "HERE - " << fl[i] << std::endl;
-// 				// }
+				// std::cout << "ARITY_OP" << arity << std::endl;
+				// for( unsigned i = 0; i < fl.size(); i++ ){
+				//     std::cout<< i << "HERE - " << fl[i] << std::endl;
+				// }
 
-// 				for (Fluent_Vec::const_iterator it_add = add.begin();
-// 						 it_add != add.end(); it_add++)
-// 				{
+				for (Fluent_Vec::const_iterator it_add = add.begin();
+						 it_add != add.end(); it_add++)
+				{
 
-// 					for (unsigned idx = 0; idx < n_combinations; idx++)
-// 					{
+					for (unsigned idx = 0; idx < n_combinations; idx++)
+					{
 
-// 						tuple[atoms_arity] = *it_add;
+						tuple[atoms_arity] = *it_add;
 
-// 						/**
-// 						 * get tuples from indexes
-// 						 */
-// 						if (atoms_arity > 0)
-// 							idx2tuple(tuple, fl, idx, atoms_arity);
+						/**
+						 * get tuples from indexes
+						 */
+						if (atoms_arity > 0)
+							idx2tuple(tuple, fl, idx, atoms_arity);
 
-// 						/**
-// 						 * Check if tuple is covered
-// 						 */
-// 						unsigned tuple_idx;
+						/**
+						 * Check if tuple is covered
+						 */
+						unsigned tuple_idx;
 
-// 						if (arity == 1)
-// 						{
-// 							tuple_idx = tuple2idx(tuple, arity);
-// 						}
-// 						else if (arity == 2)
-// 						{
-// 							tuple[0] = fl[idx];
-// 							if (tuple[0] == tuple[1])
-// 								continue; // don't check singleton tuples
-// 							tuple_idx = tuple2idx_size2(tuple, arity);
-// 						}
-// 						else
-// 						{
+						if (arity == 1)
+						{
+							tuple_idx = tuple2idx(tuple, arity);
+						}
+						else if (arity == 2)
+						{
+							tuple[0] = fl[idx];
+							if (tuple[0] == tuple[1])
+								continue; // don't check singleton tuples
+							tuple_idx = tuple2idx_size2(tuple, arity);
+						}
+						else
+						{
 
-// 							// If all elements in the tuple are equal, ignore the tuple
-// 							if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
-// 															{ return x != tuple[0]; }))
-// 								continue;
-// 							/**
-// 							 * get tuples from indexes
-// 							 */
-// 							idx2tuple(tuple, fl, idx, atoms_arity);
+							// If all elements in the tuple are equal, ignore the tuple
+							if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+															{ return x != tuple[0]; }))
+								continue;
+							/**
+							 * get tuples from indexes
+							 */
+							idx2tuple(tuple, fl, idx, atoms_arity);
 
-// 							tuple_idx = tuple2idx(tuple, arity);
-// 						}
+							tuple_idx = tuple2idx(tuple, arity);
+						}
 
-// 						/**
-// 						 * new_tuple if
-// 						 * -> none was registered
-// 						 * OR
-// 						 * -> n better than old_n
-// 						 */
-// 						auto &n_seen = m_nodes_tuples[tuple_idx];
+						/**
+						 * new_tuple if
+						 * -> none was registered
+						 * OR
+						 * -> n better than old_n
+						 */
+						auto &n_seen = m_nodes_tuples[tuple_idx];
 
-// #ifdef DEBUG
-//                             if (verbose)
-//                             {
-//                                 std::cout << m_strips_model.fluents()[tuple[0]]->signature() << "  ";
-//                                 std::cout << "ID: " << tuple[0] << std::endl;
-//                                 std::cout << "\t BEFORE INCREMENTING COUNT: " << m_tuple_counts[tuple_idx] << std::endl;
+#ifdef DEBUG
+                            if (verbose)
+                            {
+                                std::cout << m_strips_model.fluents()[tuple[0]]->signature() << "  ";
+                                std::cout << "ID: " << tuple[0] << std::endl;
+                                std::cout << "\t BEFORE INCREMENTING COUNT: " << m_tuple_counts[tuple_idx] << std::endl;
                                 
-//                             }
+                            }
 
-// #endif
+#endif
 
-//                         /*increment tuple counts*/
-//                         m_tuple_counts[tuple_idx]++;
+                        /*increment tuple counts*/
+                        m_tuple_counts[tuple_idx]++;
 
-// #ifndef DEBUG
-//                         std::cout << "\t AFTER INCREMENTING COUNT: " << m_tuple_counts[tuple_idx] << std::endl;
-// #endif
 
-// 						if (!n_seen || is_better(n_seen, n))
-// 						{
+#ifndef DEBUG
+                        // std::cout << "\t AFTER INCREMENTING COUNT: " << m_tuple_counts[tuple_idx] << std::endl;
+#endif
 
-// 							n_seen = (Search_Node *)n;
-// 							new_covers = true;
 
-// #ifdef DEBUG
-// 							if (m_verbose)
-// 							{
-// 								std::cout << "\t NEW!! : ";
-// 								for (unsigned i = 0; i < arity; i++)
-// 								{
-// 									std::cout << m_strips_model.fluents()[tuple[i]]->signature() << "  ";
-// 								}
-// 								std::cout << " by state: " << m_nodes_tuples[tuple_idx] << "";
-// 								std::cout << std::endl;
-// 							}
-// #endif
-// 						}
-// 						else
-// 						{
-// #ifdef DEBUG
-// 							if (m_verbose)
-// 							{
-// 								std::cout << "\t TUPLE COVERED: ";
-// 								for (unsigned i = 0; i < arity; i++)
-// 								{
-// 									std::cout << m_strips_model.fluents()[tuple[i]]->signature() << "  ";
-// 								}
+						if (!n_seen || is_better(n_seen, n))
+						{
 
-// 								std::cout << " by state: " << m_nodes_tuples[tuple_idx] << "" << std::flush;
+							n_seen = (Search_Node *)n;
+							new_covers = true;
 
-// 								std::cout << std::endl;
-// 							}
-// #endif
-// 						}
-// 					}
-// 				}
+#ifdef DEBUG
+							if (m_verbose)
+							{
+								std::cout << "\t NEW!! : ";
+								for (unsigned i = 0; i < arity; i++)
+								{
+									std::cout << m_strips_model.fluents()[tuple[i]]->signature() << "  ";
+								}
+								std::cout << " by state: " << m_nodes_tuples[tuple_idx] << "";
+								std::cout << std::endl;
+							}
+#endif
+						}
+						else
+						{
+#ifdef DEBUG
+							if (m_verbose)
+							{
+								std::cout << "\t TUPLE COVERED: ";
+								for (unsigned i = 0; i < arity; i++)
+								{
+									std::cout << m_strips_model.fluents()[tuple[i]]->signature() << "  ";
+								}
 
-// 				// if (!has_state)
-// 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+								std::cout << " by state: " << m_nodes_tuples[tuple_idx] << "" << std::flush;
 
-// 				return new_covers;
-// 			}
+								std::cout << std::endl;
+							}
+#endif
+						}
+					}
+				}
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				return new_covers;
+			}
 
 			bool cover_tuples(Search_Node *n, unsigned arity)
 			{
@@ -368,6 +436,16 @@ namespace aptk
 
 				// if (!has_state)
 				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
 
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
@@ -449,6 +527,11 @@ namespace aptk
 #endif
 					}
 				}
+								if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
 				// if (!has_state)
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
@@ -514,32 +597,221 @@ namespace aptk
 				// return false;
 			}
 
-            /* currently designed for width=1, behavior for w>1 undefined*/
-            void compute_count_metric(Search_Node *n, float &metric_value) {
+            
+            void compute_count_metric_only_2(Search_Node *n, float &metric_value) {
                 
-                /*HARD CODED TO 1 FOR THIS METHOD*/
-                unsigned arity = 1;
+                unsigned arity = 2;
 		
                 metric_value = 0;
 
-                // const bool has_state = n->has_state();
 				const bool has_state = n_has_state(n);
+
+                // // const bool has_state = n->has_state();
+
+
+                // // if (!has_state)
+				// // 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+
+                // Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+                // std::vector<unsigned> tuple(m_arity);
+
+                // unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
+
+                // for (unsigned idx = 0; idx < n_combinations; idx++)
+                // {
+                //     /**
+				// 	 * get tuples from indexes
+				// 	 */
+				// 	idx2tuple(tuple, fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+				// 	/**
+				// 	 * Check if tuple is covered
+				// 	 */
+				// 	unsigned tuple_idx;
+				// 	unsigned tuple_count;
+
+                //     /*if arity = 1*/
+                //     tuple_idx = tuple2idx(tuple, m_arity);
+
+                //     tuple_count = m_tuple_counts[tuple_idx];
+
+				// 	// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                //     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                //     metric_value -= (float)1 / (1 + tuple_count);
+                // }
+
+                // // if (!has_state)
+				// //     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+
+
+				//---------------------------------------
+
+				static Fluent_Vec new_atom_vec;
+				const Action *a = m_strips_model.actions()[n->action()];
+				if (a->has_ceff())
+				{
+					static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
+					new_atom_set.reset();
+					new_atom_vec.clear();
+					for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
+					{
+						if (new_atom_set.isset(*it))
+							continue;
+
+						new_atom_vec.push_back(*it);
+						new_atom_set.set(*it);
+					}
+					for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+					{
+						Conditional_Effect *ce = a->ceff_vec()[i];
+						if (ce->can_be_applied_on(*(n->parent()->state())))
+							for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
+							{
+								{
+									if (new_atom_set.isset(*it))
+										continue;
+
+									new_atom_vec.push_back(*it);
+									new_atom_set.set(*it);
+								}
+							}
+					}
+				}
+
+				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
+
+				// if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+
+
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+				bool new_covers = false;
+
+				assert(arity > 0);
+
+				std::vector<unsigned> tuple(arity);
+
+				unsigned atoms_arity = arity - 1;
+				unsigned n_combinations = aptk::unrolled_pow(fl.size(), atoms_arity);
+
+				// std::cout << "ARITY_OP" << arity << std::endl;
+				// for( unsigned i = 0; i < fl.size(); i++ ){
+				//     std::cout<< i << "HERE - " << fl[i] << std::endl;
+				// }
+
+				for (Fluent_Vec::const_iterator it_add = add.begin();
+						 it_add != add.end(); it_add++)
+				{
+
+					for (unsigned idx = 0; idx < n_combinations; idx++)
+					{
+
+						tuple[atoms_arity] = *it_add;
+
+						/**
+						 * get tuples from indexes
+						 */
+						if (atoms_arity > 0)
+							idx2tuple(tuple, fl, idx, atoms_arity);
+
+						/**
+						 * Check if tuple is covered
+						 */
+						unsigned tuple_idx;
+						
+
+						if (arity == 1)
+						{
+							tuple_idx = tuple2idx(tuple, arity);
+						}
+						else if (arity == 2)
+						{
+							tuple[0] = fl[idx];
+							if (tuple[0] == tuple[1])
+								continue; // don't check singleton tuples
+							tuple_idx = tuple2idx_size2(tuple, arity);
+						}
+						else
+						{
+
+							// If all elements in the tuple are equal, ignore the tuple
+							if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+															{ return x != tuple[0]; }))
+								continue;
+							/**
+							 * get tuples from indexes
+							 */
+							idx2tuple(tuple, fl, idx, atoms_arity);
+
+							tuple_idx = tuple2idx(tuple, arity);
+						}
+
+						unsigned tuple_count = m_tuple_counts[tuple_idx];
+
+						// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+						/*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+						// if (atoms_arity == 1)
+						// 	metric_value -= 0.1 * (float)1 / (1 + tuple_count);
+						// else
+						// 	metric_value -= (float)1 / (1 + tuple_count);
+						metric_value -= (float)1 / (1 + tuple_count);
+					}
+				}
+
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+            }
+
+			void compute_count_metric_only_2_no_op(Search_Node *n, float &metric_value) {
+                unsigned arity = 2;
+		
+                metric_value = 0;
+
+				const bool has_state = n_has_state(n);
+
+                // const bool has_state = n->has_state();
+
 
                 // if (!has_state)
 				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
 
                 Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
-                std::vector<unsigned> tuple(m_arity);
+                std::vector<unsigned> tuple(arity);
 
-                unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
+                unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
 
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
 					 * get tuples from indexes
 					 */
-					idx2tuple(tuple, fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+					idx2tuple(tuple, fl, idx, arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
 
 					/**
 					 * Check if tuple is covered
@@ -548,7 +820,7 @@ namespace aptk
 					unsigned tuple_count;
 
                     /*if arity = 1*/
-                    tuple_idx = tuple2idx(tuple, m_arity);
+                    tuple_idx = tuple2idx(tuple, arity);
 
                     tuple_count = m_tuple_counts[tuple_idx];
 
@@ -556,11 +828,274 @@ namespace aptk
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                     metric_value -= (float)1 / (1 + tuple_count);
                 }
-
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
                 // if (!has_state)
 				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+			}
 
-            }
+
+			void compute_count_metric_only_1(Search_Node *n, float &metric_value) {
+                unsigned arity = 1;
+		
+                metric_value = 0;
+
+				const bool has_state = n_has_state(n);
+
+                // const bool has_state = n->has_state();
+
+
+                // if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					temp_fv.clear();
+					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+
+                Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+                std::vector<unsigned> tuple(arity);
+
+                unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
+
+                for (unsigned idx = 0; idx < n_combinations; idx++)
+                {
+                    /**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, fl, idx, arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					unsigned tuple_count;
+
+                    /*if arity = 1*/
+                    tuple_idx = tuple2idx(tuple, arity);
+
+                    tuple_count = m_tuple_counts[tuple_idx];
+
+					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                    /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                    metric_value -= (float)1 / (1 + tuple_count);
+                }
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+                // if (!has_state)
+				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+			}
+
+			void compute_count_metric_rp_fl_only(Search_Node *n, float &metric_value) {
+
+				// /*HARD CODED TO 1 FOR THIS METHOD*/
+                // unsigned arity = 1;
+				unsigned arity = m_arity;
+		
+                metric_value = 0;
+
+
+				Fluent_Set* rp_f_set = get_rp_set(n);
+				static Fluent_Set counted(m_num_fluents);
+
+				const bool has_state = n_has_state(n);
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+				/*
+				 * Creating new Fluent_Vec with only fluents in rp_f_set, & then using that for getting metric value
+				 * Possibly more inefficient (?) but easier implementation for testing
+				*/
+				Fluent_Vec rp_fl;
+				for (unsigned f : fl) {
+					if (rp_f_set->isset(f) && !counted.isset(f))
+					{
+						rp_fl.push_back(f);
+						counted.set(f);
+					}
+				}
+
+				//---
+
+				static Fluent_Vec new_atom_vec;
+				const Action *a = m_strips_model.actions()[n->action()];
+				if (a->has_ceff())
+				{
+					static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
+					new_atom_set.reset();
+					new_atom_vec.clear();
+					for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
+					{
+						if (new_atom_set.isset(*it))
+							continue;
+
+						new_atom_vec.push_back(*it);
+						new_atom_set.set(*it);
+					}
+					for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+					{
+						Conditional_Effect *ce = a->ceff_vec()[i];
+						if (ce->can_be_applied_on(*(n->parent()->state())))
+							for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
+							{
+								{
+									if (new_atom_set.isset(*it))
+										continue;
+
+									new_atom_vec.push_back(*it);
+									new_atom_set.set(*it);
+								}
+							}
+					}
+				}
+
+				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
+
+				bool new_covers = false;
+
+				assert(arity > 0);
+
+				std::vector<unsigned> tuple(arity);
+
+				unsigned atoms_arity = arity - 1;
+				unsigned n_combinations = aptk::unrolled_pow(rp_fl.size(), atoms_arity);
+
+				// std::cout << "ARITY_OP" << arity << std::endl;
+				// for( unsigned i = 0; i < fl.size(); i++ ){
+				//     std::cout<< i << "HERE - " << fl[i] << std::endl;
+				// }
+
+				for (Fluent_Vec::const_iterator it_add = add.begin();
+						 it_add != add.end(); it_add++)
+				{
+
+					for (unsigned idx = 0; idx < n_combinations; idx++)
+					{
+
+						tuple[atoms_arity] = *it_add;
+
+						/**
+						 * get tuples from indexes
+						 */
+						if (atoms_arity > 0)
+							idx2tuple(tuple, rp_fl, idx, atoms_arity);
+
+						/**
+						 * Check if tuple is covered
+						 */
+						unsigned tuple_idx;
+						
+
+						if (arity == 1)
+						{
+							tuple_idx = tuple2idx(tuple, arity);
+						}
+						else if (arity == 2)
+						{
+							tuple[0] = rp_fl[idx];
+							if (tuple[0] == tuple[1])
+								continue; // don't check singleton tuples
+							tuple_idx = tuple2idx_size2(tuple, arity);
+						}
+						else
+						{
+
+							// If all elements in the tuple are equal, ignore the tuple
+							if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+															{ return x != tuple[0]; }))
+								continue;
+							/**
+							 * get tuples from indexes
+							 */
+							idx2tuple(tuple, rp_fl, idx, atoms_arity);
+
+							tuple_idx = tuple2idx(tuple, arity);
+						}
+
+						unsigned tuple_count = m_tuple_counts[tuple_idx];
+
+						// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+						/*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+						metric_value -= (float)1 / (1 + tuple_count);
+					}
+				}
+			
+                // std::vector<unsigned> tuple(m_arity);
+
+                // unsigned n_combinations = aptk::unrolled_pow(rp_fl.size(), m_arity); 
+
+				// for (unsigned idx = 0; idx < n_combinations; idx++)
+                // {
+                //     /**
+				// 	 * get tuples from indexes
+				// 	 */
+				// 	idx2tuple(tuple, rp_fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+				// 	/**
+				// 	 * Check if tuple is covered
+				// 	 */
+				// 	unsigned tuple_idx;
+				// 	unsigned tuple_count;
+
+                //     /*if arity = 1*/
+                //     tuple_idx = tuple2idx(tuple, m_arity);
+
+                //     tuple_count = m_tuple_counts[tuple_idx];
+
+				// 	// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                //     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                //     metric_value -= (float)1 / (1 + tuple_count);
+                // }
+
+				// //TEST: compute for all, and add with 0.1 mulyiplier
+				// n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
+
+				// for (unsigned idx = 0; idx < n_combinations; idx++)
+                // {
+                //     /**
+				// 	 * get tuples from indexes
+				// 	 */
+				// 	idx2tuple(tuple, fl, idx, m_arity); /*gets a tuple for checking novelty, using idx to determine the respective fluents in fl to create the tuple, & arity for tuple size*/
+
+				// 	/**
+				// 	 * Check if tuple is covered
+				// 	 */
+				// 	unsigned tuple_idx;
+				// 	unsigned tuple_count;
+
+                //     /*if arity = 1*/
+                //     tuple_idx = tuple2idx(tuple, m_arity);
+
+                //     tuple_count = m_tuple_counts[tuple_idx];
+
+				// 	// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
+                //     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
+                //     metric_value -= 0.1 * ( (float)1 / (1 + tuple_count) );
+                // }
+
+				counted.reset();
+			}
+
+			Fluent_Set* get_rp_set(Search_Node *n) 
+			{
+				Search_Node* n_start = n;
+				while (!n_start->rp_vec())
+				{
+					n_start = n_start->parent();
+				}	
+				return n_start->rp_set();
+			}
 
 			const STRIPS_Problem &m_strips_model;
 			std::vector<Search_Node *> m_nodes_tuples;
@@ -570,6 +1105,7 @@ namespace aptk
 			unsigned m_num_fluents;
 			unsigned m_max_memory_size_MB;
 			bool m_verbose;
+			bool m_rp_fl_only;
 		};
 
 	}

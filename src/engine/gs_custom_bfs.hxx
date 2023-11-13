@@ -106,6 +106,10 @@ namespace aptk
 
 				size_t hash() const { return m_state->hash(); }
 
+				//for compatibility
+				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
+				Fluent_Set *&rp_set() { return m_rp_fl_set; }
+
 			public:
 				State *m_state;
 				Node<State> *m_parent;
@@ -113,6 +117,8 @@ namespace aptk
 				Action_Idx m_action;
 				float m_g;
 				float m_f;
+				Fluent_Vec *m_rp_fl_vec;
+				Fluent_Set *m_rp_fl_set;
 			};
 
 			class Atomic_Plan_Vec

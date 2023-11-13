@@ -85,6 +85,9 @@ namespace aptk
 				{
 					os << "{@ = " << this << ", s = " << m_state << ", parent = " << m_parent << ", g(n) = " << m_g << ", h1(n) = " << m_h1 << ", h2(n) = " << m_h2 << ", f(n) = " << m_f << "}";
 				}
+				//for compatibility
+				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
+				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 
 				bool operator==(const Node<State> &o) const
 				{
@@ -117,6 +120,8 @@ namespace aptk
 				Action_Idx m_action;
 				float m_g;
 				float m_f;
+				Fluent_Vec *m_rp_fl_vec;
+				Fluent_Set *m_rp_fl_set;
 			};
 
 			class Atomic_Plan_Vec

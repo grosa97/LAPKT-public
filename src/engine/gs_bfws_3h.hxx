@@ -749,8 +749,7 @@ namespace aptk
 
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
-						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << std::endl;
-						
+						std::cout << m_expanded_count_by_novelty[0] << " -- "<< m_expanded_count_by_novelty[1] << " -- "<< m_expanded_count_by_novelty[2] << " -- "<< head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "<< head->gn() << std::endl;
 				}
 
 				virtual Search_Node *do_search()
