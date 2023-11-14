@@ -36,6 +36,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <vector>
 #include <deque>
 #include <algorithm>
+#include <math.h>
 
 namespace aptk
 {
@@ -48,7 +49,7 @@ namespace aptk
 		{
 		public:
 			Count_Novelty_Partition(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
-					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false)
+					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false), m_total_count(0)
 			{
 
 				set_arity(max_arity, 1);
@@ -127,7 +128,12 @@ namespace aptk
 					compute_count_metric_rp_fl_only(n, h_val);
 				else
 					compute_count_metric(n, h_val);
-				
+				m_total_count++;
+				// if (m_total_count_map.find(n->partition()) != m_total_count_map.end()) {
+				// 	m_total_count_map[n->partition()]++;
+				// } else {
+				// 	m_total_count_map[n->partition()] = 1;
+				// }
 				update_counts(n);
 			}
 
@@ -374,7 +380,25 @@ namespace aptk
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+					//  metric_value -= ( (float)1 / (1 + tuple_count) );
+                    // metric_value -= ( (float)1 / (1 + tuple_count) ) - (1/m_num_fluents);
+					// metric_value -= ( (float)1 / (0.1 + tuple_count) );
+					// metric_value -= ( (float) m_num_fluents / (1 + tuple_count) );
+					// metric_value -= ( (float)1 / (0.001 + tuple_count) );
+
+					// float m = ( (float)1 / (0.1 + tuple_count) );
+					// double l = (-1*(float)tuple_count) / (m_num_fluents*m_num_fluents);
+					// metric_value -= ( 0.9*m + 0.1*l );
+
+					// metric_value -= (float)1/tuple_count;
+
+					metric_value -= log(((float)tuple_count + 1)/((float)m_total_count + 1)) - log(((float)tuple_count)/((float)m_total_count));
+
+					// unsigned total_count = 	m_total_count_map[n->partition()];
+					// if (m_total_count_map.find(n->partition()) != m_total_count_map.end())
+					// 	metric_value -= log(((float)tuple_count + 1)/((float)total_count + 1)) - log(((float)tuple_count)/((float)total_count));
+					// else
+					// 	metric_value -= std::numeric_limits<float>::infinity();
                 }
 				if (!has_state)
 				{
@@ -579,6 +603,8 @@ namespace aptk
 			unsigned m_partition_size;
 			bool m_verbose;
 			bool m_rp_fl_only;
+			int m_total_count;
+			// std::unordered_map<unsigned, unsigned> m_total_count_map;
 		};
 
 	}

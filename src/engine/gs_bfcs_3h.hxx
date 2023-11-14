@@ -597,6 +597,7 @@ namespace aptk
 				void eval_count_based(Search_Node *candidate)
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					// candidate->partition() = (1000 * candidate->GC());
 					m_first_h->eval(candidate, candidate->h1n());
 
 					// if (candidate->h1n() > m_max_novelty)
