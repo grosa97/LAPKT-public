@@ -351,15 +351,15 @@ void BFWS::solve()
 		BFCS_1_p bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
-		bfws_options(search_prob, bfs_engine, max_width, graph);
+		// bfws_options(search_prob, bfs_engine, max_width, graph);
 		/**
-		 * Use landmark count instead of goal count
+		 * Use landmark count instead of goal counts
 		 */
-		// Gen_Lms_Fwd gen_lms(search_prob);
-		// gen_lms.set_only_goals(false);
-		// Landmarks_Graph graph1(*prob);
-		// gen_lms.compute_lm_graph_set_additive(graph1);
-		// bfws_options(search_prob, bfs_engine, max_width, graph1);
+		Gen_Lms_Fwd gen_lms(search_prob);
+		gen_lms.set_only_goals(false);
+		Landmarks_Graph graph1(*prob);
+		gen_lms.compute_lm_graph_set_additive(graph1);
+		bfws_options(search_prob, bfs_engine, max_width, graph1);
 
 		// bfs_engine.set_use_h3n(true);
 		
