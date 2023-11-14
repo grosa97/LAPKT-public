@@ -354,6 +354,7 @@ namespace aptk
 
                 unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
 
+				float m = 0;
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
@@ -374,7 +375,10 @@ namespace aptk
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+                    // metric_value -= (float)1 / (1 + tuple_count);
+					m = -(float)1 / (1 + tuple_count);
+					if (m < metric_value)
+						metric_value = m;
                 }
 				if (!has_state)
 				{
@@ -390,7 +394,7 @@ namespace aptk
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
 					return;
-
+				
 				check_table_size(n);
 
 				/*HARD CODED TO 1 FOR THIS METHOD*/
@@ -433,6 +437,7 @@ namespace aptk
 
                 unsigned n_combinations = aptk::unrolled_pow(rp_fl.size(), m_arity); 
 
+				float m = 0;
 				for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
@@ -453,7 +458,10 @@ namespace aptk
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+                    // metric_value -= (float)1 / (1 + tuple_count);
+					m = -(float)1 / (1 + tuple_count);
+					if (m < metric_value)
+						metric_value = m;
                 }
 
 				// //TEST: compute for all, and add with 0.1 mulyiplier

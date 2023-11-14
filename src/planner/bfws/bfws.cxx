@@ -319,7 +319,7 @@ void BFWS::solve()
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
-		
+
 		// bfs_engine.set_use_h3n(true);
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
@@ -352,7 +352,7 @@ void BFWS::solve()
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
-
+		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);

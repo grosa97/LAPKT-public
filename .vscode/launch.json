@@ -144,7 +144,7 @@
                 "--search_type",
                 // "BFWS-goalcount-only",
                 // "BFWS-goalcount-h3blind",
-                "BFCS-1-p-rp",
+                "BFCS-1-p",
                 // "BFWS-f5-h3count-p",
                 // "BFWS-f5-h3count-test",
                 // "BFWS-f5",
