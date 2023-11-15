@@ -352,9 +352,14 @@ namespace aptk
 
                 std::vector<unsigned> tuple(m_arity);
 
-                unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
+                unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity);
 
 				float m = 0;
+
+				//make initial min heap have size 3, with starting values +inf
+				std::vector<unsigned> initialValues = {0,0,0};
+				std::priority_queue<float, std::vector<float>, std::greater<float>> top_3_heap(initialValues.begin(), initialValues.end());
+
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
@@ -376,10 +381,25 @@ namespace aptk
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                     // metric_value -= (float)1 / (1 + tuple_count);
-					m = -(float)1 / (1 + tuple_count);
-					if (m < metric_value)
-						metric_value = m;
+					// m = -(float)1 / (1 + tuple_count);
+					// if (m < metric_value)
+					// 	metric_value = m;
+
+				
+					m = (float)1 / (1 + tuple_count);
+					if ( m > top_3_heap.top()) {
+						top_3_heap.pop();
+						top_3_heap.push(m);
+					}
                 }
+
+				while (!top_3_heap.empty())
+				{
+					float m = top_3_heap.top();
+					top_3_heap.pop();
+					metric_value -= m;
+				}
+
 				if (!has_state)
 				{
 					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
@@ -411,7 +431,6 @@ namespace aptk
 				static Fluent_Vec added, deleted, temp_fv;
 				if (!has_state)
 				{
-					
 					added.clear();
 					deleted.clear();
 					temp_fv.clear();
@@ -438,6 +457,8 @@ namespace aptk
                 unsigned n_combinations = aptk::unrolled_pow(rp_fl.size(), m_arity); 
 
 				float m = 0;
+
+
 				for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
