@@ -320,11 +320,12 @@ void BFWS::solve()
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
+		
+		// //landmarks
 		// Gen_Lms_Fwd gen_lms(search_prob);
 		// gen_lms.set_only_goals(false);
 		// Landmarks_Graph graph1(*prob);
 		// gen_lms.compute_lm_graph_set_additive(graph1);
-
 		// bfws_options(search_prob, bfs_engine, max_width, graph1);
 		
 		// bfs_engine.set_use_h3n(true);
@@ -332,25 +333,44 @@ void BFWS::solve()
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
-	else if (m_search_alg.compare("BFCS-1-rp") == 0)
+	else if (m_search_alg.compare("BFCS-2") == 0)
 	{
+		std::cout << "Starting search with BFCS-2..." << std::endl;
 
-		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
-
-		BFCS_1 bfs_engine(search_prob, m_verbose);
+		BFCS_sa bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
-		bfws_options(search_prob, bfs_engine, max_width, graph);
-
-		bfs_engine.set_use_count_rp_fl_only(true);
+		// bfws_options(search_prob, bfs_engine, max_width, graph);
+		bfs_engine.set_use_h2n(true);
+		
+		//landmarks
+		Gen_Lms_Fwd gen_lms(search_prob);
+		gen_lms.set_only_goals(false);
+		Landmarks_Graph graph1(*prob);
+		gen_lms.compute_lm_graph_set_additive(graph1);
+		bfws_options(search_prob, bfs_engine, max_width, graph1);
+		
 		// bfs_engine.set_use_h3n(true);
-
-
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+
+		// std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
+
+		// BFCS_1 bfs_engine(search_prob, m_verbose);
+
+		// unsigned max_width = 1;
+		// bfws_options(search_prob, bfs_engine, max_width, graph);
+
+		// bfs_engine.set_use_count_rp_fl_only(true);
+		// // bfs_engine.set_use_h3n(true);
+
+
+		// float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+		// std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
-	else if (m_search_alg.compare("BFCS-1-p") == 0)
+	else if (m_search_alg.compare("BFCS-3") == 0)
 	{
 
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
@@ -366,7 +386,7 @@ void BFWS::solve()
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 	}
-	else if (m_search_alg.compare("BFCS-1-p-rp") == 0)
+	else if (m_search_alg.compare("BFCS-4") == 0)
 	{
 
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;

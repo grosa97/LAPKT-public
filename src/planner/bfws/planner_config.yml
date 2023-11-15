@@ -53,9 +53,9 @@ BFWS:
         - 'DUAL-BFWS'
         - 'BFWS-goalcount-h3blind'
         - 'BFCS-1'
-        - 'BFCS-1-rp'
-        - 'BFCS-1-p'
-        - 'BFCS-1-p-rp'
+        - 'BFCS-2'
+        - 'BFCS-3'
+        - 'BFCS-4'
 
         # - 'BFWS-f5-h3count-p'
         # - 'BFWS-f5-h3count-p-rp'

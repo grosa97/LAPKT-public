@@ -47,10 +47,11 @@ namespace aptk
 		{
 		public:
 			Count_Novelty_SA_Heuristic(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
-					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_verbose(true), m_rp_fl_only(false)
+					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_verbose(true), m_rp_fl_only(false), m_best_partition_m2(0)
 			{
 				set_arity(max_arity);
 				init();
+				m_best_partition_m1 = std::numeric_limits<unsigned int>::max();
 			}
 
 			void set_verbose(bool v) { m_verbose = v; }
@@ -109,7 +110,7 @@ namespace aptk
 			{
 				if (check_forget(n->partition()))
 					forget();
-				compute_count_metric_sa_1(n, h_val);				
+				compute_count_metric_sa_1(n, h_val);
 				update_counts_sa(n);
 			}
 
@@ -142,12 +143,12 @@ namespace aptk
 
 			bool check_forget(unsigned partition) 
 			{
-				// if ( (partition / 1000) < m_best_partition_m1)
-				// {
-				// 	m_best_partition_m2 = 0;
-				// 	m_best_partition_m1 = partition / 1000;
-				// 	return true;
-				// }
+				if ( (partition / 1000) < m_best_partition_m1)
+				{
+					m_best_partition_m2 = 0;
+					m_best_partition_m1 = partition / 1000;
+					return true;
+				}
 				if ( (partition % 1000) > m_best_partition_m2 )
 				{
 					m_best_partition_m2 = partition % 1000;

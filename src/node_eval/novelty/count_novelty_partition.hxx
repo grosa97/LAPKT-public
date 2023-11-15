@@ -353,6 +353,7 @@ namespace aptk
 
                 unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
 
+				float m = 0;
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
@@ -373,7 +374,9 @@ namespace aptk
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+                    m = -(float)1 / (1 + tuple_count);
+					if (m < metric_value)
+						metric_value = m;
                 }
 				if (!has_state)
 				{

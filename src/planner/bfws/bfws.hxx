@@ -188,7 +188,7 @@ typedef Count_Novelty_SA_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_S
 typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
 typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p;
 
-typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_SA_Count_H, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_sa;
+typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_SA_Count_H, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_sa;
 typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_SA_Count_P, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_sa_p;
 
 class BFWS : public STRIPS_Interface

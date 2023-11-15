@@ -79,8 +79,13 @@ namespace aptk
 							return true;
 						if (dequal(b->h3n(), a->h3n()))
 						{
+							// if (dless(b->h2n(), a->h2n()))
+							// 	return true;
+							// if (dequal(b->h2n(), a->h2n()))
+							{
 							if (dless(b->gn_unit(), a->gn_unit()))
 								return true;
+							}
 						}
 					}
 				}
