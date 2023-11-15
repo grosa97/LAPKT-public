@@ -64,9 +64,9 @@ namespace aptk
 				typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
 				typedef typename std::vector<std::vector<int>>::iterator Int_Vec_Ptr_It;
 
-				for (Node_Vec_Ptr_It it_p = m_nodes_tuples_by_partition.begin(); it_p != m_nodes_tuples_by_partition.end(); it_p++)
-					for (Node_Ptr_It it = it_p->begin(); it != it_p->end(); it++)
-						*it = NULL;
+				// for (Node_Vec_Ptr_It it_p = m_nodes_tuples_by_partition.begin(); it_p != m_nodes_tuples_by_partition.end(); it_p++)
+				// 	for (Node_Ptr_It it = it_p->begin(); it != it_p->end(); it++)
+				// 		*it = NULL;
 
 				for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition.begin(); it_p != m_tuple_counts_by_partition.end(); it_p++)
 					std::fill(it_p->begin(), it_p->end(), 0);
@@ -80,9 +80,9 @@ namespace aptk
 			void set_rp_fl_only(bool v) { m_rp_fl_only = v; }
 
 			unsigned &partition_size() { return m_partition_size; }
-			bool is_partition_empty(unsigned partition) { return m_nodes_tuples_by_partition[partition].empty(); }
+			// bool is_partition_empty(unsigned partition) { return m_nodes_tuples_by_partition[partition].empty(); }
 
-			Search_Node *table(unsigned partition, unsigned idx) { return m_nodes_tuples_by_partition[partition][idx]; }
+			// Search_Node *table(unsigned partition, unsigned idx) { return m_nodes_tuples_by_partition[partition][idx]; }
 
 			void set_arity(unsigned max_arity, unsigned partition_size = 0)
 			{
@@ -93,7 +93,7 @@ namespace aptk
 				m_num_fluents = m_strips_model.num_fluents();
 
 				float size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * (float)partition_size * sizeof(Search_Node *);
-				// std::cout << "Try allocate size: "<< size_novelty<<" MB"<<std::endl;
+				std::cout << "Try allocate size: "<< size_novelty<<" MB"<<std::endl;
 				if (size_novelty > m_max_memory_size_MB)
 				{
 					m_arity = 1;
@@ -105,12 +105,12 @@ namespace aptk
 				for (unsigned k = 0; k < m_arity; k++)
 					m_num_tuples *= m_num_fluents;
 
-				m_nodes_tuples_by_partition.resize(partition_size + 1);
+				// m_nodes_tuples_by_partition.resize(partition_size + 1);
 				m_tuple_counts_by_partition.resize(partition_size + 1);
 
 				for (unsigned i = 0; i < partition_size + 1; i++)
 				{
-					m_nodes_tuples_by_partition[i].clear();
+					// m_nodes_tuples_by_partition[i].clear();
 					m_tuple_counts_by_partition[i].resize(m_num_tuples, 0);
 				}
 				
@@ -159,13 +159,13 @@ namespace aptk
 
 				if (m_partition_size < n->partition())
 				{
-					m_nodes_tuples_by_partition.resize(n->partition() + 1);
+					// m_nodes_tuples_by_partition.resize(n->partition() + 1);
 					m_tuple_counts_by_partition.resize(n->partition() + 1);
 					m_partition_size = n->partition();
 				}
 
-				if (m_nodes_tuples_by_partition[n->partition()].empty())
-					m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
+				// if (m_nodes_tuples_by_partition[n->partition()].empty())
+				// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
 
 				if (m_tuple_counts_by_partition[n->partition()].empty())
 					m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
@@ -284,28 +284,28 @@ namespace aptk
 					 * -> n better than old_n
 					 */
 
-					auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
 
 					/*increment tuple counts for partition*/
 					m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
 
-					if (!n_seen || is_better(n_seen, n))
-					{
-						n_seen = (Search_Node *)n;
-						new_covers = true;
+// 					if (!n_seen || is_better(n_seen, n))
+// 					{
+// 						n_seen = (Search_Node *)n;
+// 						new_covers = true;
 
-#ifdef DEBUG
-						if (m_verbose)
-						{
-							std::cout << "\t NEW!! : ";
-							for (unsigned i = 0; i < arity; i++)
-							{
-								std::cout << m_strips_model.fluents()[tuple[i]]->signature() << "  ";
-							}
-							std::cout << std::endl;
-						}
-#endif
-					}
+// #ifdef DEBUG
+// 						if (m_verbose)
+// 						{
+// 							std::cout << "\t NEW!! : ";
+// 							for (unsigned i = 0; i < arity; i++)
+// 							{
+// 								std::cout << m_strips_model.fluents()[tuple[i]]->signature() << "  ";
+// 							}
+// 							std::cout << std::endl;
+// 						}
+// #endif
+// 					}
 				}
 				if (!has_state)
 				{
@@ -571,7 +571,7 @@ namespace aptk
 			}
 
 			const STRIPS_Problem &m_strips_model;
-			std::vector<std::vector<Search_Node *>> m_nodes_tuples_by_partition;
+			// std::vector<std::vector<Search_Node *>> m_nodes_tuples_by_partition;
 			std::vector<std::vector<int>> m_tuple_counts_by_partition;
 			unsigned m_arity;
 			unsigned long m_num_tuples;

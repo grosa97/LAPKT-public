@@ -66,8 +66,8 @@ namespace aptk
 			{
 				typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
 
-				for (Node_Ptr_It it = m_nodes_tuples.begin(); it != m_nodes_tuples.end(); it++)
-					*it = NULL;
+				// for (Node_Ptr_It it = m_nodes_tuples.begin(); it != m_nodes_tuples.end(); it++)
+				// 	*it = NULL;
                 
                 std::fill(m_tuple_counts.begin(), m_tuple_counts.end(), 0);
 			}
@@ -83,31 +83,38 @@ namespace aptk
 				m_num_tuples = 1;
 				m_num_fluents = m_strips_model.num_fluents();
 				m_num_actions = m_strips_model.num_actions();
+				//only for arity 1
+				m_num_tuples = m_num_fluents * (m_num_actions + 1);
 
-				float size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * sizeof(Search_Node *);
+				float size_novelty = ((float)pow(m_num_tuples, m_arity) / 1024000.) * sizeof(Search_Node *);
 				if (m_verbose)
 					std::cout << "Try allocate size: " << size_novelty << " MB" << std::endl;
-				if (size_novelty > m_max_memory_size_MB)
+				if (size_novelty > (m_max_memory_size_MB/2))
 				{
-					m_arity = 1;
-
-					size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * sizeof(Search_Node *);
+					m_arity = 0;
+					// m_num_tuples = 0;
+					size_novelty = ((float)pow(m_num_tuples, m_arity) / 1024000.) * sizeof(Search_Node *);
 					if (m_verbose)
 						std::cout << "EXCEDED, m_arity downgraded to 1 --> size: " << size_novelty << " MB" << std::endl;
 				}
 
 				// for (unsigned k = 0; k < m_arity; k++)
 				// 	m_num_tuples *= m_num_fluents;
-				//only for arity 1
-				m_num_tuples = m_num_fluents * (m_num_actions + 1);
 
-				m_nodes_tuples.resize(m_num_tuples, NULL);
-                m_tuple_counts.resize(m_num_tuples, 0);
+				// m_nodes_tuples.resize(m_num_tuples, NULL);
+				if (m_arity > 0)
+                	m_tuple_counts.resize(m_num_tuples, 0);
 				return m_arity;
 			}
 
 			virtual void eval(Search_Node *n, float &h_val)
 			{
+				if (m_arity == 0)
+				{
+					h_val = 0;
+					return;
+				}
+
 				if (check_forget(n->partition()))
 					forget();
 				compute_count_metric_sa_1(n, h_val);
@@ -159,9 +166,9 @@ namespace aptk
 
 			void forget()
 			{
-				typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
-				for (Node_Ptr_It it = m_nodes_tuples.begin(); it != m_nodes_tuples.end(); it++)
-					*it = NULL;
+				// typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
+				// for (Node_Ptr_It it = m_nodes_tuples.begin(); it != m_nodes_tuples.end(); it++)
+				// 	*it = NULL;
                 
                 std::fill(m_tuple_counts.begin(), m_tuple_counts.end(), 0);
 			}
@@ -290,16 +297,16 @@ namespace aptk
 					 * -> n better than old_n
 					 */
 
-					auto &n_seen = m_nodes_tuples[tuple_idx];
+					// auto &n_seen = m_nodes_tuples[tuple_idx];
                     
                     /*increment tuple counts*/
                     m_tuple_counts[tuple_idx]++;
 
-					if (!n_seen || is_better(n_seen, n))
-					{
-						n_seen = (Search_Node *)n;
-						new_covers = true;
-					}
+					// if (!n_seen || is_better(n_seen, n))
+					// {
+					// 	n_seen = (Search_Node *)n;
+					// 	new_covers = true;
+					// }
 				}
 				if (!has_state)
 				{
@@ -448,7 +455,7 @@ namespace aptk
 			}
 
 			const STRIPS_Problem &m_strips_model;
-			std::vector<Search_Node *> m_nodes_tuples;
+			// std::vector<Search_Node *> m_nodes_tuples;
             std::vector<unsigned> m_tuple_counts;
 			unsigned m_arity;
 			unsigned long m_num_tuples;
