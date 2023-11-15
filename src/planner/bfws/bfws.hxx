@@ -52,6 +52,8 @@
 #include <gs_bfcs_3h.hxx>
 #include <count_novelty_heuristic.hxx>
 #include <count_novelty_partition.hxx>
+#include <count_novelty_sa_heuristic.hxx>
+#include <count_novelty_sa_partition.hxx>
 
 
 namespace po = boost::program_options;
@@ -104,6 +106,10 @@ using aptk::agnostic::Count_Novelty_Partition;
 using aptk::search::gs_bfws_3h::GS_BFWS_3H;
 using aptk::search::Node_Comparer_3H_gn_unit;
 using aptk::search::gs_bfcs_3h::GS_BFCS_3H;
+using aptk::agnostic::Count_Novelty_SA_Heuristic;
+using aptk::agnostic::Count_Novelty_SA_Partition;
+
+
 
 /**
  * DEFINITIONS
@@ -173,11 +179,17 @@ typedef Count_Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Coun
 typedef Node_Comparer_3H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
 typedef Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> BFS_Open_List_3h;
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Fwd_3h;
+
+typedef Count_Novelty_SA_Heuristic<Fwd_Search_Problem, Search_Node_3h> H_Novel_SA_Count_H;
+typedef Count_Novelty_SA_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_SA_Count_P;
 // typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
 // typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Partition, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS_p;
 
 typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
 typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p;
+
+typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_SA_Count_H, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_sa;
+typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_SA_Count_P, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_sa_p;
 
 class BFWS : public STRIPS_Interface
 {

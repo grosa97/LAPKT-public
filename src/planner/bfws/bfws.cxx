@@ -315,10 +315,17 @@ void BFWS::solve()
 	{
 		std::cout << "Starting search with BFCS-1..." << std::endl;
 
-		BFCS_1 bfs_engine(search_prob, m_verbose);
+		BFCS_sa bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
+		bfs_engine.set_use_h2n(true);
+		// Gen_Lms_Fwd gen_lms(search_prob);
+		// gen_lms.set_only_goals(false);
+		// Landmarks_Graph graph1(*prob);
+		// gen_lms.compute_lm_graph_set_additive(graph1);
+
+		// bfws_options(search_prob, bfs_engine, max_width, graph1);
 		
 		// bfs_engine.set_use_h3n(true);
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
@@ -348,7 +355,7 @@ void BFWS::solve()
 
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		BFCS_1_p bfs_engine(search_prob, m_verbose);
+		BFCS_sa_p bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);

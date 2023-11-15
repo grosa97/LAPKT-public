@@ -2,6 +2,8 @@ target_sources(core
     PRIVATE
         count_novelty_heuristic.hxx
         count_novelty_partition.hxx
+        count_novelty_sa_heuristic.hxx
+        count_novelty_sa_partition.hxx
         node_novelty_spaces.hxx
         novelty.hxx
         approximate_novelty.hxx
@@ -21,6 +23,8 @@ install(
     FILES
         count_novelty_heuristic.hxx
         count_novelty_partition.hxx
+        count_novelty_sa_heuristic.hxx
+        count_novelty_sa_partition.hxx
         node_novelty_spaces.hxx
         novelty.hxx
         approximate_novelty.hxx

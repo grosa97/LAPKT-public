@@ -291,7 +291,6 @@ namespace aptk
 
 					if (!n_seen || is_better(n_seen, n))
 					{
-
 						n_seen = (Search_Node *)n;
 						new_covers = true;
 
