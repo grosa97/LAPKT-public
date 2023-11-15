@@ -390,9 +390,9 @@ namespace aptk
 					// double l = (-1*(float)tuple_count) / (m_num_fluents*m_num_fluents);
 					// metric_value -= ( 0.9*m + 0.1*l );
 
-					// metric_value -= (float)1/tuple_count;
+					metric_value -= (float)1/tuple_count;
 
-					metric_value -= log(((float)tuple_count + 1)/((float)m_total_count + 1)) - log(((float)tuple_count)/((float)m_total_count));
+					// metric_value -= log(((float)tuple_count + 1)/((float)m_total_count + 1)) - log(((float)tuple_count)/((float)m_total_count));
 
 					// unsigned total_count = 	m_total_count_map[n->partition()];
 					// if (m_total_count_map.find(n->partition()) != m_total_count_map.end())

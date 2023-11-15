@@ -352,6 +352,7 @@ void BFWS::solve()
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
+		bfs_engine.set_use_h2n(true);
 		/**
 		 * Use landmark count instead of goal count
 		 */
