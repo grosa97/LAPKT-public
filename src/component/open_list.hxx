@@ -154,7 +154,7 @@ namespace aptk
 
 		template <class Node_Comp, class Inverse_Node_Comp, class Node>
 		Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::Pruned_Open_List() 
-		: m_soft_limit(0)
+		: m_soft_limit(0), m_use_alternating(false)
 		{
 		}
 

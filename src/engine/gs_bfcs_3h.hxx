@@ -255,11 +255,11 @@ namespace aptk
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//exp 1
-					// int f = this->problem().task().num_fluents();
-					// m_open.set_soft_limit(f*f)
+					int f = this->problem().task().num_fluents();
+					m_open.set_soft_limit(f*f);
 
 					//exp 2
-					m_open.set_soft_limit(500000);
+					// m_open.set_soft_limit(500000);
 
 					//exp 3
 					// m_open.set_soft_limit(1000000);
