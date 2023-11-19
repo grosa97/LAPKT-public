@@ -129,7 +129,13 @@ namespace aptk
 				m_soft_bottom_limit = bl;
 				m_soft_top_limit = tl;
 			}
-			float get_th_h1() { return m_node_threshold->h1n();}
+			float get_th_h1() 
+			{
+				if (m_node_threshold != nullptr)
+					return m_node_threshold->h1n();
+				else
+					return 99999;
+			}
 			void insert(Node *);
 			Node *pop();
 			bool empty() const;
@@ -154,7 +160,7 @@ namespace aptk
 
 		template <class Node_Comp, class Inverse_Node_Comp, class Node>
 		Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::Pruned_Open_List() 
-		: m_soft_limit(0), m_use_alternating(false)
+		: m_node_threshold(nullptr), m_soft_limit(0), m_use_alternating(false), m_expanding(false), m_soft_top_limit(0), m_soft_bottom_limit(0)
 		{
 		}
 
