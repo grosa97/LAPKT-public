@@ -253,6 +253,20 @@ namespace aptk
 					m_second_h = new Second_Heuristic(search_problem);
 					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
+
+					//exp 1
+					// int f = this->problem().task().num_fluents();
+					// m_open.set_soft_limit(f*f)
+
+					//exp 2
+					m_open.set_soft_limit(500000);
+
+					//exp 3
+					// m_open.set_soft_limit(1000000);
+
+					//exp 4
+					// m_open.set_soft_limit(2000000);
+					// m_open.set_alternating(50000, 100000);
 				}
 
 				virtual ~GS_BFCS_3H()
@@ -761,7 +775,8 @@ namespace aptk
 
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
-						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "<< head->GC()<<" -- "<<head->gn_unit() << std::endl;
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+							<< head->GC()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<" -- "<<m_open.get_th_h1()<<std::endl;
 				}
 
 				virtual Search_Node *do_search()

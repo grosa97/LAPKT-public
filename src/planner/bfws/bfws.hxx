@@ -104,6 +104,10 @@ using aptk::agnostic::Count_Novelty_Partition;
 using aptk::search::gs_bfws_3h::GS_BFWS_3H;
 using aptk::search::Node_Comparer_3H_gn_unit;
 using aptk::search::gs_bfcs_3h::GS_BFCS_3H;
+using aptk::search::Pruned_Open_List;
+
+using aptk::search::Inverse_Node_Comparer_3H_gn_unit;
+using aptk::search::Pruned_Node_Comparer_3H_gn_unit;
 
 /**
  * DEFINITIONS
@@ -175,9 +179,14 @@ typedef Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> BFS_Op
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Fwd_3h;
 // typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
 // typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Partition, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS_p;
+typedef Inverse_Node_Comparer_3H_gn_unit<Search_Node_3h> Inverse_Tie_Breaking_Algorithm_3h_ignore_costs;
 
-typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
-typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p;
+
+typedef Pruned_Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Inverse_Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Pruned_BFS_Open_List_3h;
+
+// typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
+// typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p;
+typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Pruned_BFS_Open_List_3h> BFCS_1_p_pruned;
 
 class BFWS : public STRIPS_Interface
 {

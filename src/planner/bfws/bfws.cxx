@@ -326,11 +326,11 @@ void BFWS::solve()
 		// std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
-		BFCS_1_p bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
-		// bfs_engine.set_use_h2n(true);
+		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
@@ -342,7 +342,7 @@ void BFWS::solve()
 
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		BFCS_1 bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
@@ -360,7 +360,7 @@ void BFWS::solve()
 		////PARTITIONED BUT WITH H2 TIE BREAK
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		BFCS_1_p bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
@@ -386,7 +386,7 @@ void BFWS::solve()
 
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
-		BFCS_1_p bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);

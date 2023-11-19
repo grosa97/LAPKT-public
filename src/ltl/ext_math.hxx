@@ -48,7 +48,7 @@ namespace aptk
                 return (a == std::numeric_limits<T>::max() ? std::numeric_limits<T>::max() : (b == std::numeric_limits<T>::max() ? std::numeric_limits<T>::max() : a + b));
         }
 
-#define THRESHOLD 1e-04
+#define THRESHOLD 1e-07
 
         inline bool dless(float f1, float f2)
         {
@@ -60,6 +60,11 @@ namespace aptk
         {
 
                 return ((fabs(f2 - f1)) < THRESHOLD);
+        }
+
+        inline bool dgreater(float f1, float f2)
+        {
+                return ((f1 - f2) > THRESHOLD);
         }
 
         template <typename T>

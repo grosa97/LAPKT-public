@@ -112,6 +112,163 @@ namespace aptk
 			}
 		};
 
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		class Pruned_Open_List
+		{
+		public:
+			typedef Node Node_Type;
+
+			Pruned_Open_List();
+			~Pruned_Open_List();
+
+			void set_soft_limit(unsigned l) { m_soft_limit = l; }
+			void set_alternating(unsigned bl, unsigned tl)
+			{
+				m_use_alternating = true;
+				m_expanding = true;
+				m_soft_bottom_limit = bl;
+				m_soft_top_limit = tl;
+			}
+			float get_th_h1() { return m_node_threshold->h1n();}
+			void insert(Node *);
+			Node *pop();
+			bool empty() const;
+			float min() const;
+			void clear();
+			size_t size() { return m_queue.size(); }
+			size_t inverse_size() { return m_inverse_queue.size(); }
+			Node *top() { return m_queue.top(); }
+			bool greater_than_th(Node* n);
+
+		private:
+			std::priority_queue<Node *, std::vector<Node *>, Node_Comp> m_queue;
+			std::priority_queue<Node*, std::vector<Node*>, Inverse_Node_Comp> m_inverse_queue;
+			unsigned m_soft_limit;
+			Node* m_node_threshold;
+			Inverse_Node_Comp m_greater_comp;
+			unsigned m_soft_bottom_limit;
+			unsigned m_soft_top_limit;
+			bool m_use_alternating;
+			bool m_expanding;
+		};
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::Pruned_Open_List() 
+		: m_soft_limit(0)
+		{
+		}
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::~Pruned_Open_List()
+		{
+		}		
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		bool Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::greater_than_th(Node* n)
+		{
+			if (m_node_threshold == nullptr)
+			{
+				m_node_threshold = n;
+				return false;
+			}
+			else
+				return m_greater_comp(m_node_threshold, n);
+		}
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		void Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::insert(Node *n)
+		{
+			if (m_use_alternating)
+			{
+				if ( (m_queue.size() > m_soft_top_limit) || (!m_expanding && m_queue.size() > m_soft_bottom_limit) )
+				{
+					m_expanding = false;
+					if ( greater_than_th(n) )
+					{
+						delete n;
+					}
+					else
+					{
+						m_queue.push(n);
+						m_inverse_queue.pop();
+						m_inverse_queue.push(n);
+						m_node_threshold = m_inverse_queue.top();
+					}
+				}
+				else
+				{
+					m_expanding = true;
+					m_queue.push(n);
+					m_inverse_queue.push(n);
+					if ( greater_than_th(n) )
+						m_node_threshold = n;					
+				}
+
+			}
+			else 
+			{
+				if (m_queue.size() > m_soft_limit)
+				{
+					if ( greater_than_th(n) )
+					{
+						delete n;
+					}
+					else
+					{
+						m_queue.push(n);
+						m_inverse_queue.pop();
+						m_inverse_queue.push(n);
+						m_node_threshold = m_inverse_queue.top();
+					}
+				}
+				else 
+				{
+					m_queue.push(n);
+					m_inverse_queue.push(n);
+					if ( greater_than_th(n) )
+						m_node_threshold = n;
+				}
+			}
+
+		}
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		Node *Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::pop()
+		{
+			if (empty())
+				return NULL;
+			Node *elem = m_queue.top();
+			m_queue.pop();
+			return elem;
+		}
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		bool Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::empty() const
+		{
+			return m_queue.empty();
+		}
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		float Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::min() const
+		{
+			if (empty())
+				return 0.0f;
+			return m_queue.top()->f;
+		}
+
+		template <class Node_Comp, class Inverse_Node_Comp, class Node>
+		void Pruned_Open_List<Node_Comp, Inverse_Node_Comp, Node>::clear()
+		{
+			while (!empty())
+			{
+				Node *elem = pop();
+				delete elem;
+				//nodes in m_inverse_queue are either in open list or closed list, so not delete here
+			}
+		}
+
+
+
 		template <class Node_Comp, class Node>
 		class Open_List
 		{

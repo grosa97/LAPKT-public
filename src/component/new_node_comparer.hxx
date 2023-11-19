@@ -92,6 +92,94 @@ namespace aptk
 		};
 
 		template <typename Node>
+		class Inverse_Node_Comparer_3H_gn_unit
+		{
+		public:
+			bool operator()(Node *a, Node *b) const
+			{
+				if (dgreater(b->h1n(), a->h1n()))
+					return true;
+				if (dequal(b->h1n(), a->h1n()))
+				{
+					if (dgreater(b->h2n(), a->h2n()))
+						return true;
+					if (dequal(b->h2n(), a->h2n()))
+					{
+						if (dgreater(b->h3n(), a->h3n()))
+							return true;
+						if (dequal(b->h3n(), a->h3n()))
+						{
+							if (dgreater(b->gn_unit(), a->gn_unit()))
+								return true;
+						}
+					}
+				}
+				return false;
+			}
+		};
+
+		template <typename Node>
+		class Pruned_Node_Comparer_3H_gn_unit
+		{
+		public:
+			bool operator()(Node *a, Node *b) const
+			{
+				if (a == nullptr)
+					return true;
+				if (dless(b->h1n(), a->h1n()))
+					return true;
+				if (dequal(b->h1n(), a->h1n()))
+				{
+					if (dless(b->h2n(), a->h2n()))
+						return true;
+					if (dequal(b->h2n(), a->h2n()))
+					{
+						if (dless(b->h3n(), a->h3n()))
+							return true;
+						if (dequal(b->h3n(), a->h3n()))
+						{
+							if (dless(b->gn_unit(), a->gn_unit()))
+								return true;
+						}
+					}
+				}
+				// if ( dless( b->gn(), a->gn() ) )  return true;
+				return false;
+
+				// return (dless(b->fn(), a->fn()) || (dequal(a->fn(), b->fn()) && dless(b->hn(), a->hn())));
+			}
+		};
+
+		template <typename Node>
+		class Pruned_Inverse_Node_Comparer_3H_gn_unit
+		{
+		public:
+			bool operator()(Node *a, Node *b) const
+			{
+				if (a == nullptr)
+					return true;
+				if (dgreater(b->h1n(), a->h1n()))
+					return true;
+				if (dequal(b->h1n(), a->h1n()))
+				{
+					if (dgreater(b->h2n(), a->h2n()))
+						return true;
+					if (dequal(b->h2n(), a->h2n()))
+					{
+						if (dgreater(b->h3n(), a->h3n()))
+							return true;
+						if (dequal(b->h3n(), a->h3n()))
+						{
+							if (dgreater(b->gn_unit(), a->gn_unit()))
+								return true;
+						}
+					}
+				}
+				return false;
+			}
+		};
+
+		template <typename Node>
 		class Node_Comparer_2H
 		{
 		public:
