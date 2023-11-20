@@ -315,7 +315,8 @@ void BFWS::solve()
 	{
 		std::cout << "Starting search with BFCS-1..." << std::endl;
 
-		BFCS_1 bfs_engine(search_prob, m_verbose);
+		BFCS_1_p bfs_engine(search_prob, m_verbose);
+		
 
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);

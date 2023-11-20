@@ -48,7 +48,8 @@ namespace aptk
                 return (a == std::numeric_limits<T>::max() ? std::numeric_limits<T>::max() : (b == std::numeric_limits<T>::max() ? std::numeric_limits<T>::max() : a + b));
         }
 
-#define THRESHOLD 1e-04
+// #define THRESHOLD 1e-04
+#define THRESHOLD 1e-10
 
         inline bool dless(float f1, float f2)
         {

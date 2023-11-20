@@ -37,6 +37,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <deque>
 #include <algorithm>
 #include <math.h>
+#include <cmath>
 
 namespace aptk
 {
@@ -360,6 +361,10 @@ namespace aptk
 
                 unsigned n_combinations = aptk::unrolled_pow(fl.size(), m_arity); 
 
+				float m = 0;
+				int num_goal_fl = m_strips_model.goal().size();
+				int partition_val = num_goal_fl - (n->partition() / 1000);
+				// int partition_counts = m_total_count_map[n->partition()];
                 for (unsigned idx = 0; idx < n_combinations; idx++)
                 {
                     /**
@@ -390,8 +395,18 @@ namespace aptk
 					// double l = (-1*(float)tuple_count) / (m_num_fluents*m_num_fluents);
 					// metric_value -= ( 0.9*m + 0.1*l );
 
-					metric_value -= (float)1/tuple_count;
+					// metric_value -= (float)1/tuple_count;
 
+					// metric_value -= sqrt( ( (float)m_total_count / (float)tuple_count ) );
+					// metric_value -= sqrt( ( log((float)m_total_count) / (float)tuple_count ) );
+					
+					// m = -sqrt( ( log( (float)m_total_count ) / (float)tuple_count ) );
+					
+					m = -sqrt( ((float)partition_val+1) / (float)tuple_count );
+
+					// m = -sqrt(( log((float)partition_counts) / (float)tuple_count));
+					if (m < metric_value)
+						metric_value = m;
 					// metric_value -= log(((float)tuple_count + 1)/((float)m_total_count + 1)) - log(((float)tuple_count)/((float)m_total_count));
 
 					// unsigned total_count = 	m_total_count_map[n->partition()];
@@ -604,7 +619,7 @@ namespace aptk
 			bool m_verbose;
 			bool m_rp_fl_only;
 			int m_total_count;
-			// std::unordered_map<unsigned, unsigned> m_total_count_map;
+			std::unordered_map<unsigned, unsigned> m_total_count_map;
 		};
 
 	}

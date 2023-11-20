@@ -131,7 +131,7 @@ namespace aptk
 					compute_count_metric_only_1(n, a1_val);
 					h_val = a1_val + a2_val;
 				}
-
+				m_total_count++;
 				
 				update_counts(n);
 			}
@@ -887,7 +887,9 @@ namespace aptk
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
-                    metric_value -= (float)1 / (1 + tuple_count);
+                    // metric_value -= (float)1 / (1 + tuple_count);
+					metric_value -= sqrt( ( log((float)m_total_count) / (float)tuple_count ) );
+
                 }
 				if (!has_state)
 				{
@@ -1192,6 +1194,7 @@ namespace aptk
 			unsigned m_max_memory_size_MB;
 			bool m_verbose;
 			bool m_rp_fl_only;
+			unsigned m_total_count;
 		};
 
 	}
