@@ -109,6 +109,7 @@ using aptk::search::Pruned_Open_List;
 using aptk::search::Inverse_Node_Comparer_3H_gn_unit;
 using aptk::search::Pruned_Node_Comparer_3H_gn_unit;
 
+using aptk::search::Custom_Priority_Queue;
 /**
  * DEFINITIONS
  */
@@ -158,7 +159,7 @@ typedef FF_Relaxed_Plan_Heuristic<Fwd_Search_Problem, Alt_H_Max, unsigned> Class
 
 // NIR: Now we're ready to define the BFS algorithm we're going to use, H_Lmcount can be used only with goals,
 // or with landmarks computed from s0
-typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, BFS_Open_List_2h> k_BFWS;
+// typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, BFS_Open_List_2h> k_BFWS;
 typedef BFWS_2H_M<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, BFS_Open_List_2h> k_BFWS_M;
 typedef BFWS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h, H_Lmcount_Fwd, H_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd;
 
@@ -184,9 +185,16 @@ typedef Inverse_Node_Comparer_3H_gn_unit<Search_Node_3h> Inverse_Tie_Breaking_Al
 
 typedef Pruned_Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Inverse_Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Pruned_BFS_Open_List_3h;
 
+
+typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Testing_Open_List;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p;
-typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Pruned_BFS_Open_List_3h> BFCS_1_p_pruned;
+// typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Pruned_BFS_Open_List_3h> BFCS_1_p_pruned;
+
+typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Testing_Open_List> BFCS_1_p_pruned;
+// typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p_pruned;
+typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_2h_ignore_costs, Search_Node_2h> Testing_Open_List_2h;
+typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, Testing_Open_List_2h> k_BFWS;
 
 class BFWS : public STRIPS_Interface
 {

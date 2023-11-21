@@ -256,7 +256,7 @@ namespace aptk
 
 					//exp 1
 					int f = this->problem().task().num_fluents();
-					m_open.set_soft_limit(f*f);
+					// m_open.set_soft_limit(f*f);
 
 					//exp 2
 					// m_open.set_soft_limit(500000);
@@ -431,6 +431,7 @@ namespace aptk
 						// 	eval_count_based(m_root);
 					}
 					else
+					
 					{
 						eval(m_root);
 
@@ -776,7 +777,7 @@ namespace aptk
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
 						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
-							<< head->GC()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<" -- "<<m_open.get_th_h1()<<std::endl;
+							<< head->GC()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
 				}
 
 				virtual Search_Node *do_search()

@@ -32,6 +32,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <queue>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <ext_math.hxx>
+#include <random>
 
 namespace aptk
 {
@@ -110,6 +111,149 @@ namespace aptk
 
 				// return (dless(b->fn(), a->fn()) || (dequal(a->fn(), b->fn()) && dless(b->hn(), a->hn())));
 			}
+		};
+
+		template <class Node_Comp, class Node>
+		class Custom_Priority_Queue
+		{
+			public:
+				typedef Node Node_Type;
+			protected:
+				std::vector<Node*> m_heap;
+				int m_size_limit;
+				int m_last_layer_first_element;
+				int m_next;
+				Node_Comp m_node_comp;
+				// std::random_device m_rd;
+				std::mt19937::result_type seed = 42;
+    			std::mt19937 m_gen;
+
+			public:
+
+				Custom_Priority_Queue() : m_next(0), m_size_limit(0), m_gen(seed)
+				{
+					int max_depth = 17;
+					m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
+					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1
+				}
+				~Custom_Priority_Queue() {}
+
+				bool empty() const { return m_heap.empty(); }
+				std::size_t size() const { return m_heap.size(); }
+
+				void insert(Node *n)
+				{
+					if (size() < m_size_limit)
+					{
+						m_heap.push_back(n);
+						std::push_heap(m_heap.begin(), m_heap.end(), Node_Comp());
+					}
+					else
+					{
+						static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+						int r_i = distrib(m_gen)-1;
+						if (m_node_comp(m_heap[r_i], n))
+						{
+							// int r_diff = m_size_limit - r;
+							// if (n->h1n() < -0.9)
+							// {
+							// 	std::cout <<"==="<<std::endl;
+							// 	std::cout << top()->h1n()<<std::endl;
+							// }
+							Node* d = m_heap[r_i];
+							m_heap[r_i] = n;
+							std::push_heap(m_heap.begin(), m_heap.begin()+r_i+1, Node_Comp());
+							delete d;
+							// if (n->h1n() < -0.9)
+							// 	std::cout << top()->h1n()<<std::endl;
+						}
+						else
+							delete n;
+					}
+
+
+				}
+
+				Node* pop()
+				{
+					if (empty())
+						return NULL;
+					Node* r = m_heap.front();
+					std::pop_heap(m_heap.begin(), m_heap.end(), Node_Comp());
+					m_heap.pop_back();
+					return r;
+				}
+
+				Node* top()
+				{
+					return m_heap.front();
+				}
+
+			protected:
+				// void swap(Node* &a, Node* &b)
+				// {
+				// 	Node* temp = a;
+				// 	a = b;
+				// 	b = temp;
+				// }
+
+				// int parent_i(int curr_i)
+				// {
+				// 	assert(curr_i >= 0);
+				// 	return ( (curr_i+1) / 2 ) - 1;
+				// }
+
+				// void heapify_down(int i)
+				// {
+				// 	bool cont;
+				// 	if (!empty())
+				// 		cont = true;
+				// 	else
+				// 		cont = false;
+
+				// 	int best = i;
+				// 	while (cont)
+				// 	{
+				// 		int l_child = 2*i;
+				// 		int r_child = l_child + 1;
+
+				// 		if ( l_child <= m_heap.size() && m_node_comp(m_heap[best], m_heap[l_child]) )
+				// 			best = l_child;
+				// 		if ( r_child <= m_heap.size() && m_node_comp(m_heap[best], m_heap[r_child]) )
+				// 			best = r_child;
+
+				// 		if (best != i)
+				// 		{
+				// 			swap(m_heap[i], m_heap[best]);
+				// 			//heapify_down heap, best
+				// 			i = best;
+				// 		}
+				// 		else
+				// 			cont = false;
+				// 	}
+				// }
+
+				// void heapify_up(int i)
+				// {
+				// 	bool cont = true;
+
+				// 	while (cont)
+				// 	{
+				// 		int p = parent_i(i);
+				// 		if (p == -1)
+				// 			cont = false;
+				// 		else
+				// 		{
+				// 			if (m_node_comp(m_heap[p], m_heap[i]))
+				// 			{
+				// 				swap(m_heap[p], m_heap[i]);
+				// 				i = p;
+				// 			}
+				// 			else
+				// 				cont = false;
+				// 		}
+				// 	}
+				// }
 		};
 
 		template <class Node_Comp, class Inverse_Node_Comp, class Node>
