@@ -132,11 +132,17 @@ namespace aptk
 
 				Custom_Priority_Queue() : m_next(0), m_size_limit(0), m_gen(seed)
 				{
-					int max_depth = 17;
-					m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
-					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1
+					// int max_depth = 17;
+					// m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
+					// m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1
 				}
 				~Custom_Priority_Queue() {}
+
+				void init(int max_depth)
+				{
+					m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
+					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1					
+				}
 
 				bool empty() const { return m_heap.empty(); }
 				std::size_t size() const { return m_heap.size(); }

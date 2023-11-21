@@ -254,19 +254,10 @@ namespace aptk
 					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
-					//exp 1
-					int f = this->problem().task().num_fluents();
-					// m_open.set_soft_limit(f*f);
+					//max depth determined size of list (2^17 = 262143)					
+					int OPEN_MAX_DEPTH = 17;
+					m_open.init(OPEN_MAX_DEPTH);
 
-					//exp 2
-					// m_open.set_soft_limit(500000);
-
-					//exp 3
-					// m_open.set_soft_limit(1000000);
-
-					//exp 4
-					// m_open.set_soft_limit(2000000);
-					// m_open.set_alternating(50000, 100000);
 				}
 
 				virtual ~GS_BFCS_3H()
@@ -431,7 +422,7 @@ namespace aptk
 						// 	eval_count_based(m_root);
 					}
 					else
-					
+
 					{
 						eval(m_root);
 
