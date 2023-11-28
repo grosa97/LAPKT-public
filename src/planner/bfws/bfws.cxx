@@ -328,7 +328,7 @@ void BFWS::solve()
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
-		unsigned max_width = 1;
+		unsigned max_width = 2;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);

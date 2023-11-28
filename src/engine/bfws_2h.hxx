@@ -472,6 +472,8 @@ namespace aptk
 						{
 							std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
 						}
+						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
 				}
 
@@ -708,6 +710,9 @@ namespace aptk
 					}
 					inc_eval();
 					m_expanded_count_by_novelty[head->h1n() - 1]++;
+					if ( (m_exp_count % 10000) == 0 )
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<<" -- "
+							<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
 				}
 
 				virtual Search_Node *do_search()

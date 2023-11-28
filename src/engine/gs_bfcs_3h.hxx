@@ -290,10 +290,8 @@ namespace aptk
 				 * computing a relaxed plan, and marking the fluents
 				 * added by actions in relaxed plan as relevant
 				 */
-
 				void set_relplan(Search_Node *n, State *s)
 				{
-
 					std::vector<Action_Idx> po;
 					std::vector<Action_Idx> rel_plan;
 					unsigned h = 0;
@@ -756,12 +754,12 @@ namespace aptk
 							eval_relevant_fluents(n);
 
 						eval_count_based(n);
-						if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
-						{
-							inc_dead_end();
-							delete n;
-							continue;
-						}
+						// if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
+						// {
+						// 	inc_dead_end();
+						// 	delete n;
+						// 	continue;
+						// }
 
 // 						if (m_use_novelty)
 // 						{
@@ -794,9 +792,13 @@ namespace aptk
 					// m_expanded_count_by_novelty[head->h1n() - 1]++;
 
 					//DEBUG
-					// if ( (m_exp_count % 10000) == 0 )
-					// 	std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
-					// 		<< head->GC()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
+					if ( (m_exp_count % 10000) == 0 )
+					{
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+							<< head->GC()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+					}
+							
 				}
 
 				virtual Search_Node *do_search()
