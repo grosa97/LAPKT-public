@@ -49,7 +49,7 @@ namespace aptk
 		public:
 			Count_Novelty_Partition(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
 					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false),
-					m_use_threshold(true), m_count_threshold(3)
+					m_use_threshold(false), m_count_threshold(3)
 			{
 				set_arity(max_arity, 1);
 			}
@@ -245,7 +245,7 @@ namespace aptk
 
 			bool cover_compute_tuples(Search_Node *n, float &metric_value)
 			{
-				metric_value = 0;
+				metric_value = 9;
 				unsigned arity = 1;
 				assert(arity == 1);
 
@@ -278,7 +278,7 @@ namespace aptk
 				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
 
 
-				float m = 0;
+				float m;
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 					/**
@@ -346,14 +346,41 @@ namespace aptk
 						}
 					}
 
-					if (tuple_count == -1)
-						m = 0;
+					if (tuple_count == 0)
+						m = 1;
+					// else if (tuple_count == 1)
+					// 	m = 2;
+					else if (tuple_count <= 5)
+						m = 3;
+					else if (tuple_count <= 10)
+						m = 4;
+					// else if (tuple_count <= 20)
+					// 	m = 5;
+					else if (tuple_count <= 100)
+						m = 6;
+					else if (tuple_count <= 200)
+						m = 7;
+					else if (tuple_count <= 1000)
+						m = 8;
 					else
-					{
-						m = -(float)1 / (1 + tuple_count);
-						if (m < metric_value)
-							metric_value = m;
-					}
+						m = 9;
+					// else
+					// 	m = 8;
+
+					// m = -(float)1 / (1 + tuple_count);
+
+
+					if (m < metric_value)
+						metric_value = m;
+
+					// if (tuple_count == -1)
+					// 	m = 0;
+					// else
+					// {
+					// 	m = -(float)1 / (1 + tuple_count);
+					// 	if (m < metric_value)
+					// 		metric_value = m;
+					// }
 					
 				}
 				if (!has_state)
@@ -453,6 +480,8 @@ namespace aptk
 						else 
 							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
 					}
+
+					
 // 					if (!n_seen || is_better(n_seen, n))
 // 					{
 
@@ -494,7 +523,7 @@ namespace aptk
                 /*HARD CODED TO 1 FOR THIS METHOD*/
                 unsigned arity = 1;
 		
-                metric_value = 0;
+                metric_value = 9;
 
                 // const bool has_state = n->has_state();
 				const bool has_state = n_has_state(n);
@@ -550,13 +579,34 @@ namespace aptk
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
                     // metric_value -= (float)1 / (1 + tuple_count);
-					// m = -(float)1 / (1 + tuple_count);
 					// if (m < metric_value)
 					// 	metric_value = m;
 
-					m = -(float)1 / (1 + tuple_count);
+					if (tuple_count == 0)
+						m = 1;
+					else if (tuple_count == 1)
+						m = 2;
+					else if (tuple_count <= 5)
+						m = 3;
+					else if (tuple_count <= 10)
+						m = 4;
+					else if (tuple_count <= 20)
+						m = 5;
+					else if (tuple_count <= 100)
+						m = 6;
+					else if (tuple_count <= 200)
+						m = 7;
+					else if (tuple_count <= 1000)
+						m = 8;
+					// else
+					// 	m = 8;
+
+					// m = -(float)1 / (1 + tuple_count);
+
+
 					if (m < metric_value)
 						metric_value = m;
+
 
 					// m = (float)1 / (1 + tuple_count);
 					// if ( m > top_3_heap.top()) {
