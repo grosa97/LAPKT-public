@@ -48,9 +48,9 @@ namespace aptk
 		{
 		public:
 			Count_Novelty_Partition(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
-					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false)
+					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false),
+					m_use_threshold(true), m_count_threshold(3)
 			{
-
 				set_arity(max_arity, 1);
 			}
 
@@ -61,15 +61,19 @@ namespace aptk
 			void init()
 			{
 				typedef typename std::vector<std::vector<Search_Node *>>::iterator Node_Vec_Ptr_It;
-				typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
-				typedef typename std::vector<std::vector<int>>::iterator Int_Vec_Ptr_It;
+				// typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
+				// typedef typename std::vector<std::vector<int>>::iterator Int_Vec_Ptr_It;
+				typedef typename std::vector<std::unordered_map<int, int>>::iterator Int_Vec_Ptr_It;
 
 				// for (Node_Vec_Ptr_It it_p = m_nodes_tuples_by_partition.begin(); it_p != m_nodes_tuples_by_partition.end(); it_p++)
 				// 	for (Node_Ptr_It it = it_p->begin(); it != it_p->end(); it++)
 				// 		*it = NULL;
 
+				// for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition.begin(); it_p != m_tuple_counts_by_partition.end(); it_p++)
+				// 	std::fill(it_p->begin(), it_p->end(), 0);\
+
 				for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition.begin(); it_p != m_tuple_counts_by_partition.end(); it_p++)
-					std::fill(it_p->begin(), it_p->end(), 0);
+					*it_p = std::unordered_map<int, int>();
 			}
 
 			unsigned arity() const { return m_arity; }
@@ -105,14 +109,26 @@ namespace aptk
 				for (unsigned k = 0; k < m_arity; k++)
 					m_num_tuples *= m_num_fluents;
 
-				// m_nodes_tuples_by_partition.resize(partition_size + 1);
+				// // m_nodes_tuples_by_partition.resize(partition_size + 1);
+				// m_tuple_counts_by_partition.resize(partition_size + 1);
+
+				// for (unsigned i = 0; i < partition_size + 1; i++)
+				// {
+				// 	// m_nodes_tuples_by_partition[i].clear();
+				// 	m_tuple_counts_by_partition[i].resize(m_num_tuples, 0);
+				// }
+				
+
+				int oldSize = m_tuple_counts_by_partition.size();
+
+				// Resize the vector
 				m_tuple_counts_by_partition.resize(partition_size + 1);
 
-				for (unsigned i = 0; i < partition_size + 1; i++)
-				{
-					// m_nodes_tuples_by_partition[i].clear();
-					m_tuple_counts_by_partition[i].resize(m_num_tuples, 0);
+				// Add unordered maps at the new indices
+				for (int i = oldSize; i < (partition_size + 1); ++i) {
+					m_tuple_counts_by_partition[i] = std::unordered_map<int, int>();
 				}
+
 				
 			}
 
@@ -123,12 +139,14 @@ namespace aptk
 
 			virtual void eval(Search_Node *n, float &h_val)
 			{
-				if (m_rp_fl_only)
-					compute_count_metric_rp_fl_only(n, h_val);
-				else
-					compute_count_metric(n, h_val);
+				// if (m_rp_fl_only)
+				// 	compute_count_metric_rp_fl_only(n, h_val);
+				// else
+				// 	compute_count_metric(n, h_val);
 				
-				update_counts(n);
+				// update_counts(n);
+
+				cover_compute_tuples(n, h_val);
 			}
 
 			void eval_rp_fl(Search_Node *n, float &h_val)
@@ -160,15 +178,23 @@ namespace aptk
 				if (m_partition_size < n->partition())
 				{
 					// m_nodes_tuples_by_partition.resize(n->partition() + 1);
+					// m_tuple_counts_by_partition.resize(n->partition() + 1);
+
 					m_tuple_counts_by_partition.resize(n->partition() + 1);
+
 					m_partition_size = n->partition();
+
 				}
 
 				// if (m_nodes_tuples_by_partition[n->partition()].empty())
 				// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
 
+				// if (m_tuple_counts_by_partition[n->partition()].empty())
+				// 	m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
+
 				if (m_tuple_counts_by_partition[n->partition()].empty())
-					m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
+					m_tuple_counts_by_partition[n->partition()] = std::unordered_map<int, int>();
+				
 			}
 
 			/**
@@ -216,6 +242,131 @@ namespace aptk
 				return n->state() != NULL;
 			}
 
+
+			bool cover_compute_tuples(Search_Node *n, float &metric_value)
+			{
+				metric_value = 0;
+				unsigned arity = 1;
+				assert(arity == 1);
+
+				if (n->partition() == std::numeric_limits<unsigned>::max())
+					return false;
+
+				check_table_size(n);
+
+				const bool has_state = n->has_state();
+
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					
+					added.clear();
+					deleted.clear();
+					// temp_fv.clear();
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+				bool new_covers = false;
+
+				std::vector<unsigned> tuple(arity);
+
+				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
+
+
+				float m = 0;
+				for (unsigned idx = 0; idx < n_combinations; idx++)
+				{
+					/**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, fl, idx, arity);
+
+					/**
+					 * Check if tuple is covered
+					 */
+
+					unsigned tuple_idx;
+					int tuple_count;
+
+					if (arity == 1)
+					{
+						tuple_idx = tuple2idx(tuple, arity);
+					}
+					else if (arity == 2)
+					{
+						if (tuple[0] == tuple[1])
+							continue; // don't check singleton tuples
+						tuple_idx = tuple2idx_size2(tuple, arity);
+					}
+					else
+					{
+
+						// If all elements in the tuple are equal, ignore the tuple
+						if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+														{ return x != tuple[0]; }))
+							continue;
+						tuple_idx = tuple2idx(tuple, arity);
+					}
+
+					/**
+					 * new_tuple if
+					 * -> none was registered
+					 * OR
+					 * -> n better than old_n
+					 */
+
+					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+
+					/*increment tuple counts for partition*/
+					if(m_use_threshold) {
+						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+						{
+							if( !(m_tuple_counts_by_partition[n->partition()][tuple_idx] >= m_count_threshold) )
+								tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+							else
+								tuple_count = -1;
+						}
+						else {
+							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+							tuple_count = 0;
+						}
+					}
+					else{
+						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+							tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+						else 
+						{
+							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+							tuple_count = 0;
+						}
+					}
+
+					if (tuple_count == -1)
+						m = 0;
+					else
+					{
+						m = -(float)1 / (1 + tuple_count);
+						if (m < metric_value)
+							metric_value = m;
+					}
+					
+				}
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				return new_covers;
+			}
+
 			bool cover_tuples(Search_Node *n, unsigned arity)
 			{
 				assert(arity == 1);
@@ -229,8 +380,8 @@ namespace aptk
 					
 					added.clear();
 					deleted.clear();
-					temp_fv.clear();
-					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					// temp_fv.clear();
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
 					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
 				}
 				// if (!has_state)
@@ -287,8 +438,21 @@ namespace aptk
 					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
 
 					/*increment tuple counts for partition*/
-					m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
-
+					if(m_use_threshold) {
+						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+						{
+							if( !(m_tuple_counts_by_partition[n->partition()][tuple_idx] > m_count_threshold) )
+								m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+						}
+						else 
+							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+					}
+					else{
+						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+							m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+						else 
+							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+					}
 // 					if (!n_seen || is_better(n_seen, n))
 // 					{
 
@@ -311,7 +475,7 @@ namespace aptk
 				if (!has_state)
 				{
 					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
 				}
 				// if (!has_state)
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
@@ -341,8 +505,8 @@ namespace aptk
 					
 					added.clear();
 					deleted.clear();
-					temp_fv.clear();
-					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					// temp_fv.clear();
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
 					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
 				}
                 // if (!has_state)
@@ -376,7 +540,12 @@ namespace aptk
                     /*if arity = 1*/
                     tuple_idx = tuple2idx(tuple, m_arity);
 
-                    tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+					// tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+
+					if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+						tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+					else 
+						tuple_count = 0;
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
@@ -406,7 +575,7 @@ namespace aptk
 				if (!has_state)
 				{
 					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
 				}
                 // if (!has_state)
 				//     n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
@@ -436,8 +605,8 @@ namespace aptk
 				{
 					added.clear();
 					deleted.clear();
-					temp_fv.clear();
-					temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
+					// temp_fv.clear();
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
 					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
 				}
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
@@ -516,7 +685,7 @@ namespace aptk
 				if (!has_state)
 				{
 					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
 				}
 				counted.reset();
 			}
@@ -602,7 +771,8 @@ namespace aptk
 
 			const STRIPS_Problem &m_strips_model;
 			// std::vector<std::vector<Search_Node *>> m_nodes_tuples_by_partition;
-			std::vector<std::vector<int>> m_tuple_counts_by_partition;
+			// std::vector<std::vector<int>> m_tuple_counts_by_partition;
+			std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition;
 			unsigned m_arity;
 			unsigned long m_num_tuples;
 			unsigned m_num_fluents;
@@ -611,6 +781,9 @@ namespace aptk
 			unsigned m_partition_size;
 			bool m_verbose;
 			bool m_rp_fl_only;
+
+			bool m_use_threshold;
+			unsigned m_count_threshold;
 		};
 
 	}
