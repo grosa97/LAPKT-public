@@ -24,8 +24,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef __SINGLE_QUEUE_QUADRUPLE_HEURISTIC_GREEDY_BEST_FIRST_SEARCH__
-#define __SINGLE_QUEUE_QUADRUPLE_HEURISTIC_GREEDY_BEST_FIRST_SEARCH__
+#ifndef __SINGLE_QUEUE_QUADRUPLE_HEURISTIC_GREEDY_BEST_FIRST_COUNT_SEARCH__
+#define __SINGLE_QUEUE_QUADRUPLE_HEURISTIC_GREEDY_BEST_FIRST_COUNT_SEARCH__
 
 #include <search_prob.hxx>
 #include <resources_control.hxx>
@@ -42,7 +42,7 @@ namespace aptk
 	namespace search
 	{
 
-		namespace bfws_4h
+		namespace gs_bfcs_4h
 		{
 
 			template <typename Search_Model, typename State>
@@ -273,7 +273,7 @@ namespace aptk
 			};
 
 			template <typename Search_Model, typename First_Heuristic, typename Second_Heuristic, typename Third_Heuristic, typename Fourth_Heuristic, typename Open_List_Type>
-			class BFWS_4H
+			class GS_BFCS_4H
 			{
 
 			public:
@@ -282,7 +282,7 @@ namespace aptk
 				typedef Closed_List<Search_Node> Closed_List_Type;
 				typedef aptk::agnostic::Landmarks_Graph_Manager<Search_Model> Landmarks_Graph_Manager;
 
-				BFWS_4H(const Search_Model &search_problem, bool verbose)
+				GS_BFCS_4H(const Search_Model &search_problem, bool verbose)
 						: m_problem(search_problem), m_exp_count(0), m_gen_count(0), m_pruned_B_count(0),
 							m_dead_end_count(0), m_open_repl_count(0), m_B(infty), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_h4n(no_such_index), m_verbose(verbose), m_action2gen_nodes(search_problem.num_actions()), m_use_novelty(true)
 				{
@@ -292,7 +292,7 @@ namespace aptk
 					m_fourth_h = new Fourth_Heuristic(search_problem);
 				}
 
-				virtual ~BFWS_4H()
+				virtual ~GS_BFCS_4H()
 				{
 					for (typename Closed_List_Type::iterator i = m_closed.begin();
 							 i != m_closed.end(); i++)
@@ -639,6 +639,8 @@ namespace aptk
 							eval_novel(n);
 
 							// n->h1n() = (2 * ( ( n->h1n() - 1 )  ) ) + 1;
+							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							// n->h3n() = (2 * (n->h3n() - 1)) + 1;
 							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
 							n->h3n() = (2 * (n->h3n() - 1)) + 1;
 						}
@@ -662,6 +664,11 @@ namespace aptk
 						open_node(n);
 					}
 					inc_eval();
+
+					//DEBUG
+					if ( (m_exp_count % 10000) == 0 )
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+							<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
 				}
 
 				virtual Search_Node *do_search()
@@ -780,4 +787,4 @@ namespace aptk
 
 }
 
-#endif // bfws_4h.hxx
+#endif // gs_bfcs_4h.hxx

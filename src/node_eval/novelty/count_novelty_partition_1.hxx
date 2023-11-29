@@ -25,8 +25,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef __COUNT_NOVELTY_PARTITION__
-#define __COUNT_NOVELTY_PARTITION__
+#ifndef __COUNT_NOVELTY_PARTITION_1__
+#define __COUNT_NOVELTY_PARTITION_1__
 
 #include <search_prob.hxx>
 #include <heuristic.hxx>
@@ -44,17 +44,17 @@ namespace aptk
 	{
 
 		template <typename Search_Model, typename Search_Node>
-		class Count_Novelty_Partition : public Heuristic<State>
+		class Count_Novelty_Partition_1 : public Heuristic<State>
 		{
 		public:
-			Count_Novelty_Partition(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
+			Count_Novelty_Partition_1(const Search_Model &prob, unsigned max_arity = 1, const unsigned max_MB = 2048)
 					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_always_full_state(false), m_partition_size(0), m_verbose(true), m_rp_fl_only(false),
 					m_use_threshold(false), m_count_threshold(3)
 			{
 				set_arity(max_arity, 1);
 			}
 
-			virtual ~Count_Novelty_Partition()
+			virtual ~Count_Novelty_Partition_1()
 			{
 			}
 
@@ -137,7 +137,7 @@ namespace aptk
 				
 			// }
 
-			virtual void eval(Search_Node *n, float &h_val)
+			virtual void eval(Search_Node *n, unsigned &h_val)
 			{
 				// if (m_rp_fl_only)
 				// 	compute_count_metric_rp_fl_only(n, h_val);
@@ -243,7 +243,7 @@ namespace aptk
 			}
 
 
-			bool cover_compute_tuples(Search_Node *n, float &metric_value)
+			bool cover_compute_tuples(Search_Node *n, unsigned &metric_value)
 			{
 				metric_value = 9;
 				unsigned arity = 1;
@@ -277,7 +277,7 @@ namespace aptk
 				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
 
 
-				float m;
+				unsigned m;
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 					/**
@@ -345,24 +345,56 @@ namespace aptk
 						}
 					}
 
+
+					// if (tuple_count == 0)
+					// 	m = 1;
+					// // else if (tuple_count == 1)
+					// // 	m = 2;
+					// // else if (tuple_count <= 5)
+					// // 	m = 2;
+					// else if (tuple_count <= 10)
+					// 	m = 2;
+					// // else if (tuple_count <= 20)
+					// // 	m = 5;
+					// else if (tuple_count <= 100)
+					// 	m = 3;
+					// // else if (tuple_count <= 200)
+					// // 	m = 5;
+					// // else if (tuple_count <= 1000)
+					// // 	m = 6;
+					// else
+					// 	m = 4;
+
 					if (tuple_count == 0)
 						m = 1;
-					// else if (tuple_count == 1)
-					// 	m = 2;
-					else if (tuple_count <= 5)
-						m = 3;
 					else if (tuple_count <= 10)
-						m = 4;
-					// else if (tuple_count <= 20)
-					// 	m = 5;
+						m = 2;
 					else if (tuple_count <= 100)
-						m = 6;
-					else if (tuple_count <= 200)
-						m = 7;
-					else if (tuple_count <= 1000)
-						m = 8;
+						m = 3;
+					// else if (tuple_count <= 1000)
+					// 	m = 5;
 					else
-						m = 9;
+						m = 5;
+
+
+					// if (tuple_count == 0)
+					// 	m = 1;
+					// // else if (tuple_count == 1)
+					// // 	m = 2;
+					// else if (tuple_count <= 5)
+					// 	m = 2;
+					// else if (tuple_count <= 10)
+					// 	m = 3;
+					// // else if (tuple_count <= 20)
+					// // 	m = 5;
+					// else if (tuple_count <= 100)
+					// 	m = 5;
+					// else if (tuple_count <= 200)
+					// 	m = 9;
+					// else if (tuple_count <= 1000)
+					// 	m = 17;
+					// else
+					// 	m = 33;
 					// else
 					// 	m = 8;
 
@@ -839,4 +871,4 @@ namespace aptk
 
 }
 
-#endif // count_novelty_partition.hxx
+#endif // count_novelty_partition_1.hxx
