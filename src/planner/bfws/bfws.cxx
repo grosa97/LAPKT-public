@@ -710,8 +710,11 @@ void BFWS::solve()
 		std::cout << "Landmarks found: " << graph1.num_landmarks() << std::endl;
 		std::cout << "Landmarks_Edges found: " << graph1.num_landmarks_and_edges() << std::endl;
 
-		bfs_engine.set_arity(1, graph1.num_landmarks_and_edges());
-		bfs_engine.set_arity_2(1, 1);
+		// bfs_engine.set_arity(1, graph1.num_landmarks_and_edges());
+		// bfs_engine.set_arity_2(1, 1);
+
+		bfs_engine.set_arity(m_max_novelty, graph1.num_landmarks_and_edges());
+		bfs_engine.set_arity_2(m_max_novelty, 1);
 
 		m_found_plan = false;
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);

@@ -479,7 +479,8 @@ namespace aptk
 				void eval_novel(Search_Node *candidate)
 				{
 					candidate->goals_unachieved() = candidate->h2n();
-					candidate->partition() = candidate->goals_unachieved()*10000 + candidate->h4n();
+					// candidate->partition() = candidate->goals_unachieved()*10000 + candidate->h4n();
+					candidate->partition() = candidate->goals_unachieved();
 					if (candidate->goals_unachieved() == 0)
 					{
 						candidate->h1n() = 1;
@@ -638,8 +639,8 @@ namespace aptk
 							eval(n, false);
 							eval_novel(n);
 
-							n->h1n() = (2 * ( ( n->h1n() - 1 )  ) ) + 1;
-							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							// n->h1n() = (2 * ( ( n->h1n() - 1 )  ) ) + 1;
+							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
 							// n->h3n() = (2 * (n->h3n() - 1)) + 1;
 							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
 							n->h3n() = (2 * (n->h3n() - 1)) + 1;
@@ -652,8 +653,8 @@ namespace aptk
 							eval(n, false);
 							eval_novel(n);
 
-							n->h1n() = (2 * ( n->h1n() - 1 ) ) + 2;
-							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
+							// n->h1n() = (2 * ( n->h1n() - 1 ) ) + 2;
+							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
 							n->h3n() = (2 * (n->h3n() - 1)) + 2;
 						}
 

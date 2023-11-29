@@ -220,14 +220,11 @@ namespace aptk
 					if (m_verbose)
 						std::cout << "search state node: " << &(n) << std::endl;
 #endif
-
 					bool new_covers;
-
 					if (n->parent() == nullptr || m_always_full_state)
 						new_covers = cover_tuples(n, i);
 					else
 						new_covers = (n->partition() == n->parent()->partition()) ? cover_tuples_op(n, i) : cover_tuples(n, i);
-
 #ifdef DEBUG
 					if (m_verbose && !new_covers)
 						std::cout << "\t \t PRUNE! search node: " << &(n) << std::endl;
