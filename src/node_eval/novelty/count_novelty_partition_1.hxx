@@ -175,25 +175,48 @@ namespace aptk
 				// if (temp < -0.3)
 				// 	h_val += temp;
 
+				// if (m_1 == 0)
+				// 	h_val = 1;
+				// // else if (tuple_count == 1)
+				// // 	m = 2;
+				// // else if (m_2 == 0 && m_1 <= 2)
+				// // 	h_val = 2;
+				// else if (m_2 == 0)
+				// 	h_val = 2;
+				// else if (m_2 == 5)
+				// 	h_val = 3;
+				// // else if (tuple_count <= 20)
+				// // 	m = 5;
+				// // else if (m_2 <= 5)
+				// // 	h_val= 5;
+				// else if (m_2 <= 10)
+				// 	h_val = 5;
+				// else if (m_2 <= 100)
+				// 	h_val = 9;
+				// else if (m_2 <= 200)
+				// 	h_val = 17;
+				// else
+				// 	h_val = 33;
+					// h_val = 33;
+
 				if (m_1 == 0)
 					h_val = 1;
 				// else if (tuple_count == 1)
 				// 	m = 2;
-				else if (m_2 == 0 && m_1 <= 2)
-					h_val = 2;
+				// else if (m_2 == 0 && m_1 <= 2)
+				// 	h_val = 2;
 				else if (m_2 == 0)
-					h_val = 3;
+					h_val = 2;
 				// else if (tuple_count <= 20)
 				// 	m = 5;
 				// else if (m_2 <= 5)
 				// 	h_val= 5;
-				// else if (m_2 <= 10)
-				// 	h_val = 9;
-				// else if (m_2 <= 100)
-				// 	h_val = 17;
-				else
+				else if (m_2 <= 9)
+					h_val = 3;
+				else if (m_2 <= 99)
 					h_val = 5;
-					// h_val = 33;
+				else
+					h_val = 9;
 
 
 			}

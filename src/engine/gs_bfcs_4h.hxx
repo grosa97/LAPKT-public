@@ -58,7 +58,8 @@ namespace aptk
 				typedef typename std::vector<Node<Search_Model, State> *>::iterator Node_Vec_Ptr_It;
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
-						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_f(0), m_h1(0), m_h2(0), m_h3(0), m_h4(0), m_partition(0), m_partition2(0), m_seen(false), m_helpful(false), m_land_consumed(NULL), m_land_unconsumed(NULL)
+						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_f(0), m_h1(0), m_h2(0), m_h3(0), m_h4(0), m_partition(0), m_partition2(0), m_seen(false), m_helpful(false), m_land_consumed(NULL), m_land_unconsumed(NULL),
+						m_m1(0), m_m2(0)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1.0f : 0.0f);
@@ -270,6 +271,9 @@ namespace aptk
 				size_t m_hash;
 				Bool_Vec_Ptr *m_land_consumed;
 				Bool_Vec_Ptr *m_land_unconsumed;
+
+				unsigned m_m1;
+				unsigned m_m2;
 			};
 
 			template <typename Search_Model, typename First_Heuristic, typename Second_Heuristic, typename Third_Heuristic, typename Fourth_Heuristic, typename Open_List_Type>
@@ -489,6 +493,8 @@ namespace aptk
 					{
 						m_first_h->eval(candidate, candidate->h1n());
 					}
+
+					candidate->m_m1 = candidate->h1n();
 				}
 
 				void eval_po(Search_Node *candidate)
@@ -512,6 +518,7 @@ namespace aptk
 					// candidate->partition2() = (1000 * candidate->h2n() )+ candidate->h4n(); //m_first_h->goal_size()
 
 					m_third_h->eval(candidate, candidate->h3n());
+					candidate->m_m2 = candidate->h3n();
 				}
 
 				bool is_closed(Search_Node *n)
@@ -639,11 +646,17 @@ namespace aptk
 							eval(n, false);
 							eval_novel(n);
 
+							if (n->h1n() <= n->h3n())
+								n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							else
+								n->h1n() = (2 * (10*(n->h3n() - 1) + (n->h1n() - 1))) + 1;
+							
 							// n->h1n() = (2 * ( ( n->h1n() - 1 )  ) ) + 1;
-							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
-							// n->h3n() = (2 * (n->h3n() - 1)) + 1;
 							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
-							n->h3n() = (2 * (n->h3n() - 1)) + 1;
+							// // n->h3n() = (2 * (n->h3n() - 1)) + 1;
+							// // n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							// n->h3n() = (2 * (n->h3n() - 1)) + 1;
+							
 						}
 						else
 						{
@@ -654,22 +667,36 @@ namespace aptk
 							eval_novel(n);
 
 							// n->h1n() = (2 * ( n->h1n() - 1 ) ) + 2;
-							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
-							n->h3n() = (2 * (n->h3n() - 1)) + 2;
+							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
+							// n->h3n() = (2 * (n->h3n() - 1)) + 2;
+
+							if (n->h1n() <= n->h3n())
+								n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							else
+								n->h1n() = (2 * (10*(n->h3n() - 1) + (n->h1n() - 1))) + 1;
+
 						}
+						// if (n->h1n() % 2 == 0 && n->h3n() % 2 == 1)
+						// 	std::cout <<"AAAA" <<std::endl;
+						// if (head->h1n() % 2 == 0 && head->h3n() % 2 == 1)
+						// 	std::cout <<"Abbb" <<std::endl;
 
 #ifdef DEBUG
 						if (m_verbose)
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 						open_node(n);
+					//DEBUG
+					if ( (m_gen_count % 10000) == 0 )
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+							<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_exp_count<<" -- " << m_gen_count<< " -- "<< m_open.size()<<std::endl;
 					}
 					inc_eval();
 
-					//DEBUG
-					if ( (m_exp_count % 10000) == 0 )
-						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
-							<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
+					// //DEBUG
+					// if ( (m_gen_count % 10000) == 0 )
+					// 	std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+					// 		<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
 				}
 
 				virtual Search_Node *do_search()
@@ -678,6 +705,8 @@ namespace aptk
 					int counter = 0;
 					while (head)
 					{
+						// if (head->h1n() % 2 == 0 && head->h3n() % 2 == 1)
+						// 	std::cout <<"Abbb" <<std::endl;
 						if (head->gn() >= bound())
 						{
 							inc_pruned_bound();
@@ -713,7 +742,7 @@ namespace aptk
 						{
 							// eval( head, true );
 							eval_po(head);
-							eval_po_novel(head);
+							// eval_po_novel(head);
 							if (head->h4n() == no_such_index)
 							{
 								close(head);

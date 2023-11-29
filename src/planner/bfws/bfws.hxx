@@ -203,9 +203,14 @@ typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H
 typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_2h_ignore_costs, Search_Node_2h> Testing_Open_List_2h;
 // typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, Testing_Open_List_2h> k_BFWS;
 
-typedef Count_Novelty_Partition_1<Fwd_Search_Problem, Search_Node_4h> Count_Novel_Fwd_4h;
-typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h> Count_Novel_2_Fwd_4h;
-typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h> BFCS_w_hlm_hadd;
+
+typedef aptk::search::gs_bfcs_4h::Node<Fwd_Search_Problem, aptk::State> Search_Node_4h_c;
+typedef Count_Novelty_Partition_1<Fwd_Search_Problem, Search_Node_4h_c> Count_Novel_Fwd_4h;
+typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> Count_Novel_2_Fwd_4h;
+
+typedef Node_Comparer_4H< Search_Node_4h_c> Tie_Breaking_Algorithm_4h_c;
+typedef Open_List<Tie_Breaking_Algorithm_4h_c, Search_Node_4h_c> BFS_Open_List_4h_c;
+typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
 
 
 class BFWS : public STRIPS_Interface
