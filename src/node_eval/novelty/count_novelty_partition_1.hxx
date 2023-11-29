@@ -365,36 +365,36 @@ namespace aptk
 					// else
 					// 	m = 4;
 
-					if (tuple_count == 0)
-						m = 1;
-					else if (tuple_count <= 10)
-						m = 2;
-					else if (tuple_count <= 100)
-						m = 3;
-					// else if (tuple_count <= 1000)
-					// 	m = 5;
-					else
-						m = 5;
-
-
 					// if (tuple_count == 0)
 					// 	m = 1;
-					// // else if (tuple_count == 1)
-					// // 	m = 2;
-					// else if (tuple_count <= 5)
-					// 	m = 2;
 					// else if (tuple_count <= 10)
-					// 	m = 3;
-					// // else if (tuple_count <= 20)
-					// // 	m = 5;
+					// 	m = 2;
 					// else if (tuple_count <= 100)
-					// 	m = 5;
-					// else if (tuple_count <= 200)
-					// 	m = 9;
-					// else if (tuple_count <= 1000)
-					// 	m = 17;
+					// 	m = 3;
+					// // else if (tuple_count <= 1000)
+					// // 	m = 5;
 					// else
-					// 	m = 33;
+					// 	m = 5;
+
+
+					if (tuple_count == 0)
+						m = 1;
+					// else if (tuple_count == 1)
+					// 	m = 2;
+					else if (tuple_count <= 5)
+						m = 2;
+					else if (tuple_count <= 10)
+						m = 3;
+					// else if (tuple_count <= 20)
+					// 	m = 5;
+					else if (tuple_count <= 100)
+						m = 5;
+					else if (tuple_count <= 200)
+						m = 9;
+					else if (tuple_count <= 1000)
+						m = 17;
+					else
+						m = 33;
 					// else
 					// 	m = 8;
 
