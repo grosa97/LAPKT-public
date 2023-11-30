@@ -175,25 +175,25 @@ namespace aptk
 			void check_table_size(Search_Node *n)
 			{
 
-				if (m_partition_size < n->partition())
+				if (m_partition_size < n->partition2())
 				{
-					// m_nodes_tuples_by_partition.resize(n->partition() + 1);
-					// m_tuple_counts_by_partition.resize(n->partition() + 1);
+					// m_nodes_tuples_by_partition.resize(n->partition2() + 1);
+					// m_tuple_counts_by_partition.resize(n->partition2() + 1);
 
-					m_tuple_counts_by_partition.resize(n->partition() + 1);
+					m_tuple_counts_by_partition.resize(n->partition2() + 1);
 
-					m_partition_size = n->partition();
+					m_partition_size = n->partition2();
 
 				}
 
-				// if (m_nodes_tuples_by_partition[n->partition()].empty())
-				// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
+				// if (m_nodes_tuples_by_partition[n->partition2()].empty())
+				// 	m_nodes_tuples_by_partition[n->partition2()].resize(m_num_tuples, NULL);
 
-				// if (m_tuple_counts_by_partition[n->partition()].empty())
-				// 	m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
+				// if (m_tuple_counts_by_partition[n->partition2()].empty())
+				// 	m_tuple_counts_by_partition[n->partition2()].resize(m_num_tuples, 0);
 
-				if (m_tuple_counts_by_partition[n->partition()].empty())
-					m_tuple_counts_by_partition[n->partition()] = std::unordered_map<int, int>();
+				if (m_tuple_counts_by_partition[n->partition2()].empty())
+					m_tuple_counts_by_partition[n->partition2()] = std::unordered_map<int, int>();
 				
 			}
 
@@ -207,7 +207,7 @@ namespace aptk
 
 				novelty = (float)m_arity + 1;
 
-				if (n->partition() == std::numeric_limits<unsigned>::max())
+				if (n->partition2() == std::numeric_limits<unsigned>::max())
 					return;
 
 				check_table_size(n);
@@ -224,7 +224,7 @@ namespace aptk
 					// if (n->parent() == nullptr || m_always_full_state)
 					// 	new_covers = cover_tuples(n, i);
 					// else
-					// 	new_covers = (n->partition() == n->parent()->partition()) ? cover_tuples_op(n, i) : cover_tuples(n, i);
+					// 	new_covers = (n->partition2() == n->parent()->partition2()) ? cover_tuples_op(n, i) : cover_tuples(n, i);
 
 					new_covers = cover_tuples(n, i);
 
@@ -249,7 +249,7 @@ namespace aptk
 				unsigned arity = 1;
 				assert(arity == 1);
 
-				if (n->partition() == std::numeric_limits<unsigned>::max())
+				if (n->partition2() == std::numeric_limits<unsigned>::max())
 					return false;
 
 				check_table_size(n);
@@ -319,28 +319,28 @@ namespace aptk
 					 * -> n better than old_n
 					 */
 
-					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+					// auto &n_seen = m_nodes_tuples_by_partition[n->partition2()][tuple_idx];
 
 					/*increment tuple counts for partition*/
 					if(m_use_threshold) {
-						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+						if (m_tuple_counts_by_partition[n->partition2()].count(tuple_idx) > 0)
 						{
-							if( !(m_tuple_counts_by_partition[n->partition()][tuple_idx] >= m_count_threshold) )
-								tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+							if( !(m_tuple_counts_by_partition[n->partition2()][tuple_idx] >= m_count_threshold) )
+								tuple_count = m_tuple_counts_by_partition[n->partition2()][tuple_idx]++;
 							else
 								tuple_count = -1;
 						}
 						else {
-							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+							m_tuple_counts_by_partition[n->partition2()][tuple_idx] = 1;
 							tuple_count = 0;
 						}
 					}
 					else{
-						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
-							tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+						if (m_tuple_counts_by_partition[n->partition2()].count(tuple_idx) > 0)
+							tuple_count = m_tuple_counts_by_partition[n->partition2()][tuple_idx]++;
 						else 
 						{
-							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+							m_tuple_counts_by_partition[n->partition2()][tuple_idx] = 1;
 							tuple_count = 0;
 						}
 					}
@@ -491,23 +491,23 @@ namespace aptk
 					 * -> n better than old_n
 					 */
 
-					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+					// auto &n_seen = m_nodes_tuples_by_partition[n->partition2()][tuple_idx];
 
 					/*increment tuple counts for partition*/
 					if(m_use_threshold) {
-						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
+						if (m_tuple_counts_by_partition[n->partition2()].count(tuple_idx) > 0)
 						{
-							if( !(m_tuple_counts_by_partition[n->partition()][tuple_idx] > m_count_threshold) )
-								m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+							if( !(m_tuple_counts_by_partition[n->partition2()][tuple_idx] > m_count_threshold) )
+								m_tuple_counts_by_partition[n->partition2()][tuple_idx]++;
 						}
 						else 
-							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+							m_tuple_counts_by_partition[n->partition2()][tuple_idx] = 1;
 					}
 					else{
-						if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
-							m_tuple_counts_by_partition[n->partition()][tuple_idx]++;
+						if (m_tuple_counts_by_partition[n->partition2()].count(tuple_idx) > 0)
+							m_tuple_counts_by_partition[n->partition2()][tuple_idx]++;
 						else 
-							m_tuple_counts_by_partition[n->partition()][tuple_idx] = 1;
+							m_tuple_counts_by_partition[n->partition2()][tuple_idx] = 1;
 					}
 
 					
@@ -544,7 +544,7 @@ namespace aptk
 			 /* currently designed for width=1, behavior for w>1 undefined*/
             void compute_count_metric(Search_Node *n, float &metric_value) {
 
-				if (n->partition() == std::numeric_limits<unsigned>::max())
+				if (n->partition2() == std::numeric_limits<unsigned>::max())
 					return;
 
 				check_table_size(n);
@@ -598,10 +598,10 @@ namespace aptk
                     /*if arity = 1*/
                     tuple_idx = tuple2idx(tuple, m_arity);
 
-					// tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+					// tuple_count = m_tuple_counts_by_partition[n->partition2()][tuple_idx];
 
-					if (m_tuple_counts_by_partition[n->partition()].count(tuple_idx) > 0)
-						tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+					if (m_tuple_counts_by_partition[n->partition2()].count(tuple_idx) > 0)
+						tuple_count = m_tuple_counts_by_partition[n->partition2()][tuple_idx];
 					else 
 						tuple_count = 0;
 
@@ -655,7 +655,7 @@ namespace aptk
 
 			void compute_count_metric_rp_fl_only(Search_Node *n, float &metric_value) {
 
-				if (n->partition() == std::numeric_limits<unsigned>::max())
+				if (n->partition2() == std::numeric_limits<unsigned>::max())
 					return;
 				
 				check_table_size(n);
@@ -718,7 +718,7 @@ namespace aptk
                     /*if arity = 1*/
                     tuple_idx = tuple2idx(tuple, m_arity);
 
-                    tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+                    tuple_count = m_tuple_counts_by_partition[n->partition2()][tuple_idx];
 
 					// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/
@@ -747,7 +747,7 @@ namespace aptk
                 //     /*if arity = 1*/
                 //     tuple_idx = tuple2idx(tuple, m_arity);
 
-                //     tuple_count = m_tuple_counts_by_partition[n->partition()][tuple_idx];
+                //     tuple_count = m_tuple_counts_by_partition[n->partition2()][tuple_idx];
 
 				// 	// float debug_val = (float)1 / (1 + tuple_count); //DEBUG
                 //     /*subtract to get negative of novelty metric, such that lower value means greater surprise*/

@@ -662,13 +662,18 @@ namespace aptk
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 						open_node(n);
+					//DEBUG
+					if ( (m_gen_count % 10000) == 0 )
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+							<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_exp_count<<" -- " << m_gen_count<< " -- "<< m_open.size()<<std::endl;
+
 					}
 					inc_eval();
 
-					//DEBUG
-					if ( (m_exp_count % 10000) == 0 )
-						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
-							<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
+					// //DEBUG
+					// if ( (m_exp_count % 10000) == 0 )
+					// 	std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+					// 		<< head->h4n()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
 				}
 
 				virtual Search_Node *do_search()
@@ -712,7 +717,7 @@ namespace aptk
 						{
 							// eval( head, true );
 							eval_po(head);
-							eval_po_novel(head);
+							// eval_po_novel(head);
 							if (head->h4n() == no_such_index)
 							{
 								close(head);
