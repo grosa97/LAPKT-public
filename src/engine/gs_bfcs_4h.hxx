@@ -646,13 +646,13 @@ namespace aptk
 							eval(n, false);
 							eval_novel(n);
 
-							if (n->h1n() <= n->h3n())
-								n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 1;
-							else
-								n->h1n() = (2 * (10*(n->h3n() - 1) + (n->h1n() - 1))) + 1;
+							// if (n->h1n() <= n->h3n())
+							// 	n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							// else
+							// 	n->h1n() = (2 * (10*(n->h3n() - 1) + (n->h1n() - 1))) + 1;
 							
 							// n->h1n() = (2 * ( ( n->h1n() - 1 )  ) ) + 1;
-							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
+							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
 							// // n->h3n() = (2 * (n->h3n() - 1)) + 1;
 							// // n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
 							n->h3n() = (2 * (n->h3n() - 1)) + 1;
@@ -667,13 +667,13 @@ namespace aptk
 							eval_novel(n);
 
 							// n->h1n() = (2 * ( n->h1n() - 1 ) ) + 2;
-							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
+							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
 							// n->h3n() = (2 * (n->h3n() - 1)) + 2;
 
-							if (n->h1n() <= n->h3n())
-								n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 2;
-							else
-								n->h1n() = (2 * (10*(n->h3n() - 1) + (n->h1n() - 1))) + 2;
+							// if (n->h1n() <= n->h3n())
+							// 	n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 2;
+							// else
+							// 	n->h1n() = (2 * (10*(n->h3n() - 1) + (n->h1n() - 1))) + 2;
 
 							n->h3n() = (2 * (n->h3n() - 1)) + 2;
 
@@ -744,7 +744,7 @@ namespace aptk
 						{
 							// eval( head, true );
 							eval_po(head);
-							// eval_po_novel(head);
+							eval_po_novel(head);
 							if (head->h4n() == no_such_index)
 							{
 								close(head);

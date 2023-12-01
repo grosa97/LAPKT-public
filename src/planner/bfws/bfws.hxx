@@ -168,7 +168,7 @@ typedef FF_Relaxed_Plan_Heuristic<Fwd_Search_Problem, Alt_H_Max, unsigned> Class
 // or with landmarks computed from s0
 typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, BFS_Open_List_2h> k_BFWS;
 typedef BFWS_2H_M<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, BFS_Open_List_2h> k_BFWS_M;
-typedef BFWS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h, H_Lmcount_Fwd, H_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd;
+// typedef BFWS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h, H_Lmcount_Fwd, H_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd;
 
 // NIR: Consistency Search variants
 typedef BFWS_2H_Consistency<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, BFS_Open_List_2h> k_BFWS_Consistency;
@@ -210,7 +210,20 @@ typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> Count_No
 
 typedef Node_Comparer_4H< Search_Node_4h_c> Tie_Breaking_Algorithm_4h_c;
 typedef Open_List<Tie_Breaking_Algorithm_4h_c, Search_Node_4h_c> BFS_Open_List_4h_c;
-typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
+// typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
+
+typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_Fwd_4h_Test;
+typedef Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_2_Fwd_4h_Test;
+
+typedef GS_BFCS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h_Test, H_Lmcount_Fwd, H_Novel_2_Fwd_4h_Test, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd_test;
+
+
+
+typedef Count_Novelty_Partition_1<Fwd_Search_Problem, Search_Node_4h> Count_Novel_Fwd_4h_test;
+typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h> Count_Novel_2_Fwd_4h_test;
+typedef BFWS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h_test, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h_test, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd_test;
+
+
 
 
 class BFWS : public STRIPS_Interface
