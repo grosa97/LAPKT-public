@@ -55,7 +55,8 @@
 #include <count_novelty_partition_1.hxx>
 #include <count_novelty_partition_2.hxx>
 #include <gs_bfcs_4h.hxx>
-
+#include <novelty_partition_1_2.hxx>
+#include <novelty_partition_2_2.hxx>
 
 namespace po = boost::program_options;
 
@@ -117,6 +118,9 @@ using aptk::search::Custom_Priority_Queue;
 using aptk::search::gs_bfcs_4h::GS_BFCS_4H;
 using aptk::agnostic::Count_Novelty_Partition_1;
 using aptk::agnostic::Count_Novelty_Partition_2;
+
+using aptk::agnostic::Novelty_Partition_1_2;
+using aptk::agnostic::Novelty_Partition_2_2;
 /**
  * DEFINITIONS
  */
@@ -212,16 +216,23 @@ typedef Node_Comparer_4H< Search_Node_4h_c> Tie_Breaking_Algorithm_4h_c;
 typedef Open_List<Tie_Breaking_Algorithm_4h_c, Search_Node_4h_c> BFS_Open_List_4h_c;
 // typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
 
-typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_Fwd_4h_Test;
-typedef Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_2_Fwd_4h_Test;
+// typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_Fwd_4h_Test;
+// typedef Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_2_Fwd_4h_Test;
+// typedef Novelty_Partition_1_2<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_Fwd_4h_Test;
+// typedef Novelty_Partition_2_2<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_2_Fwd_4h_Test;
 
-typedef GS_BFCS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h_Test, H_Lmcount_Fwd, H_Novel_2_Fwd_4h_Test, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd_test;
+
+// typedef GS_BFCS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h_Test, H_Lmcount_Fwd, H_Novel_2_Fwd_4h_Test, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd_test;
 
 
 
-typedef Count_Novelty_Partition_1<Fwd_Search_Problem, Search_Node_4h> Count_Novel_Fwd_4h_test;
-typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h> Count_Novel_2_Fwd_4h_test;
-typedef BFWS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h_test, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h_test, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd_test;
+// typedef Count_Novelty_Partition_1<Fwd_Search_Problem, Search_Node_4h> Count_Novel_Fwd_4h_test;
+// typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h> Count_Novel_2_Fwd_4h_test;
+// typedef BFWS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h_test, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h_test, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd_test;
+
+typedef Novelty_Partition_1_2<Fwd_Search_Problem, Search_Node_4h> H_Novel_Fwd_4h_Test;
+typedef Novelty_Partition_2_2<Fwd_Search_Problem, Search_Node_4h> H_Novel_2_Fwd_4h_Test;
+typedef BFWS_4H<Fwd_Search_Problem, H_Novel_Fwd_4h_Test, H_Lmcount_Fwd, H_Novel_2_Fwd_4h_Test, H_Add_Rp_Fwd, BFS_Open_List_4h> BFWS_w_hlm_hadd_test;
 
 
 
