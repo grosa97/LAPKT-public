@@ -10,6 +10,7 @@ target_sources(core
         novelty_partition.hxx
         novelty_partition_1.hxx
         novelty_partition_2.hxx
+        h_qn.hxx
 )
 
 target_include_directories(core
@@ -29,6 +30,7 @@ install(
         novelty_partition.hxx
         novelty_partition_1.hxx
         novelty_partition_2.hxx
+        h_qn.hxx
     DESTINATION
         ${CMAKE_INSTALL_PREFIX}/lapkt/core/include/node_eval/novelty
     COMPONENT
