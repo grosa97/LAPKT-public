@@ -339,6 +339,7 @@ namespace aptk
 				metric_value = 0;
 				unsigned arity = 1;
 				// assert(arity == 1);
+				
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
 					return std::vector<unsigned>();
@@ -346,21 +347,50 @@ namespace aptk
 				check_table_size_1(n);
 
 				const bool has_state = n->has_state();
-
-				static Fluent_Vec added, deleted, temp_fv;
-				if (!has_state)
+				Fluent_Vec fl;
+				if (n->parent() == NULL)
 				{
-					
-					added.clear();
-					deleted.clear();
-					// temp_fv.clear();
-					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
-					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					fl = n->state()->fluent_vec();
 				}
-				// if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				else
+				{
+					static Fluent_Vec new_atom_vec;
+					const Action *a = m_strips_model.actions()[n->action()];
+					if (a->has_ceff())
+					{
+						static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
+						new_atom_set.reset();
+						new_atom_vec.clear();
+						for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
+						{
+							if (new_atom_set.isset(*it))
+								continue;
 
-				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+							new_atom_vec.push_back(*it);
+							new_atom_set.set(*it);
+						}
+						for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+						{
+							Conditional_Effect *ce = a->ceff_vec()[i];
+							if (ce->can_be_applied_on(*(n->parent()->state())))
+								for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
+								{
+									{
+										if (new_atom_set.isset(*it))
+											continue;
+
+										new_atom_vec.push_back(*it);
+										new_atom_set.set(*it);
+									}
+								}
+						}
+					}
+
+				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
+				fl = add;
+				}
+
+				
 
 				bool new_covers = false;
 
@@ -451,17 +481,17 @@ namespace aptk
 							metric_value = m;
 					}
 
-					keepBottom3(tuple[0], tuple_count, bot3);
+					// keepBottom3(tuple[0], tuple_count, bot3);
 				}
-				if (!has_state)
-				{
-					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
-				}
+				// if (!has_state)
+				// {
+				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				// }
 				// if (!has_state)
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				return getBottom3Keys(bot3);
+				return fl;
 			}
 									// m = -(float)1 / (1 + tuple_count);
 						// if (m < metric_value)
