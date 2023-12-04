@@ -663,6 +663,10 @@ namespace aptk
 					candidate->h1n() = (float) u_h1n;
 					// candidate->h1n() = (float) u_h1n + (int) (m_num_fluents*count_nov_val);
 					candidate->h3n() = (float) ff_val;
+					
+					delete candidate->state();
+					candidate->set_state(NULL);
+
 					if (ff_val < m_max_h1n)
 					{
 						m_max_h1n = ff_val;
