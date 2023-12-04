@@ -472,6 +472,10 @@ namespace aptk
 						{
 							std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
 						}
+						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl;
+
+
 					}
 				}
 
@@ -565,6 +569,7 @@ namespace aptk
 				void eval_novel(Search_Node *candidate)
 				{
 					candidate->partition() = (1000 * candidate->h2n()) + candidate->r();
+					// candidate->partition() = candidate->h2n();
 					m_first_h->eval(candidate, candidate->h1n());
 				}
 

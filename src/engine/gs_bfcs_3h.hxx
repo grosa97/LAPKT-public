@@ -36,6 +36,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <algorithm>
 #include <iostream>
 #include <hash_table.hxx>
+#include <h_qn.hxx>
+
+using aptk::agnostic::Q_Novelty_Heuristic;
 
 namespace aptk
 {
@@ -82,8 +85,8 @@ namespace aptk
 				float h1n() const { return m_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
-				unsigned &h3n() { return m_h3; }
-				unsigned h3n() const { return m_h3; } 
+				float &h3n() { return m_h3; }
+				float h3n() const { return m_h3; } 
 
 				unsigned &r() { return m_r; }
 				unsigned r() const { return m_r; }
@@ -206,7 +209,7 @@ namespace aptk
 				unsigned m_g_unit;
 				float m_h1;
 				unsigned m_h2;
-				unsigned m_h3;
+				float m_h3;
 				unsigned m_r;
 				unsigned m_partition;
 				unsigned m_M;
@@ -246,17 +249,19 @@ namespace aptk
 				GS_BFCS_3H(const Search_Model &search_problem, bool verbose)
 						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), 
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
-						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
+						m_max_h1n(no_such_index), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false)   //, m_h3_only_max_nov(true)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
+					m_qn_second_h = new Q_Novelty_Heuristic<Search_Model, Search_Node>(search_problem);
 					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
+					m_num_fluents = this->problem().task().num_fluents();
 					//max depth determined size of list (2^17 = 262143)					
-					int OPEN_MAX_DEPTH =18;
-					m_open.init(OPEN_MAX_DEPTH);
+					// int OPEN_MAX_DEPTH =18;
+					// m_open.init(OPEN_MAX_DEPTH);
 
 				}
 
@@ -489,7 +494,11 @@ namespace aptk
 					}
 
 					// Count land/goal unachieved
+					// unsigned base_val;
 					m_second_h->eval(*(candidate->state()), candidate->GC());
+					// m_qn_second_h->eval(candidate, candidate->GC(), u_h1n);
+					// candidate->h1n() = (float) u_h1n;
+					// candidate->h2n() = u_h1n;
 					if (m_use_h2n)
 						candidate->h2n() = candidate->GC();
 
@@ -502,7 +511,7 @@ namespace aptk
 							std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
 						}
 						//DEBUG
-						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+						std::cout << "--[" << m_max_h1n << " / " << m_max_h2n << "]--" << std::endl;
 						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
 				}
@@ -602,8 +611,15 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					m_first_h->eval(candidate, candidate->h1n());			
+					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					candidate->partition() = (1000 * (candidate->GC()+1)) - candidate->r();
+					//  candidate->partition() = candidate->GC();
+					float count_nov_val = 0;
+					m_first_h->eval(candidate, count_nov_val);
+					unsigned u_h1n;
+					// m_qn_second_h->eval(candidate, candidate->partition(), u_h1n);
+					candidate->h1n() = (float) u_h1n + (int) (m_num_fluents*count_nov_val);
+					candidate->h3n() = count_nov_val;
 
 
 					// if (candidate->h1n() > m_max_novelty)
@@ -617,6 +633,43 @@ namespace aptk
 					// 	else
 					// 		m_third_h->eval(candidate, candidate->h1n());
 					// }	
+				}
+
+				void eval_ff(Search_Node* candidate)
+				{
+					unsigned ff_val;
+					candidate->set_state(m_problem.next(*(candidate->parent()->state()), candidate->action()));
+					m_relevant_fluents_h->eval(*(candidate->state()), ff_val);
+					if (ff_val == std::numeric_limits<unsigned>::max())
+					{
+						candidate->h1n() = (float)ff_val;
+						candidate->h3n() = (float)ff_val;
+					}
+					else
+					{
+
+
+					int u_h1n;
+					m_qn_second_h->eval(candidate, ff_val, u_h1n);
+
+
+					// candidate->partition() = (1000 * (candidate->GC()+1)) - candidate->r();
+					// candidate->partition() = (1000 * (candidate->GC())) + ff_val;
+					// float count_nov_val = 0;
+					// m_first_h->eval(candidate, count_nov_val);
+
+
+					// candidate->h1n() = (float)ff_val;
+					candidate->h1n() = (float) u_h1n;
+					// candidate->h1n() = (float) u_h1n + (int) (m_num_fluents*count_nov_val);
+					candidate->h3n() = (float) ff_val;
+					if (ff_val < m_max_h1n)
+					{
+						m_max_h1n = ff_val;
+						std::cout << "--[" << m_max_h1n << " / " << m_max_h2n << "]--" << std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+					}
+					}
 				}
 
 				void record_count_h(Search_Node* candidate)
@@ -755,7 +808,8 @@ namespace aptk
 							// if(n->h2n() == head->h2n())
 							eval_relevant_fluents(n);
 
-						eval_count_based(n);
+						// eval_count_based(n);
+						eval_ff(n);
 						// if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
 						// {
 						// 	inc_dead_end();
@@ -932,6 +986,7 @@ namespace aptk
 
 				First_Heuristic &h1() { return *m_first_h; }
 				Second_Heuristic &h2() { return *m_second_h; }
+				Third_Heuristic &h3() { return *m_third_h; }
 				Relevant_Fluents_Heuristic &rel_fl_h() { return *m_relevant_fluents_h; }
 
 				void set_verbose(bool v) { m_verbose = v; }
@@ -976,6 +1031,7 @@ namespace aptk
 				Second_Heuristic *m_second_h;
 				Third_Heuristic *m_third_h;
 				Relevant_Fluents_Heuristic *m_relevant_fluents_h;
+				Q_Novelty_Heuristic<Search_Model, Search_Node> *m_qn_second_h;
 
 				Open_List_Type m_open;
 				Closed_List_Type m_closed;
@@ -998,6 +1054,7 @@ namespace aptk
 				std::vector<Action_Idx> m_app_set;
 				Landmarks_Graph_Manager *m_lgm;
 
+				unsigned m_max_h1n;
 				unsigned m_max_h2n;
 				unsigned m_max_r;
 				bool m_verbose;
@@ -1013,6 +1070,8 @@ namespace aptk
 				bool m_h3_rp_fl_only;
 
 				std::unordered_map<int, unsigned> m_h1_record;
+
+				unsigned m_num_fluents;
 			};
 
 		}

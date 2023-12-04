@@ -245,7 +245,7 @@ namespace aptk
 
 			bool cover_compute_tuples(Search_Node *n, float &metric_value)
 			{
-				metric_value = 9;
+				metric_value = 0;
 				unsigned arity = 1;
 				assert(arity == 1);
 
@@ -346,29 +346,29 @@ namespace aptk
 						}
 					}
 
-					if (tuple_count == 0)
-						m = 1;
-					// else if (tuple_count == 1)
-					// 	m = 2;
-					else if (tuple_count <= 5)
-						m = 3;
-					else if (tuple_count <= 10)
-						m = 4;
-					// else if (tuple_count <= 20)
-					// 	m = 5;
-					else if (tuple_count <= 100)
-						m = 6;
-					else if (tuple_count <= 200)
-						m = 7;
-					else if (tuple_count <= 1000)
-						m = 8;
-					else
-						m = 9;
+					// if (tuple_count == 0)
+					// 	m = 1;
+					// // else if (tuple_count == 1)
+					// // 	m = 2;
+					// else if (tuple_count <= 5)
+					// 	m = 3;
+					// else if (tuple_count <= 10)
+					// 	m = 4;
+					// // else if (tuple_count <= 20)
+					// // 	m = 5;
+					// else if (tuple_count <= 100)
+					// 	m = 6;
+					// else if (tuple_count <= 200)
+					// 	m = 7;
+					// else if (tuple_count <= 1000)
+					// 	m = 8;
+					// else
+					// 	m = 9;
 					// else
 					// 	m = 8;
-
-					// m = -(float)1 / (1 + tuple_count);
-
+					
+					m = -(float)1 / (1 + tuple_count);
+					// metric_value -= (float)1 / (1 + tuple_count);
 
 					if (m < metric_value)
 						metric_value = m;

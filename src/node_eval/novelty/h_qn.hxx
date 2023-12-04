@@ -44,28 +44,32 @@ namespace aptk
 	namespace agnostic
 	{
 
-		template <typename Search_Model, typename Search_Node, typedename Base_Heuristic>
+		template <typename Search_Model, typename Node>
 		class Q_Novelty_Heuristic : public Heuristic<State>
 		{
 		public:
-			Q_Novelty_Heuristic(const Search_Model &prob, Base_Heuristic* base_h, const unsigned max_MB = 2048)
+            typedef typename Search_Model::State_Type State;
+
+			Q_Novelty_Heuristic(const Search_Model &prob, const unsigned max_MB = 2048)
 					: Heuristic<State>(prob), m_strips_model(prob.task()), m_max_memory_size_MB(max_MB), m_verbose(true), m_rp_fl_only(false)
 			{
 				init();
-                m_base_h = base_h;
+                // m_base_h = base_h;
+                set_arity(1);
+                m_V = m_strips_model.num_fluents();
 			}
 
 			void set_verbose(bool v) { m_verbose = v; }
 
 			void set_rp_fl_only(bool v) { m_rp_fl_only = v; }
 
-			virtual ~Count_Novelty_Heuristic()
+			virtual ~Q_Novelty_Heuristic()
 			{
 			}
 
 			void init()
 			{
-				typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
+				// typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
 
 				// for (Node_Ptr_It it = m_nodes_tuples.begin(); it != m_nodes_tuples.end(); it++)
 				// 	*it = NULL;
@@ -84,14 +88,14 @@ namespace aptk
 				m_num_tuples = 1;
 				m_num_fluents = m_strips_model.num_fluents();
 
-				float size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * sizeof(Search_Node *);
+				float size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * sizeof(Node *);
 				if (m_verbose)
 					std::cout << "Try allocate size: " << size_novelty << " MB" << std::endl;
 				if (size_novelty > m_max_memory_size_MB)
 				{
 					m_arity = 1;
 
-					size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * sizeof(Search_Node *);
+					size_novelty = ((float)pow(m_num_fluents, m_arity) / 1024000.) * sizeof(Node *);
 					if (m_verbose)
 						std::cout << "EXCEDED, m_arity downgraded to 1 --> size: " << size_novelty << " MB" << std::endl;
 				}
@@ -104,25 +108,23 @@ namespace aptk
 				return m_arity;
 			}
 
-			// void eval(Search_Node *n, float &h_val)
+			// void eval(Node *n, float &h_val)
 			// {
 			// 	compute(n, h_val);
 			// }
 
-			// void eval(Search_Node *n, float &h_val, std::vector<Action_Idx> &pref_ops)
+			// void eval(Node *n, float &h_val, std::vector<Action_Idx> &pref_ops)
 			// {
 			// 	eval(n, h_val);
 			// }
 
-            // void eval(Search_Node *n, float &h_val) {
+            // void eval(Node *n, float &h_val) {
             //     compute_count_metric(n, h_val);
             //     update_counts(n);
             // }
 
-			virtual void eval(Search_Node *n, float &h_val)
+			virtual void eval(Node *n, int base_val, int &h_val)
 			{
-                unsigned base_val;
-                m_base_h->eval(n, base_val);
                 compute(n, base_val, h_val);
 			}
 
@@ -138,15 +140,19 @@ namespace aptk
 
 		protected:
 
+        bool n_has_state(Node *n){
+            return n->state() != NULL;
+        }
 
-        void compute(Search_Node n, unsigned h_val, unsigned &h_qb_val)
+        void compute( Node *n, int h_val, int &h_qb_val)
         {
             const bool has_state = n_has_state(n);
 
             if (!has_state)
                 n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
 
-            Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+            // const Fluent_Vec &fl = s.fluent_vec();
+            const Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
             
             h_qb_val = calc_h_qb(fl, h_val);
 
@@ -154,18 +160,18 @@ namespace aptk
                 n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
         }
 
-        int calc_h_qb(Fluent_Vec fl, unsigned h_val)
+        int calc_h_qb(const Fluent_Vec &fl, int h_val)
         {
-            std::unordered_set<unsigned> seen;
+            // std::unordered_set<unsigned> seen;
             
             int n_minus = 0;
             int n_plus = 0;
 
             for (auto f : fl)
             {
-                if (seen.find(f) == seen.end()) 
+                // if (seen.find(f) == seen.end()) 
                 {
-                    seen.insert(f);
+                    // seen.insert(f);
                     if ( h_val > m_fact_scores[f] )
                         n_minus++;
                     else if ( h_val < m_fact_scores[f] )
@@ -175,25 +181,25 @@ namespace aptk
                     }
                 }
             }
-            int V = seen.size();
 
             if (n_plus > 0)
-                return V - n_plus;
+                return m_V - n_plus;
             else
-                return V + n_minus;
+                return m_V + n_minus;
         }
 
 
 			const STRIPS_Problem &m_strips_model;
 			// std::vector<Search_Node *> m_nodes_tuples;
-            std::vector<unsigned> m_fact_scores;
+            std::vector<int> m_fact_scores;
 			unsigned m_arity;
 			unsigned long m_num_tuples;
-			unsigned m_num_fluents;
+			int m_num_fluents;
 			unsigned m_max_memory_size_MB;
 			bool m_verbose;
 			bool m_rp_fl_only;
-            Base_Heuristic* m_base_h;
+            int m_V;
+            // Base_Heuristic& m_base_h;
 		};
 
 	}

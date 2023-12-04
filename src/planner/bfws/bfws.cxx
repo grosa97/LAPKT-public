@@ -361,20 +361,27 @@ void BFWS::solve()
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
-
+		bfs_engine.rel_fl_h().ignore_rp_h_value(true);
 		unsigned max_width = 1;
-		bfws_options(search_prob, bfs_engine, max_width, graph);
-		bfs_engine.set_use_h2n(true);
+		// bfws_options(search_prob, bfs_engine, max_width, graph);
+		// bfs_engine.set_use_h2n(true);
 
 		// /**
 		//  * Use landmark count instead of goal count
 		//  */
-		// Gen_Lms_Fwd gen_lms(search_prob);
-		// gen_lms.set_only_goals(false);
-		// Landmarks_Graph graph1(*prob);
-		// gen_lms.compute_lm_graph_set_additive(graph1);
+		Gen_Lms_Fwd gen_lms(search_prob);
+		gen_lms.set_only_goals(false);
+		Landmarks_Graph graph1(*prob);
+		gen_lms.compute_lm_graph_set_additive(graph1);
 
-		// bfws_options(search_prob, bfs_engine, max_width, graph1);
+		Land_Graph_Man lgm(search_prob, &graph1);
+		bfs_engine.use_land_graph_manager(&lgm);
+		bfs_engine.set_use_h2n(true);
+		bfws_options(search_prob, bfs_engine, max_width, graph1);
+
+
+
+		
 		// bfs_engine.set_use_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
