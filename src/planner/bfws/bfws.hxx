@@ -214,7 +214,7 @@ typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> Count_No
 
 typedef Node_Comparer_4H< Search_Node_4h_c> Tie_Breaking_Algorithm_4h_c;
 typedef Open_List<Tie_Breaking_Algorithm_4h_c, Search_Node_4h_c> BFS_Open_List_4h_c;
-// typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
+typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
 
 // typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_Fwd_4h_Test;
 // typedef Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> H_Novel_2_Fwd_4h_Test;
