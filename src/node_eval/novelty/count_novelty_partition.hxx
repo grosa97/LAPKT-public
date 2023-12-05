@@ -496,15 +496,15 @@ namespace aptk
 
 				const bool has_state = n->has_state();
 
-				static Fluent_Vec added, deleted, temp_fv;
-				if (!has_state)
-				{
-					added.clear();
-					deleted.clear();
-					// temp_fv.clear();
-					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
-					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-				}
+				// static Fluent_Vec added, deleted, temp_fv;
+				// if (!has_state)
+				// {
+				// 	added.clear();
+				// 	deleted.clear();
+				// 	// temp_fv.clear();
+				// 	// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				// }
 				// if (!has_state)
 				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
 
@@ -601,11 +601,11 @@ namespace aptk
 				}
 				metric_value += metric_value_2;
 
-				if (!has_state)
-				{
-					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
-				}
+				// if (!has_state)
+				// {
+				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				// }
 				// if (!has_state)
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
