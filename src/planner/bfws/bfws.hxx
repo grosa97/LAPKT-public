@@ -55,6 +55,7 @@
 #include <count_novelty_partition_1.hxx>
 #include <count_novelty_partition_2.hxx>
 #include <gs_bfcs_4h.hxx>
+#include <count_novelty_partition_12.hxx>
 
 
 namespace po = boost::program_options;
@@ -117,6 +118,8 @@ using aptk::search::Custom_Priority_Queue;
 using aptk::search::gs_bfcs_4h::GS_BFCS_4H;
 using aptk::agnostic::Count_Novelty_Partition_1;
 using aptk::agnostic::Count_Novelty_Partition_2;
+using aptk::agnostic::Count_Novelty_Partition_12;
+
 /**
  * DEFINITIONS
  */
@@ -208,9 +211,11 @@ typedef aptk::search::gs_bfcs_4h::Node<Fwd_Search_Problem, aptk::State> Search_N
 typedef Count_Novelty_Partition_1<Fwd_Search_Problem, Search_Node_4h_c> Count_Novel_Fwd_4h;
 typedef Count_Novelty_Partition_2<Fwd_Search_Problem, Search_Node_4h_c> Count_Novel_2_Fwd_4h;
 
+typedef Count_Novelty_Partition_12<Fwd_Search_Problem, Search_Node_4h_c> Count_Novel_12_Fwd_4h;
+
 typedef Node_Comparer_4H< Search_Node_4h_c> Tie_Breaking_Algorithm_4h_c;
 typedef Open_List<Tie_Breaking_Algorithm_4h_c, Search_Node_4h_c> BFS_Open_List_4h_c;
-typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
+typedef GS_BFCS_4H<Fwd_Search_Problem, Count_Novel_12_Fwd_4h, H_Lmcount_Fwd, Count_Novel_2_Fwd_4h, H_Add_Rp_Fwd, BFS_Open_List_4h_c> BFCS_w_hlm_hadd;
 
 
 class BFWS : public STRIPS_Interface

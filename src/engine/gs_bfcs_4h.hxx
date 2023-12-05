@@ -58,8 +58,8 @@ namespace aptk
 				typedef typename std::vector<Node<Search_Model, State> *>::iterator Node_Vec_Ptr_It;
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
-						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_f(0), m_h1(0), m_h2(0), m_h3(0), m_h4(0), m_partition(0), m_partition2(0), m_seen(false), m_helpful(false), m_land_consumed(NULL), m_land_unconsumed(NULL),
-						m_m1(0), m_m2(0)
+						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_f(0), m_h1(0), m_h2(0), m_h3(0), m_h4(0), m_partition(0), m_partition2(0), m_seen(false), m_helpful(false), m_land_consumed(NULL), m_land_unconsumed(NULL)
+						//,m_m1(0), m_m2(0)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1.0f : 0.0f);
@@ -272,8 +272,8 @@ namespace aptk
 				Bool_Vec_Ptr *m_land_consumed;
 				Bool_Vec_Ptr *m_land_unconsumed;
 
-				unsigned m_m1;
-				unsigned m_m2;
+				// unsigned m_m1;
+				// unsigned m_m2;
 			};
 
 			template <typename Search_Model, typename First_Heuristic, typename Second_Heuristic, typename Third_Heuristic, typename Fourth_Heuristic, typename Open_List_Type>
@@ -329,8 +329,9 @@ namespace aptk
 						m_lgm->apply_state(m_root->state()->fluent_vec(), m_root->land_consumed(), m_root->land_unconsumed());
 						eval(m_root);
 						eval_po(m_root);
-						eval_novel(m_root);
-						eval_po_novel(m_root);
+						// eval_novel(m_root);
+						// eval_po_novel(m_root);
+						eval_novel_ponovel(m_root);
 
 						m_root->undo_land_graph(m_lgm);
 					}
@@ -338,8 +339,9 @@ namespace aptk
 					{
 						eval(m_root);
 						eval_po(m_root);
-						eval_novel(m_root);
-						eval_po_novel(m_root);
+						// eval_novel(m_root);
+						// eval_po_novel(m_root);
+						eval_novel_ponovel(m_root);
 					}
 
 #ifdef DEBUG
@@ -480,22 +482,22 @@ namespace aptk
 					}
 				}
 
-				void eval_novel(Search_Node *candidate)
-				{
-					candidate->goals_unachieved() = candidate->h2n();
-					// candidate->partition() = candidate->goals_unachieved()*10000 + candidate->h4n();
-					candidate->partition() = candidate->goals_unachieved();
-					if (candidate->goals_unachieved() == 0)
-					{
-						candidate->h1n() = 1;
-					}
-					else
-					{
-						m_first_h->eval(candidate, candidate->h1n());
-					}
+				// void eval_novel(Search_Node *candidate)
+				// {
+				// 	candidate->goals_unachieved() = candidate->h2n();
+				// 	// candidate->partition() = candidate->goals_unachieved()*10000 + candidate->h4n();
+				// 	candidate->partition() = candidate->goals_unachieved();
+				// 	if (candidate->goals_unachieved() == 0)
+				// 	{
+				// 		candidate->h1n() = 1;
+				// 	}
+				// 	else
+				// 	{
+				// 		m_first_h->eval(candidate, candidate->h1n());
+				// 	}
 
-					candidate->m_m1 = candidate->h1n();
-				}
+				// 	// candidate->m_m1 = candidate->h1n();
+				// }
 
 				void eval_po(Search_Node *candidate)
 				{
@@ -518,7 +520,23 @@ namespace aptk
 					// candidate->partition2() = (1000 * candidate->h2n() )+ candidate->h4n(); //m_first_h->goal_size()
 
 					m_third_h->eval(candidate, candidate->h3n());
-					candidate->m_m2 = candidate->h3n();
+					// candidate->m_m2 = candidate->h3n();
+				}
+
+				void eval_novel_ponovel(Search_Node *candidate)
+				{
+					candidate->goals_unachieved() = candidate->h2n();
+					candidate->partition() = candidate->goals_unachieved();
+					candidate->partition2() = candidate->h4n();
+					if (candidate->goals_unachieved() == 0)
+					{
+						candidate->h1n() = 1;
+						candidate->h3n() = 1;
+					}
+					else
+					{
+						m_first_h->eval(candidate, candidate->h1n(), candidate->h3n());
+					}
 				}
 
 				bool is_closed(Search_Node *n)
@@ -642,9 +660,10 @@ namespace aptk
 								delete n;
 								continue;
 							}
-							eval_po_novel(n);
+							// eval_po_novel(n);
 							eval(n, false);
-							eval_novel(n);
+							// eval_novel(n);
+							eval_novel_ponovel(n);
 
 							if (n->h1n() <= n->h3n())
 								n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 1;
@@ -661,14 +680,16 @@ namespace aptk
 						else
 						{
 							n->h4n() = head->h4n();
-							eval_po_novel(n);
+							// eval_po_novel(n);
 
 							eval(n, false);
-							eval_novel(n);
+							// eval_novel(n);
+							eval_novel_ponovel(n);
 
 							// n->h1n() = (2 * ( n->h1n() - 1 ) ) + 2;
 							// n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
 							// n->h3n() = (2 * (n->h3n() - 1)) + 2;
+
 
 							if (n->h1n() <= n->h3n())
 								n->h1n() = (2 * (10*(n->h1n() - 1) + (n->h3n() - 1))) + 2;
