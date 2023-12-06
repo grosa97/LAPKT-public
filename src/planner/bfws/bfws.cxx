@@ -666,7 +666,7 @@ void BFWS::solve()
 		std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
 
 		// BFWS_w_hlm_hadd_test bfs_engine(search_prob, m_verbose);
-		BFWS_w_hlm_hadd_test bfs_engine(search_prob, m_verbose);
+		BFWS_w_hlm_hadd bfs_engine(search_prob, m_verbose);
 
 		bfs_engine.h4().ignore_rp_h_value(true);
 

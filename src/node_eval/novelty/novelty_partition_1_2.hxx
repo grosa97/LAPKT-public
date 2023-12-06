@@ -307,8 +307,8 @@ namespace aptk
 
 				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
 
-				if (!has_state)
-					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				//if (!has_state)
+				//	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
 
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
@@ -390,8 +390,8 @@ namespace aptk
 					}
 				}
 
-				if (!has_state)
-					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+				//if (!has_state)
+				//	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
 				return new_covers;
 			}
