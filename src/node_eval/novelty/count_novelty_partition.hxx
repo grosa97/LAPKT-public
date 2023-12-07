@@ -67,7 +67,7 @@ namespace aptk
 				typedef typename std::vector<std::vector<Search_Node *>>::iterator Node_Vec_Ptr_It;
 				// typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
 				// typedef typename std::vector<std::vector<int>>::iterator Int_Vec_Ptr_It;
-				typedef typename std::vector<std::unordered_map<int, uint8_t>>::iterator Int_Vec_Ptr_It;
+				typedef typename std::vector<std::unordered_map<int, uint16_t>>::iterator Int_Vec_Ptr_It;
 
 				// for (Node_Vec_Ptr_It it_p = m_nodes_tuples_by_partition.begin(); it_p != m_nodes_tuples_by_partition.end(); it_p++)
 				// 	for (Node_Ptr_It it = it_p->begin(); it != it_p->end(); it++)
@@ -77,9 +77,9 @@ namespace aptk
 				// 	std::fill(it_p->begin(), it_p->end(), 0);\
 
 				for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_1.begin(); it_p != m_tuple_counts_by_partition_1.end(); it_p++)
-					*it_p = std::unordered_map<int, uint8_t>();
+					*it_p = std::unordered_map<int, uint16_t>();
 				for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_2.begin(); it_p != m_tuple_counts_by_partition_2.end(); it_p++)
-					*it_p = std::unordered_map<int, uint8_t>();
+					*it_p = std::unordered_map<int, uint16_t>();
 			}
 
 			unsigned arity() const { return m_arity; }
@@ -141,7 +141,7 @@ namespace aptk
 
 					// Add unordered maps at the new indices
 					for (int i = oldSize; i < (partition_size + 1); ++i) {
-						m_tuple_counts_by_partition_2[i] = std::unordered_map<int, uint8_t>();
+						m_tuple_counts_by_partition_2[i] = std::unordered_map<int, uint16_t>();
 					}
 				}
 
@@ -149,7 +149,7 @@ namespace aptk
 				m_tuple_counts_by_partition_1.resize(partition_size + 1);
 
 				for (int i = oldSize; i < (partition_size + 1); ++i) {
-					m_tuple_counts_by_partition_1[i] = std::unordered_map<int, uint8_t>();
+					m_tuple_counts_by_partition_1[i] = std::unordered_map<int, uint16_t>();
 				}
 
 
@@ -225,7 +225,7 @@ namespace aptk
 				// 	m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
 
 				if (m_tuple_counts_by_partition_1[n->partition()].empty())
-					m_tuple_counts_by_partition_1[n->partition()] = std::unordered_map<int, uint8_t>();
+					m_tuple_counts_by_partition_1[n->partition()] = std::unordered_map<int, uint16_t>();
 			}
 
 			void check_table_size_2(Search_Node *n)
@@ -249,7 +249,7 @@ namespace aptk
 				// 	m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
 
 				if (m_tuple_counts_by_partition_2[n->partition()].empty())
-					m_tuple_counts_by_partition_2[n->partition()] = std::unordered_map<int, uint8_t>();
+					m_tuple_counts_by_partition_2[n->partition()] = std::unordered_map<int, uint16_t>();
 			}
 			
 
@@ -467,7 +467,7 @@ namespace aptk
 					{
 						auto& val = m_tuple_counts_by_partition_1[n->partition()][tuple_idx];
 						tuple_count = (int)val;
-						if (val < std::numeric_limits<uint8_t>::max())
+						if (val < std::numeric_limits<uint16_t>::max())
 							val++;
 						
 					}
@@ -630,7 +630,7 @@ namespace aptk
 						{
 							auto& val = m_tuple_counts_by_partition_1[n->partition()][tuple_idx];
 							tuple_count = (int)val;
-							if (val < std::numeric_limits<uint8_t>::max())
+							if (val < std::numeric_limits<uint16_t>::max())
 								val++;
 							
 						}
@@ -1171,8 +1171,8 @@ namespace aptk
 			const STRIPS_Problem &m_strips_model;
 			// std::vector<std::vector<Search_Node *>> m_nodes_tuples_by_partition;
 			// std::vector<std::vector<int>> m_tuple_counts_by_partition;
-			std::vector<std::unordered_map<int, uint8_t>> m_tuple_counts_by_partition_2;
-			std::vector<std::unordered_map<int, uint8_t>> m_tuple_counts_by_partition_1;
+			std::vector<std::unordered_map<int, uint16_t>> m_tuple_counts_by_partition_2;
+			std::vector<std::unordered_map<int, uint16_t>> m_tuple_counts_by_partition_1;
 			unsigned m_arity;
 			unsigned long m_num_tuples_2;
 			unsigned m_num_fluents;
