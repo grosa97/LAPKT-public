@@ -242,24 +242,12 @@ namespace aptk
 				return n->state() != NULL;
 			}
 
-
-			bool cover_compute_tuples(Search_Node *n, float &metric_value)
+			void get_add_fl(Search_Node* n, Fluent_Vec& fl)
 			{
-				metric_value = 9;
-				unsigned arity = 1;
-				assert(arity == 1);
-
-				if (n->partition() == std::numeric_limits<unsigned>::max())
-					return false;
-
-				check_table_size(n);
-
-				const bool has_state = n->has_state();
-
-				Fluent_Vec fl;
 				if (n->parent() == NULL)
 				{
 					fl = n->state()->fluent_vec();
+					// n->set_added_fl(fl);
 				}
 				else
 				{
@@ -296,9 +284,36 @@ namespace aptk
 							}
 						}
 					}
+					fl = a->has_ceff() ? new_atom_vec : a->add_vec();
+				}
+			}
 
-					const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
-					fl = add;
+			bool cover_compute_tuples(Search_Node *n, float &metric_value)
+			{
+				metric_value = 0;
+				unsigned arity = 1;
+				assert(arity == 1);
+
+				if (n->partition() == std::numeric_limits<unsigned>::max())
+					return false;
+
+				check_table_size(n);
+
+				const bool has_state = n->has_state();
+
+				Fluent_Vec fl;
+
+				if (n->parent() == NULL)
+				{
+					fl = n->state()->fluent_vec();
+				}
+				else
+				{
+					get_add_fl(n, fl);
+					Fluent_Vec parent_add_fl;
+					get_add_fl(n->parent(), parent_add_fl);
+					for (auto f: parent_add_fl)
+						fl.push_back(f);
 				}
 
 				bool new_covers = false;
@@ -376,28 +391,28 @@ namespace aptk
 						}
 					}
 
-					if (tuple_count == 0)
-						m = 1;
-					// else if (tuple_count == 1)
-					// 	m = 2;
-					else if (tuple_count <= 5)
-						m = 3;
-					else if (tuple_count <= 10)
-						m = 4;
-					// else if (tuple_count <= 20)
-					// 	m = 5;
-					else if (tuple_count <= 100)
-						m = 6;
-					else if (tuple_count <= 200)
-						m = 7;
-					else if (tuple_count <= 1000)
-						m = 8;
-					else
-						m = 9;
+					// if (tuple_count == 0)
+					// 	m = 1;
+					// // else if (tuple_count == 1)
+					// // 	m = 2;
+					// else if (tuple_count <= 5)
+					// 	m = 3;
+					// else if (tuple_count <= 10)
+					// 	m = 4;
+					// // else if (tuple_count <= 20)
+					// // 	m = 5;
+					// else if (tuple_count <= 100)
+					// 	m = 6;
+					// else if (tuple_count <= 200)
+					// 	m = 7;
+					// else if (tuple_count <= 1000)
+					// 	m = 8;
+					// else
+					// 	m = 9;
 					// else
 					// 	m = 8;
 
-					// m = -(float)1 / (1 + tuple_count);
+					m = -(float)1 / (1+tuple_count);
 
 
 					if (m < metric_value)

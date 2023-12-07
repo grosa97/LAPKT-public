@@ -111,6 +111,8 @@ namespace aptk
 				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
 				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 				bool &relaxed_deadend() { return m_relaxed_deadend; }
+				// void set_added_fl(Fluent_Vec a_fl) { m_added_fl = a_fl; }
+				// Fluent_Vec& get_added_fl() { return m_added_fl; }
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -222,6 +224,7 @@ namespace aptk
 				Fluent_Vec m_goal_candidates;
 
 				bool m_relaxed_deadend;
+				// Fluent_Vec m_added_fl;
 			};
 
 			/**
