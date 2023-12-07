@@ -667,8 +667,8 @@ namespace aptk
 				// 	// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
 				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
 				// }
-				// if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+				if (!has_state)
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
 
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
@@ -856,8 +856,8 @@ namespace aptk
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
 				// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
 				// }
-				// if (!has_state)
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+				if (!has_state)
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
 				return new_covers;
 			}
