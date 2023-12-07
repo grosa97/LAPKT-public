@@ -13,6 +13,18 @@ cmake_minimum_required(VERSION 3.19)
 option(USE_SUPERBUILD "flag that a superbuild should be invoked" ON)
 message(STATUS "SUPERBUILD IS ${USE_SUPERBUILD}")
 
+# Set policies
+
+## NOTE: cmake adds new policies when it changes the interpretation of a 
+## a function to match the evolving expectations of the developers. Policies are
+## version dependent and an older version would not recognize the policy.
+
+if(${CMAKE_VERSION} VERSION_LESS "3.24.0") 
+  message(DEPRECATION "Please consider switching to the latest cmake version")
+else()
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 if (USE_SUPERBUILD)
   project(superbuild VERSION 1.0)
 
@@ -103,17 +115,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 #---- SECTION 1.2 Choose features to add to the lapkt library  ----#
 
-option(CMAKE_FF_CXX "Include the pure CXX lapkt extensions to support usage of FF parser" OFF)
-
-option(CMAKE_LEGACY_PLANNER "Old is gold! Build some legacy pure CXX planners" OFF)
-if(CMAKE_LEGACY_PLANNER AND NOT CMAKE_FF_CXX)
-  message(FATAL_ERROR "CMAKE_FF_CXX must be ON to install legacy planners")
-endif()
-
-if(CMAKE_FF_CXX)
-  add_definitions(-DUSE_FF)
-endif()
-
 # Install FD pddl and include the wrapper over it which
 #   acts as a pipe between output of FD tarnslate and lapkt
 option(CMAKE_FD "Install FD pddl" ON)
@@ -170,7 +171,7 @@ endif()
 #     "UNTESTED PYTHON VERSION, expected >3.6.x but found - " ${Python_VERSION})
 # endif()
 
-message("The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
+message(STATUS "The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
 
 #---- Pybind11  ----#
 # MUST BE CALLED AFTER FINDPYTHON: CMake 3.12+ (3.15+ recommended, 3.18.2+ ideal) 
@@ -235,7 +236,7 @@ find_package(Boost
   # PATHS ${Boost_ROOT} 
   # NO_DEFAULT_PATH
   )
-message("THE BOOST INCLUDE dirs search path is " ${Boost_INCLUDE_DIRS} )
+message(STATUS "THE BOOST INCLUDE dirs search path is " ${Boost_INCLUDE_DIRS} )
 
 #---- Catch2 ----#
 

@@ -36,26 +36,23 @@ this in mind when using this library.
 
 Pypi package(linux and windows): Jump right in!
 =================================================
+
+**As of Aug 2023, `pypi` package is available for python `3.8`, `3.9` and `3.10` on linux, and `3.9` and `3.10` on windows**
+
+
 - Install package
 
 		python3 -m pip install lapkt
 
-- Checkout lapkt options
+- Check lapkt options
 
 		lapkt_cmd.py -h
 
-The python script can be found [here](https://github.com/LAPKT-dev/LAPKT-public/blob/Devel2.0/src/python/_package/script/lapkt_cmd.py)
-### *Note* - as of Oct 2022 `pypi` package for `macos` is `work in progress` 
+The directory where the `pip` command installs the scripts, including `lapkt_cmd.py`, is generally on the system `PATH`, if not, it needs to be added manually.
 
-## Important platform requirements:
-
-**Platform agnostic**
-
-1. The directory where the `pip` command installs the scripts, including `lapkt_cmd.py`, is generally on the system `PATH`, if not, it needs to be added manually.
-2. Python version [ `3.7`, `3.7`, `3.8`, `3.9`, `3.10` ] are supported
+**Additional platform requirements:**
 
 **@Windows**
-
 1. `clingo/gringo` python package requires `MSVCP140.dll` which comes with visual studio redistributable. [latest vc-redist](https://docs.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
 2. To be able to run `lapkt_run.py` script directly from command line, change the default handler for ".py" files to `Python'.
 
@@ -67,9 +64,7 @@ Introduction to LAPKT 4 Devs
 
 `cmake` is the primary tool used to build the LAPKT's C++(backend) source code. We also use it to generate Python/C++ library package which is ready to go as a `pypi` package. 
 
-
 # Publications
-
 
 ## Approximate Novelty Search
 

@@ -11,36 +11,38 @@ if(MACOS_BUILD)
 endif(MACOS_BUILD)
 
 if(NOT DEFINED PY_VERSION)
-  find_package(Python COMPONENTS Interpreter Development)
+  find_package(Python REQUIRED COMPONENTS Interpreter Development)
 else()
   string(REPLACE "." ";" PY_VERSION_PART ${PY_VERSION})
   LIST(GET PY_VERSION_PART 0 PY_VMAJOR)
   LIST(GET PY_VERSION_PART 1 PY_VMINOR)
   MATH(EXPR PY_VMINOR_NEXT "${PY_VMINOR} + 1")
   find_package(Python ${PY_VMAJOR}.${PY_VMINOR}...<${PY_VMAJOR}.${PY_VMINOR_NEXT} 
-    COMPONENTS Interpreter Development)
+    REQUIRED COMPONENTS Interpreter Development)
 endif()
 # if(${Python_VERSION} VERSION_LESS 3.6.0)
 #   message(SEND_ERROR
 #     "INCOMPATIBLE PYTHON VERSION, expected >3.6.x but found - "
 #     ${Python_VERSION})
 # endif()
-message("The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
+message(STATUS "The PYTHON_VERSION is ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
 
 # Install pip requirements
 execute_process(COMMAND ${Python_EXECUTABLE} -m pip install --user
   -r ${PROJECT_SOURCE_DIR}/pip_requirements.txt
   RESULT_VARIABLE out
 )
-message(STATUS "Status- Install general pip result: ${out}")
+message(STATUS "Pip Install Status | ${Python_EXECUTABLE} -m pip install --user
+-r ${PROJECT_SOURCE_DIR}/pip_requirements.txt | result: ${out}")
 
 if(GEN_SPHINX_DOCS)
   execute_process(COMMAND ${Python_EXECUTABLE} -m pip install --user
     -r ${PROJECT_SOURCE_DIR}/config/pre_build/pip_auto_docs_requirements.txt
     RESULT_VARIABLE out
   )
+  message(STATUS "Pip Install Status |  ${Python_EXECUTABLE} -m pip install --user
+  -r ${PROJECT_SOURCE_DIR}/config/pre_build/pip_auto_docs_requirements.txt| result: ${out}")
 endif(GEN_SPHINX_DOCS)
-message(STATUS "Status- Install auto docs pip dependencies: ${out}")
 
 
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#
@@ -63,13 +65,12 @@ if(GEN_DOXYGEN_DOCS OR GEN_DOXYSPHINX_DOCS)
     ExternalProject_Add( external_doxygen
       URL https://sourceforge.net/projects/doxygen/files/rel-1.9.6/doxygen-1.9.6.linux.bin.tar.gz
       URL_MD5 b6193a16bc5128597f5affd878dbd7b7
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
       DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
       SOURCE_DIR  ${DEPS_INSTALL_PREFIX}/doxygen
       BUILD_IN_SOURCE 1
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
-      INSTALL_COMMAND "" # ./b2 install
+      INSTALL_COMMAND ""
     )
     list (APPEND EXTRA_CMAKE_ARGS
       -DDOXYGEN_ROOT=${DEPS_INSTALL_PREFIX}/doxygen
@@ -78,13 +79,12 @@ if(GEN_DOXYGEN_DOCS OR GEN_DOXYSPHINX_DOCS)
     ExternalProject_Add( external_doxygen
       URL https://www.doxygen.nl/files/doxygen-1.9.6.windows.x64.bin.zip
       URL_MD5 bdf1af97a733edd0a60fce2cf375c5c3
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
       DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
       SOURCE_DIR  ${DEPS_INSTALL_PREFIX}/doxygen
       BUILD_IN_SOURCE 1
       CONFIGURE_COMMAND ""
       BUILD_COMMAND ""
-      INSTALL_COMMAND "" # ./b2 install
+      INSTALL_COMMAND ""
     )
     list (APPEND EXTRA_CMAKE_ARGS
       -DDOXYGEN_ROOT=${DEPS_INSTALL_PREFIX}/doxygen
@@ -102,26 +102,25 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external_package/fd_translate/translate.py)
   COMMAND_ERROR_IS_FATAL ANY)
 endif()
 
-# BUILD FF
-if(CMAKE_FF_CXX)
-  list(APPEND DEPENDENCIES
-    external_ff
-  )
-  ExternalProject_Add(external_ff
-    GIT_REPOSITORY https://github.com/LAPKT-dev/libff_parser
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/libff
-    #SOURCE_SUBDIR src
-    BINARY_DIR ${DEPS_BUILD_DIR}/ff/build
-    INSTALL_DIR ${DEPS_INSTALL_PREFIX}/ff
-    #GIT_REMOTE_UPDATE_STRATEGY    CHECKOUT
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX}/ff
-    # INSTALL_COMMAND  cmake --install ${PROJECT_BINARY_DIR}/../build_external/ff/build
-  )
-  list (APPEND EXTRA_CMAKE_ARGS
-    -DFF_ROOT=${DEPS_INSTALL_PREFIX}/ff
-  )
-endif()
+# # BUILD FF
+# if(CMAKE_FF_CXX)
+#   list(APPEND DEPENDENCIES
+#     external_ff
+#   )
+#   ExternalProject_Add(external_ff
+#     GIT_REPOSITORY https://github.com/LAPKT-dev/libff_parser
+#     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/libff
+#     #SOURCE_SUBDIR src
+#     BINARY_DIR ${DEPS_BUILD_DIR}/ff/build
+#     INSTALL_DIR ${DEPS_INSTALL_PREFIX}/ff
+#     #GIT_REMOTE_UPDATE_STRATEGY    CHECKOUT
+#     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX}/ff
+#     # INSTALL_COMMAND  cmake --install ${PROJECT_BINARY_DIR}/../build_external/ff/build
+#   )
+#   list (APPEND EXTRA_CMAKE_ARGS
+#     -DFF_ROOT=${DEPS_INSTALL_PREFIX}/ff
+#   )
+# endif()
 
 # BUILD CATCH2
 
@@ -133,7 +132,6 @@ if(CMAKE_TESTING_ENABLED)
     # GIT_REPOSITORY https://github.com/catchorg/Catch2
     # GIT_TAG  v3.0.0-preview4
     URL ${PROJECT_SOURCE_DIR}/external_package/Catch2-3.0.0-preview4.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_DIR ${DEPS_DOWNLOAD_DIR}/Catch2
     #SOURCE_SUBDIR src
     BINARY_DIR ${DEPS_BUILD_DIR}/Catch2/build
@@ -161,12 +159,12 @@ if(CMAKE_BOOST_BUILD_TYPE STREQUAL "Debug")
 else()
   set(BOOST_VARIANT "release")
 endif()
-message("Building Boost in " ${BOOST_VARIANT} " mode")
+message(STATUS "Building Boost in " ${BOOST_VARIANT} " mode")
 file(WRITE ${DEPS_BUILD_DIR}/boost/user-config.jam "using python  :  ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR} ;")
 
 # LOGS
-message("Boost is built using python  :  ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR} ;")
-message("The boost build command is : ./b2 --user-config=${PROJECT_BINARY_DIR}/../build_external/boost/user-config.jam --with-python --with-program_options --build-dir=${PROJECT_BINARY_DIR}/../build_external/boost/build variant=${BOOST_VARIANT} optimization=space link=static install cxxflags=-fpic")
+message(STATUS "Boost is built using python  :  ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR} ;")
+message(STATUS "The boost build command is : ./b2 --user-config=${PROJECT_BINARY_DIR}/../build_external/boost/user-config.jam --with-python --with-program_options --build-dir=${PROJECT_BINARY_DIR}/../build_external/boost/build variant=${BOOST_VARIANT} optimization=space link=static install cxxflags=-fpic")
 
 
 # Boost Configure and Build commands
@@ -208,9 +206,8 @@ list(APPEND BUILD_COMMAND
     variant=${BOOST_VARIANT}
 )
 
-ExternalProject_Add( external_boost
+ExternalProject_Add(external_boost
   URL ${PROJECT_SOURCE_DIR}/external_package/boost-1.81.0.tar.xz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   URL_MD5 6cf0cdd797bca685910d527ae3c08cb3
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
   TMP_DIR     ${DEPS_BUILD_DIR}/boost/tmp
@@ -253,7 +250,6 @@ foreach(var ${vars})
 endforeach()
 
 ExternalProject_Add (external_lapkt
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   DEPENDS ${DEPENDENCIES}
   SOURCE_DIR ${PROJECT_SOURCE_DIR}
   CMAKE_ARGS ${EXTRA_CMAKE_ARGS}

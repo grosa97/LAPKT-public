@@ -16,11 +16,6 @@ if(WINDOWS_BUILD)
     )
 endif(WINDOWS_BUILD)
 
-if(CMAKE_FF_CXX)
-    set_target_properties(cpp_unit_test PROPERTIES
-        LINK_FLAGS "-Wl,--allow-multiple-definition" # multiple definitions of gbracket_count in libff.c and scan.#$$^.c file
-    )
-endif(CMAKE_FF_CXX)
 
 # Source files shared by tests
 add_subdirectory(common)

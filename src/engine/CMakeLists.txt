@@ -1,5 +1,13 @@
 target_sources(core
     PRIVATE
+        closed_list.hxx
+        match_tree.cxx
+        match_tree.hxx
+        open_list.hxx
+        reachability.cxx
+        reachability.hxx
+        watched_lit_succ_gen.cxx
+        watched_lit_succ_gen.hxx
         at_bfs.hxx
         gs_custom_bfs.hxx
         at_bfs_dq.hxx
@@ -79,6 +87,12 @@ install(
         ${PROJECT_SOURCE_DIR}/src/engine/approx_novelty_siw.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/approx_novelty_dfs_plus.hxx
         ${PROJECT_SOURCE_DIR}/src/engine/approx_novelty_iw.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/new_node_comparer.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/closed_list.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/match_tree.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/open_list.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/reachability.hxx
+        ${PROJECT_SOURCE_DIR}/src/engine/watched_lit_succ_gen.hxx
     DESTINATION
         ${CMAKE_INSTALL_PREFIX}/lapkt/core/include/engine
     COMPONENT

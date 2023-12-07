@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        py_version: ["3.7", "3.8", "3.9", "3.10"]
+        py_version: ["3.8", "3.9", "3.10",  "3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -57,8 +57,6 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{env.BUILD_TYPE}}
         -DUSE_SUPERBUILD=ON
-        -DCMAKE_FF_CXX=ON
-        -DCMAKE_LEGACY_PLANNER=OFF
         -DCMAKE_FD=ON
         -DCMAKE_TARSKI=ON
         -DCMAKE_DOXYGEN_DOCS=ON
@@ -108,14 +106,14 @@ jobs:
 
 # --------------------------------------------------------------------------- #
 
-  build-ubuntu-18:
+  build-ubuntu-22:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        py_version: ["3.7", "3.8", "3.9", "3.10"]
+        py_version: ["3.8", "3.9", "3.10",  "3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -155,8 +153,6 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{env.BUILD_TYPE}}
         -DUSE_SUPERBUILD=ON
-        -DCMAKE_FF_CXX=ON
-        -DCMAKE_LEGACY_PLANNER=OFF
         -DCMAKE_FD=ON
         -DCMAKE_TARSKI=ON
         -DCMAKE_DOXYGEN_DOCS=OFF 
@@ -213,7 +209,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        py_version: ["3.7", "3.8", "3.9", "3.10"]
+        py_version: ["3.9", "3.10",  "3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -238,8 +234,6 @@ jobs:
         -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{env.BUILD_TYPE}}
         -DCMAKE_GENERATOR="MinGW Makefiles"
         -DUSE_SUPERBUILD=ON
-        -DCMAKE_FF_CXX=OFF
-        -DCMAKE_LEGACY_PLANNER=OFF
         -DCMAKE_FD=ON
         -DCMAKE_TARSKI=ON
         -DCMAKE_DOXYGEN_DOCS=OFF
@@ -298,9 +292,9 @@ jobs:
   #   runs-on: macos-12
   #   strategy:
   #     matrix:
-  #       # py_version: ["3.7", "3.8", "3.9", "3.10"]
-  #       py_version: ["3.8", "3.9", "3.10"]
-  #       # py_version: ["3.9", "3.10"]
+  #       # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+  #       py_version: ["3.8", "3.9", "3.10",  "3.11"]
+  #       # py_version: ["3.9", "3.10",  "3.11"]
   #       exclude:
   #         - py_version: "3.9"
 
@@ -338,8 +332,6 @@ jobs:
   #       -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{env.BUILD_TYPE}}
   #       -DCMAKE_GENERATOR="Unix Makefiles"
   #       -DUSE_SUPERBUILD=ON
-  #       -DCMAKE_FF_CXX=OFF
-  #       -DCMAKE_LEGACY_PLANNER=OFF
   #       -DCMAKE_FD=ON
   #       -DCMAKE_TARSKI=ON
   #       -DCMAKE_DOXYGEN_DOCS=OFF
@@ -398,8 +390,8 @@ jobs:
   #   runs-on: macos-11
   #   strategy:
   #     matrix:
-  #       # py_version: ["3.7", "3.8", "3.9", "3.10"]
-  #       py_version: ["3.9", "3.10"]
+  #       # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+  #       py_version: ["3.9", "3.10",  "3.11"]
   #       # exclude:
   #       #   - py_version: "3.8"
 
@@ -437,8 +429,6 @@ jobs:
   #       -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{env.BUILD_TYPE}}
   #       -DCMAKE_GENERATOR="Unix Makefiles"
   #       -DUSE_SUPERBUILD=ON
-  #       -DCMAKE_FF_CXX=OFF
-  #       -DCMAKE_LEGACY_PLANNER=OFF
   #       -DCMAKE_FD=ON
   #       -DCMAKE_TARSKI=ON
   #       -DCMAKE_DOXYGEN_DOCS=OFF
@@ -498,9 +488,9 @@ jobs:
 #     runs-on: macos-11
 #     strategy:
 #       matrix:
-#         # py_version: ["3.7", "3.8", "3.9", "3.10"]
-#         py_version: ["3.8", "3.9", "3.10"]
-#         # py_version: ["3.9", "3.10"]
+#         # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+#         py_version: ["3.8", "3.9", "3.10",  "3.11"]
+#         # py_version: ["3.9", "3.10",  "3.11"]
 #         exclude:
 #           - py_version: "3.9"
 
@@ -538,8 +528,6 @@ jobs:
 #         -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{env.BUILD_TYPE}}
 #         -DCMAKE_GENERATOR="Unix Makefiles"
 #         -DUSE_SUPERBUILD=ON
-#         -DCMAKE_FF_CXX=OFF
-#         -DCMAKE_LEGACY_PLANNER=OFF
 #         -DCMAKE_FD=ON
 #         -DCMAKE_TARSKI=ON
 #         -DCMAKE_DOXYGEN_DOCS=OFF
@@ -598,9 +586,9 @@ jobs:
 #     runs-on: macos-10.15
 #     strategy:
 #       matrix:
-#         # py_version: ["3.7", "3.8", "3.9", "3.10"]
-#         py_version: ["3.8", "3.9", "3.10"]
-#         # py_version: ["3.9", "3.10"]
+#         # py_version: ["3.8", "3.9", "3.10",  "3.11"]
+#         py_version: ["3.8", "3.9", "3.10",  "3.11"]
+#         # py_version: ["3.9", "3.10",  "3.11"]
 #         exclude:
 #           - py_version: "3.9"
 
@@ -640,8 +628,6 @@ jobs:
 #         -DCMAKE_C_COMPILER=gcc-10
 #         -DCMAKE_CXX_COMPILER=g++-10
 #         -DUSE_SUPERBUILD=ON
-#         -DCMAKE_FF_CXX=OFF
-#         -DCMAKE_LEGACY_PLANNER=OFF
 #         -DCMAKE_FD=ON
 #         -DCMAKE_TARSKI=ON
 #         -DCMAKE_DOXYGEN_DOCS=OFF
