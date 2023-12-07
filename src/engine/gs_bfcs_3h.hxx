@@ -125,7 +125,10 @@ namespace aptk
 				}
 				bool is_rp_fl_achieved(unsigned f)
 				{
-					return m_rp_fl_achieved->isset(f);
+					if (m_rp_fl_achieved != NULL)
+						return m_rp_fl_achieved->isset(f);
+					else
+						return false;
 				}
 
 				// Used to update novelty table
@@ -605,14 +608,11 @@ namespace aptk
 					float rp_count_1 = -(float)1/10;
 					float rp_count_2 = -(float)1/100;
 					// // if land/goal counter has decreased, then update relevant fluents
-					if ( (candidate->parent() && candidate->GC() < candidate->parent()->GC() ) || ( candidate->h1n() == rp_count_1 ) ||  ( candidate->h1n() == rp_count_2 ) )
+					if ( (candidate->parent() && candidate->GC() < candidate->parent()->GC() ) )
 					{
 						// if ( !(candidate->parent() && candidate->GC() < candidate->parent()->GC() ) && candidate->h1n() == -((float)1/101) )
 						// 	std::cout << "--DEBUG: candidate->h1n() == (float)(1/101): " << candidate->h1n()<<std::endl;
 						// std::cout << "\tEVAL_RP: --[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
-						static Fluent_Vec candidate_a_rp_fl;
-						if ( ( candidate->h1n() == rp_count_1 ) ||  ( candidate->h1n() == rp_count_2 ) )
-							candidate_a_rp_fl = list_rp_fl_achieved(candidate);
 
 						// If state hasn't been gereated, update the parent state with current op
 						if (!candidate->has_state())
@@ -627,98 +627,38 @@ namespace aptk
 						else
 							set_relplan(candidate, candidate->state());
 						
-						if ( ( candidate->h1n() == rp_count_1 ) ||  ( candidate->h1n() == rp_count_2 ) )
-						{
-							candidate->set_compound_r();
-							candidate->set_rp_fl_achieved(candidate_a_rp_fl, this->problem().task().num_fluents());
-						}
-						candidate_a_rp_fl.clear();
-						
 					}
-					// else if ( candidate->h1n() == rp_count_1 )
-					// {
-					// 	std::cout << "--DEBUG: candidate->h1n() == (float)(1/11): " << candidate->h1n()<<std::endl;
+					else if ( candidate->h1n() == rp_count_1 )
+					{
 
-					// 	Fluent_Vec candidate_a_rp_fl = list_rp_fl_achieved(candidate);
+						Fluent_Vec candidate_a_rp_fl = list_rp_fl_achieved(candidate);
 
-					// 	if (!candidate->has_state())
-					// 	{
-					// 		static Fluent_Vec added, deleted;
-					// 		added.clear();
-					// 		deleted.clear();
-					// 		candidate->parent()->state()->progress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
-					// 		set_relplan(candidate, candidate->parent()->state(), candidate_a_rp_fl);
-					// 		candidate->parent()->state()->regress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
-					// 	}
-					// 	else
-					// 		set_relplan(candidate, candidate->state(), candidate_a_rp_fl);
+						if (!candidate->has_state())
+						{
+							static Fluent_Vec added, deleted;
+							added.clear();
+							deleted.clear();
+							candidate->parent()->state()->progress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
+							set_relplan(candidate, candidate->parent()->state());
+							candidate->parent()->state()->regress_lazy_state(this->problem().task().actions()[candidate->action()], &added, &deleted);
+						}
+						else
+							set_relplan(candidate, candidate->state());
 
-					// 	//DEBUG
-					// 	for (auto f:candidate->state()->fluent_vec())
-					// 	{
-					// 		if (candidate->rp_set()->isset(f))
-					// 		{
-					// 			std::cout <<f <<std::endl;
-					// 		}
-					// 	}
-					// }
+						candidate->set_compound_r();
+						candidate->set_rp_fl_achieved(candidate_a_rp_fl, this->problem().task().num_fluents());
+
+						// //DEBUG
+						// std::cout <<"r: "<< candidate->r() <<std::endl;
+						// for (auto f:candidate_a_rp_fl)
+						// {
+						// 	std::cout <<f <<std::endl;
+						// }
+					}
 				}
 			}
 
 				unsigned rp_fl_achieved(Search_Node *n)
-				{
-					unsigned count = 0;
-					static Fluent_Set counted(this->problem().task().num_fluents());
-					Search_Node *n_start = n;
-					while (!n_start->rp_vec())
-					{
-						n_start = n_start->parent();
-					}
-
-					while (n->action() != no_op && n != n_start)
-					{
-
-						const Action *a = this->problem().task().actions()[n->action()];
-
-						// Add Conditional Effects
-						if (!a->ceff_vec().empty())
-						{
-							for (unsigned i = 0; i < a->ceff_vec().size(); i++)
-							{
-								Conditional_Effect *ce = a->ceff_vec()[i];
-								for (auto p : ce->add_vec())
-								{
-									if (n_start->rp_set()->isset(p) && !counted.isset(p))
-									{
-										counted.set(p);
-										if (!n_start->is_rp_fl_achieved(p))
-											count++;
-									}
-								}
-							}
-						}
-
-						const Fluent_Vec &add = a->add_vec();
-
-						// std::cout << this->problem().task().actions()[*it_a]->signature() << std::endl;
-						for (unsigned i = 0; i < add.size(); i++)
-						{
-							const unsigned p = add[i];
-							if (n_start->rp_set()->isset(p) && !counted.isset(p))
-							{
-								counted.set(p);
-								if (!n_start->is_rp_fl_achieved(p))
-									count++;
-							}
-						}
-
-						n = n->parent();
-					}
-					counted.reset();
-					return count;
-				}
-
-				unsigned compounded_rp_fl_achieved(Search_Node *n)
 				{
 					unsigned count = 0;
 					static Fluent_Set counted(this->problem().task().num_fluents());
@@ -762,19 +702,15 @@ namespace aptk
 								counted.set(p);
 							}
 						}
-
 						n = n->parent();
 					}
-					if (n_start->is_compound_r())
-						count += n_start->r();
-
 					counted.reset();
 					return count;
 				}
 
-				Fluent_Vec list_rp_fl_achieved(Search_Node *n)
+				unsigned compounded_rp_fl_achieved(Search_Node *n)
 				{
-					Fluent_Vec achieved_rp_fl_list;
+					unsigned count = 0;
 					static Fluent_Set counted(this->problem().task().num_fluents());
 					Search_Node *n_start = n;
 					while (!n_start->rp_vec())
@@ -797,8 +733,14 @@ namespace aptk
 								{
 									if (n_start->rp_set()->isset(p) && !counted.isset(p))
 									{
-										achieved_rp_fl_list.push_back(p);
 										counted.set(p);
+										if (!n_start->is_rp_fl_achieved(p))
+											count++;
+										// 	if (n_start->is_compound_r())
+										// 		std::cout << "DEBUG: not comp achieved p: "<<p <<std::endl;
+										// }
+										// else
+										// 	std::cout << "DEBUG: is_rp_fl_achieved(p): "<<p <<std::endl;
 									}
 								}
 							}
@@ -812,12 +754,89 @@ namespace aptk
 							const unsigned p = add[i];
 							if (n_start->rp_set()->isset(p) && !counted.isset(p))
 							{
-								achieved_rp_fl_list.push_back(p);
 								counted.set(p);
+								if (!n_start->is_rp_fl_achieved(p))
+									count++;
+								// 	if (n_start->is_compound_r())
+								// 		std::cout << "DEBUG: not comp achieved p: "<<p <<std::endl;
+								// }
+								// else
+								// 	std::cout << "DEBUG: is_rp_fl_achieved(p): "<<p <<std::endl;
 							}
 						}
 
 						n = n->parent();
+					}
+					if (n_start->is_compound_r())
+						count += n_start->r();
+
+					counted.reset();
+					// if (n_start->is_compound_r())
+					// 	std::cout << "----" <<std::endl;
+					return count;
+				}
+
+				Fluent_Vec list_rp_fl_achieved(Search_Node *n)
+				{
+					Fluent_Vec achieved_rp_fl_list;
+					static Fluent_Set counted(this->problem().task().num_fluents());
+					Search_Node *n_start = n;
+					Search_Node *n_start_prev = n_start;
+					bool true_rp_start = false;
+					while (!true_rp_start)
+					{
+						while (!n_start->rp_vec())
+						{
+							n_start = n_start->parent();
+						}
+
+						while (n->action() != no_op && n != n_start)
+						{
+
+							const Action *a = this->problem().task().actions()[n->action()];
+
+							// Add Conditional Effects
+							if (!a->ceff_vec().empty())
+							{
+								for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+								{
+									Conditional_Effect *ce = a->ceff_vec()[i];
+									for (auto p : ce->add_vec())
+									{
+										if (n_start->rp_set()->isset(p) && !counted.isset(p))
+										{
+											achieved_rp_fl_list.push_back(p);
+											counted.set(p);
+										}
+									}
+								}
+							}
+
+							const Fluent_Vec &add = a->add_vec();
+
+							// std::cout << this->problem().task().actions()[*it_a]->signature() << std::endl;
+							for (unsigned i = 0; i < add.size(); i++)
+							{
+								const unsigned p = add[i];
+								if (n_start->rp_set()->isset(p) && !counted.isset(p))
+								{
+									achieved_rp_fl_list.push_back(p);
+									counted.set(p);
+								}
+							}
+
+							n = n->parent();
+						}
+
+						if (!n_start->is_compound_r() || n_start->parent() == NULL)
+						{
+							true_rp_start = true;
+						}	
+						else
+						{
+							// std::cout <<"denbuig"<<std::endl;	
+							n_start = n_start->parent();
+						}	
 					}
 					counted.reset();
 					return achieved_rp_fl_list;
@@ -833,7 +852,7 @@ namespace aptk
 						m_max_r = candidate->r();
 						if (m_verbose)
 							std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
-						// std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
 					}
 				}
 
@@ -953,6 +972,9 @@ namespace aptk
 						inc_dead_end();
 						return;
 					}
+
+					// if (head->is_compound_r())
+					// 	std::cout << "aaa" <<std::endl;
 
 					for (unsigned i = 0; i < app_set.size(); ++i)
 					{
