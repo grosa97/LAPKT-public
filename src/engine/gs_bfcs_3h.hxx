@@ -61,7 +61,8 @@ namespace aptk
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
-						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false)
+						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
+						m_po2(NULL), m_is_helpful(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -76,6 +77,8 @@ namespace aptk
 						delete m_rp_fl_vec;
 					if (m_rp_fl_set != NULL)
 						delete m_rp_fl_set;
+					if (m_po2 != NULL)
+						delete m_po2;
 				}
 
 				float &h1n() { return m_h1; }
@@ -111,7 +114,10 @@ namespace aptk
 				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
 				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 				bool &relaxed_deadend() { return m_relaxed_deadend; }
-
+				std::vector<Action_Idx> &po2() { return *m_po2; }
+				void set_po2(std::vector<Action_Idx> *v) { m_po2 = v; }
+				bool is_helpful() { return m_is_helpful; }
+				void set_is_helpful() { m_is_helpful = true; }
 				// Used to update novelty table
 				bool is_better(Node *n) const
 				{
@@ -211,6 +217,7 @@ namespace aptk
 				unsigned m_partition;
 				unsigned m_M;
 				unsigned m_GC;
+				std::vector<Action_Idx> *m_po2;
 
 				size_t m_hash;
 				Bool_Vec_Ptr *m_land_consumed;
@@ -222,6 +229,7 @@ namespace aptk
 				Fluent_Vec m_goal_candidates;
 
 				bool m_relaxed_deadend;
+				bool m_is_helpful;
 			};
 
 			/**
@@ -247,7 +255,7 @@ namespace aptk
 						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), 
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
-						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false)   //, m_h3_only_max_nov(true)
+						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_count_th(0)  //, m_h3_only_max_nov(true)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -257,6 +265,8 @@ namespace aptk
 					//max depth determined size of list (2^17 = 262143)					
 					int OPEN_MAX_DEPTH =18;
 					m_open.init(OPEN_MAX_DEPTH);
+
+					m_count_th = -(float)1/200;
 
 				}
 
@@ -617,6 +627,26 @@ namespace aptk
 					// }	
 				}
 
+				void eval_po(Search_Node *candidate)
+				{
+					std::vector<Action_Idx> *po = new std::vector<Action_Idx>;
+					candidate->set_po2(po);
+					if (candidate->state() == NULL)
+					{
+						State *succ = m_problem.next(*(candidate->parent()->state()), candidate->action());
+						m_third_h->eval(*succ, candidate->h3n(), candidate->po2());
+						delete succ;
+					}
+					else 
+						m_third_h->eval(*(candidate->state()), candidate->h3n(), candidate->po2());
+					// if (candidate->h3n() < m_max_h4n)
+					// {
+					// 	m_max_h4n = candidate->h4n();
+					// 	if (m_verbose)
+					// 		std::cout << "--[" << m_max_h2n << " / " << m_max_h4n << "]--" << std::endl;
+					// }
+				}
+
 				void record_count_h(Search_Node* candidate)
 				{
 					int key = (int)(-10000*candidate->h1n());
@@ -708,6 +738,15 @@ namespace aptk
 						inc_dead_end();
 						return;
 					}
+					static Bit_Set po2(m_problem.num_actions());
+					po2.reset();
+					if (head->m_po2 != NULL)
+					{
+						for (Action_Idx a : head->po2())
+						{
+							po2.set(a);
+						}
+					}
 
 					for (unsigned i = 0; i < app_set.size(); ++i)
 					{
@@ -754,7 +793,39 @@ namespace aptk
 							eval_relevant_fluents(n);
 
 						eval_count_based(n);
-						// if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
+						if (n->h1n() > m_count_th) 
+						{
+							bool is_helpful = po2.isset(a);
+							if (is_helpful)
+							{
+								eval_po(n);
+							if (n->h3n() == no_such_index)
+							{
+								inc_dead_end();
+								delete n;
+								continue;
+							}
+								n->set_is_helpful();
+							}
+							else
+								n->h3n() = n->parent()->h3n();
+						}
+						else
+						{
+							n->h3n() = m_worst_h3n;
+							// n->h3n() = 0;
+						}
+
+						// if (n->h1n() >= -(float)1/256) 
+						// {
+						// 	eval_po(n);
+						// 	if (n->h3n() > m_worst_h3n)
+						// 		m_worst_h3n = n->h3n();
+						// }
+						// else
+						// {
+						// 	n->h3n() = m_worst_h3n;
+						// }
 						// {
 						// 	inc_dead_end();
 						// 	delete n;
@@ -838,6 +909,26 @@ namespace aptk
 							head = get_node();
 							continue;
 						}
+
+						if (head->h1n() > m_count_th) 
+						{
+							if (!head->is_helpful())
+								eval_po(head);
+							if (head->h3n() > m_worst_h3n)
+								m_worst_h3n = head->h3n();
+							if (head->h3n() == no_such_index)
+							{
+								inc_dead_end();
+								delete head;
+								continue;
+							}
+						}
+						else
+						{
+							head->h3n() = m_worst_h3n;
+						}
+
+
 						process(head);
 						close(head);
 						head = get_node();
@@ -934,6 +1025,7 @@ namespace aptk
 
 				First_Heuristic &h1() { return *m_first_h; }
 				Second_Heuristic &h2() { return *m_second_h; }
+				Third_Heuristic &h3() { return *m_third_h; }
 				Relevant_Fluents_Heuristic &rel_fl_h() { return *m_relevant_fluents_h; }
 
 				void set_verbose(bool v) { m_verbose = v; }
@@ -1013,8 +1105,10 @@ namespace aptk
 				bool m_use_h3n;
 				// bool m_h3_only_max_nov;
 				bool m_h3_rp_fl_only;
+				unsigned m_worst_h3n;
 
 				std::unordered_map<int, unsigned> m_h1_record;
+				float m_count_th;
 			};
 
 		}

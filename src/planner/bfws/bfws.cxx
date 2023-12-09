@@ -327,7 +327,8 @@ void BFWS::solve()
 
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
-
+		bfs_engine.h3().ignore_rp_h_value(true);
+		
 		unsigned max_width = 2;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
@@ -361,7 +362,8 @@ void BFWS::solve()
 		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
 
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
-
+		bfs_engine.h3().ignore_rp_h_value(true);
+		
 		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);

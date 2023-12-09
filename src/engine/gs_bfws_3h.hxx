@@ -844,6 +844,7 @@ namespace aptk
 					}
 					return 0;
 				}
+				
 				unsigned get_max_novelty_generated()
 				{
 					for (int i = m_max_novelty + 1; i >= 0; i--)
