@@ -639,6 +639,7 @@ namespace aptk
 					}
 					else 
 						m_third_h->eval(*(candidate->state()), candidate->h3n(), candidate->po2());
+						
 					// if (candidate->h3n() < m_max_h4n)
 					// {
 					// 	m_max_h4n = candidate->h4n();
@@ -807,6 +808,12 @@ namespace aptk
 									continue;
 								}
 							}
+							// else if (head->is_helpful() && !is_helpful)
+							// {
+							// 	inc_dead_end();
+							// 	delete n;
+							// 	continue;
+							// }
 							else
 								n->h3n() = n->parent()->h3n();
 						}
