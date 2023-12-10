@@ -674,6 +674,23 @@ namespace aptk
 					// m_generated_count_by_novelty[n->h1n() - 1]++;
 				}
 
+				std::string get_action_signature(Action_Idx ai)
+				{
+					return this->problem().task().fluents()[ai]->signature();
+				}
+
+				std::string signature_to_lifted_fl(std::string signature)
+				{
+					std::stringstream ss(signature);
+
+					std::string lfl;
+					if (std::getline(ss, lfl, '_'))
+						return lfl;
+					return "";
+				}
+
+
+
 				virtual void process(Search_Node *head)
 				{
 
