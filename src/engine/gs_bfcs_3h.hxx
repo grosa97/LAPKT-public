@@ -649,7 +649,7 @@ namespace aptk
 
 				void record_count_h(Search_Node* candidate)
 				{
-					int key = (int)(-10000*candidate->h1n());
+					int key = (int)(-10000000*candidate->h1n());
 					if (m_h1_record.find(key) != m_h1_record.end()) {
 						// Key found in map, increment its value by 1
 						m_h1_record[key]++;
@@ -799,13 +799,13 @@ namespace aptk
 							if (is_helpful)
 							{
 								eval_po(n);
-							if (n->h3n() == no_such_index)
-							{
-								inc_dead_end();
-								delete n;
-								continue;
-							}
 								n->set_is_helpful();
+								if (n->h3n() == no_such_index)
+								{
+									inc_dead_end();
+									delete n;
+									continue;
+								}
 							}
 							else
 								n->h3n() = n->parent()->h3n();
@@ -877,7 +877,7 @@ namespace aptk
 					Search_Node *head = get_node();
 					while (head)
 					{
-						record_count_h(head);
+						// record_count_h(head);
 						if (head->gn() >= max_depth())
 						{
 							close(head);
@@ -887,7 +887,9 @@ namespace aptk
 
 						// Generate state
 						if (!head->has_state())
+						{
 							head->set_state(m_problem.next(*(head->parent()->state()), head->action()));
+						}
 
 						if (m_problem.goal(*(head->state())))
 						{
@@ -920,6 +922,7 @@ namespace aptk
 							{
 								inc_dead_end();
 								delete head;
+								head = get_node();
 								continue;
 							}
 						}
