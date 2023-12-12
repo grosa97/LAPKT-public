@@ -255,7 +255,7 @@ namespace aptk
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
-					int OPEN_MAX_DEPTH = 17;
+					int OPEN_MAX_DEPTH = 18;
 					m_open.init(OPEN_MAX_DEPTH);
 
 				}
@@ -622,7 +622,7 @@ namespace aptk
 
 				void record_count_h(Search_Node* candidate)
 				{
-					int key = (int)(-10000*candidate->h1n());
+					int key = (int)(-100000000*candidate->h1n());
 					if (m_h1_record.find(key) != m_h1_record.end()) {
 						// Key found in map, increment its value by 1
 						m_h1_record[key]++;
