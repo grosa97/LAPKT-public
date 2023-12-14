@@ -37,6 +37,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <iostream>
 #include <hash_table.hxx>
 #include <types.hxx>
+#include <memory.hxx>
+#include <chrono>
 
 namespace aptk
 {
@@ -291,8 +293,12 @@ namespace aptk
 						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), 
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
-						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0) //, m_h3_only_max_nov(true)
+						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
+						m_memory_stop(false) //, m_h3_only_max_nov(true)
 				{
+
+					m_memory_budget = 7500;
+
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
 					m_third_h = new Third_Heuristic(search_problem);
@@ -356,8 +362,9 @@ namespace aptk
 						free(m_generated_count_by_novelty);
 					if (m_novelty_count_plan != nullptr)
 						free(m_novelty_count_plan);
+						
 
-					// TODO: delete feature counts table
+					//no need to delete lifted features count table elements->not allocated dynamically
 				}
 				
 
@@ -702,8 +709,11 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					//std::cout << lf_count <<std::endl;
-					//float lf_c_nov = -(float)1 / (1+lf_count);
-					//n->h1n() += lf_c_nov;
+					if (lf_count < 10)
+					{
+						float lf_c_nov = -(float)1 / (1+lf_count);
+						n->h1n() += lf_c_nov;
+					}
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -718,8 +728,8 @@ namespace aptk
 					// 	n->h1n() = -2; 
 					
 
-					if (lf_count == 0)
-						n->h1n() = -2;
+					// if (lf_count == 0)
+					// 	n->h1n() = -2;
 					//if (lf_count < 3) //good (also when fixed)
 					//	n->h1n() = -2;
 					//if (lf_count > 0)
@@ -1177,6 +1187,25 @@ namespace aptk
 						if (m_verbose)
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
+
+						static struct rusage usage_report;
+						if (generated() % 10000 == 0){
+							auto start = std::chrono::steady_clock::now();
+							getrusage(RUSAGE_SELF, &usage_report);
+							// auto end = std::chrono::steady_clock::now();
+							// std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							// std::chrono::duration<double, std::milli> duration = end - start;
+							// std::cout << duration.count() <<std::endl;
+							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+
+							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+							m_memory_stop = true;
+							// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
+							// 	std::cout << "Search: Memory limit exceeded." << std::endl;
+							// 	return NULL;
+							}
+						}
 						open_node(n);
 					}
 					inc_eval();
@@ -1191,12 +1220,33 @@ namespace aptk
 					}
 							
 				}
-
+  
 				virtual Search_Node *do_search()
 				{
 					Search_Node *head = get_node();
+					int counter = 0;
+
+					// static struct rusage usage_report;
 					while (head)
 					{
+						// bool timer = false;
+						// if (generated() % 100000 < 100){
+						// 	auto start = std::chrono::steady_clock::now();
+						// 	getrusage(RUSAGE_SELF, &usage_report);
+						// 	auto end = std::chrono::steady_clock::now();
+						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+						// 	std::chrono::duration<double, std::milli> duration = end - start;
+						// 	std::cout << duration.count() <<std::endl;
+						// 	timer = true;
+						// 	// if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+						// 	// 	// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
+						// 	// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
+						// 	// 	std::cout << "Search: Memory limit exceeded." << std::endl;
+						// 	// 	return NULL;
+						// 	// }
+						// }
+						// auto start = std::chrono::steady_clock::now();
+
 						record_count_h(head);
 						if (head->gn() >= max_depth())
 						{
@@ -1219,6 +1269,9 @@ namespace aptk
 						if ((time_used() - m_t0) > m_time_budget)
 							return NULL;
 
+						if (m_memory_stop)
+							return NULL;
+
 						if (is_closed(head))
 						{
 #ifdef DEBUG
@@ -1231,6 +1284,14 @@ namespace aptk
 						}
 						process(head);
 						close(head);
+						counter++;
+						// auto end = std::chrono::steady_clock::now();
+						// if (timer)
+						// {
+						// 	std::chrono::duration<double, std::milli> duration = end - start;
+						// 	std::cout << duration.count() <<std::endl;
+						// 	timer = false;
+						// }
 						head = get_node();
 					}
 					printMap(m_h1_record);
@@ -1414,6 +1475,9 @@ namespace aptk
 
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
+
+				int m_memory_budget;
+				bool m_memory_stop;
 			};
 
 		}
