@@ -65,6 +65,32 @@ namespace aptk
 				}
 			};
 
+			// Custom hash function for tuple keys
+			struct TupleHash {
+				size_t operator()(const std::tuple<unsigned, unsigned>& t) const {
+					size_t hash = 0;
+					hash ^= std::hash<unsigned>{}(std::get<0>(t));
+					hash ^= std::hash<unsigned>{}(std::get<1>(t)) + 0x9e3779b9 + (hash << 6) + (hash >> 2); // Simple hash combining method
+					return hash;
+				}
+				size_t operator()(std::tuple<unsigned, unsigned>& t) const {
+					size_t hash = 0;
+					hash ^= std::hash<unsigned>{}(std::get<0>(t));
+					hash ^= std::hash<unsigned>{}(std::get<1>(t)) + 0x9e3779b9 + (hash << 6) + (hash >> 2); // Simple hash combining method
+					return hash;
+				}
+			};
+
+			// Custom equality operator for tuple keys
+			struct TupleEqual {
+				bool operator()(const std::tuple<unsigned, unsigned>& t1, const std::tuple<unsigned, unsigned>& t2) const {
+					return t1 == t2;
+				}
+				bool operator()(std::tuple<unsigned, unsigned>& t1, std::tuple<unsigned, unsigned>& t2) const {
+					return t1 == t2;
+				}
+			};
+
 
 			// // Custom equality operator for std::vector<int>
 			// struct VectorEqual {
@@ -700,10 +726,13 @@ namespace aptk
 				void eval_lf_counts(Search_Node* n)
 				{
 					//unsigned lf_count = get_lifted_counts_state(n);
-					unsigned lf_count = get_lifted_counts_state_partition(n);
+					// unsigned lf_count = get_lifted_counts_state_partition(n);
+					unsigned lf_count = get_lifted_counts_nov_1_partition(n);
 					//std::cout << lf_count <<std::endl;
-					//float lf_c_nov = -(float)1 / (1+lf_count);
-					//n->h1n() += lf_c_nov;
+					// if (lf_count < 10) {
+					float lf_c_nov = -(float)1 / (1+lf_count);
+					n->h1n() += lf_c_nov;
+					// }
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -718,8 +747,8 @@ namespace aptk
 					// 	n->h1n() = -2; 
 					
 
-					if (lf_count == 0)
-						n->h1n() = -2;
+					// if (lf_count == 0)
+					// 	n->h1n() = -2;
 					//if (lf_count < 3) //good (also when fixed)
 					//	n->h1n() = -2;
 					//if (lf_count > 0)
@@ -989,6 +1018,111 @@ namespace aptk
 					return feat_count_value;
 				}
 
+				unsigned get_lifted_counts_nov_1_partition(Search_Node* n)
+				{
+					unsigned partition = n->partition();
+
+					if (m_sign_nov_1_count_partitions.find(partition) == m_sign_nov_1_count_partitions.end())
+						m_sign_nov_1_count_partitions[partition] = std::unordered_map<std::tuple<unsigned, unsigned>, unsigned, TupleHash, TupleEqual>();
+
+					
+					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+					
+					// std::unordered_map<std::vector<int>, unsigned int, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+					std::unordered_map<std::vector<int>, unsigned int, VectorHash>& sign_feat_occurrences = m_sign_feat_occurrences;
+
+
+					if (n->parent() == NULL) //root node
+					{
+						std::vector<int> sign_features(m_sign_count, 0);
+						for (auto f: n->state()->fluent_vec())
+							sign_features[m_fluent_to_feature[f]]++;
+						sign_feat_occurrences[sign_features] = 1;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, sign_features);
+						n->m_sign_features = kp;
+
+						std::unordered_map<std::tuple<unsigned, unsigned>, unsigned, TupleHash, TupleEqual>& sign_nov_1_counts = m_sign_nov_1_count_partitions[partition];
+
+						for (int i = 0; i < sign_features.size(); i++)
+						{
+							std::tuple<unsigned, unsigned> f_v = std::make_tuple(i, sign_features[i]);
+							sign_nov_1_counts[f_v] = 1;
+						}
+						return 0;
+					}
+					unsigned feat_count_value = std::numeric_limits<unsigned int>::max();
+					
+					static Fluent_Vec added, deleted, temp_fv;
+					added.clear();
+					deleted.clear();	
+					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					
+					const std::vector<int>* parent_features = n->parent()->m_sign_features;
+					std::vector<int> child_features(*parent_features);
+
+					std::unordered_set<unsigned> counted_a;
+					for (auto f: added)
+					{
+						if (counted_a.find(f) == counted_a.end())
+						{
+							counted_a.insert(f);
+							if (!n->parent()->state()->entails(f))
+								child_features[m_fluent_to_feature[f]]++;
+						}
+					}
+					std::unordered_set<unsigned> counted_d;
+					for (auto f: deleted)
+					{
+						if (counted_d.find(f) == counted_d.end())
+						{
+							// if (child_features[m_fluent_to_feature[f]] > 0)
+							counted_d.insert(f);
+							if (n->parent()->state()->entails(f))
+								child_features[m_fluent_to_feature[f]]--;
+						}
+					}
+
+					//still keeping uncommented lines to add features in dict so nodes can point to vector feature objects
+					auto it = sign_feat_occurrences.find(child_features);
+					if (it != sign_feat_occurrences.end())
+					{
+						// feat_count_value = sign_feat_occurrences[child_features]++;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+						n->m_sign_features = kp;
+					}
+					else
+					{
+						sign_feat_occurrences[child_features] = 1;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+						n->m_sign_features = kp;					
+						// feat_count_value = 0;
+					}
+					//---------------------------------------------------------------------------------------------------
+
+					std::unordered_map<std::tuple<unsigned, unsigned>, unsigned, TupleHash, TupleEqual>& sign_nov_1_counts = m_sign_nov_1_count_partitions[partition];
+
+					for (int i = 0; i < child_features.size(); i++)
+					{
+						std::tuple<unsigned, unsigned> f_v = std::make_tuple(i, child_features[i]);
+						auto it = sign_nov_1_counts.find(f_v);
+						if (it != sign_nov_1_counts.end())
+						{
+							unsigned c = sign_nov_1_counts[f_v]++;
+							if (c < feat_count_value)
+								feat_count_value = c;
+						}
+						else
+						{
+							sign_nov_1_counts[f_v] = 1;
+							feat_count_value = 0;
+						}
+					}
+
+					return feat_count_value;
+				}
+
 				unsigned get_lifted_counts_p_number(Search_Node* n)
 				{
 					if (n->parent() == NULL) //root node
@@ -1056,6 +1190,8 @@ namespace aptk
 					return m_sign_feat_to_p[child_features];
 					// return feat_count_value;
 				}
+
+				
 
 
 				virtual void process(Search_Node *head)
@@ -1411,6 +1547,7 @@ namespace aptk
 				std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
 				std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
+				std::unordered_map<unsigned, std::unordered_map<std::tuple<unsigned, unsigned>, unsigned, TupleHash, TupleEqual>> m_sign_nov_1_count_partitions;
 
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
