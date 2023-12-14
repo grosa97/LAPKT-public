@@ -699,11 +699,11 @@ namespace aptk
 
 				void eval_lf_counts(Search_Node* n)
 				{
-					// unsigned lf_count = get_lifted_counts_state(n);
+					//unsigned lf_count = get_lifted_counts_state(n);
 					unsigned lf_count = get_lifted_counts_state_partition(n);
-
-					float lf_c_nov = -(float)1 / (1+lf_count);
-					// n->h1n() += lf_c_nov
+					//std::cout << lf_count <<std::endl;
+					//float lf_c_nov = -(float)1 / (1+lf_count);
+					//n->h1n() += lf_c_nov;
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -711,12 +711,22 @@ namespace aptk
 					// if (lf_count > 10)  //testing good, also good with partitions in bm
 					// 	n->h1n() += 0.5;
 
-					if (lf_count > 10)  //testing good, also good with partitions in bm 12 29865 exp
-						n->h1n() *= 0.9999;
+					//if (lf_count > 10)  //testing good, also good with partitions in bm 12 29865 exp
+					//	n->h1n() *= 0.9999;
 
-					// if (lf_count < 3)  //with partition seems to do well, bm 12 in 28604 expansions
+					//if (lf_count < 10)  //with partition seems to do well, bm 12 in 28604 expansions
 					// 	n->h1n() = -2; 
+					
 
+					if (lf_count == 0)
+						n->h1n() = -2;
+					//if (lf_count < 3) //good (also when fixed)
+					//	n->h1n() = -2;
+					//if (lf_count > 0)
+					//	n->h1n() += 0.5; //(using lf_count > 1 & adding)
+					
+					//if (lf_count < 3 && -(float)1/(lf_count + 1) < n->h1n())
+					//	n->h1n() = -(float)1/(lf_count + 1);
 					// if (lf_count < 3)
 					// 	n->h1n() += lf_c_nov;
 
@@ -974,6 +984,7 @@ namespace aptk
 						sign_feat_occurrences[child_features] = 1;
 						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
 						n->m_sign_features = kp;					
+						feat_count_value = 0;
 					}
 					return feat_count_value;
 				}
