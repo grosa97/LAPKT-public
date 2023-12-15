@@ -702,8 +702,11 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					//std::cout << lf_count <<std::endl;
-					//float lf_c_nov = -(float)1 / (1+lf_count);
-					//n->h1n() += lf_c_nov;
+					if (lf_count < 10)
+					{
+						float lf_c_nov = -(float)1 / (1+lf_count);
+						n->h1n() += lf_c_nov;
+					}
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -718,8 +721,8 @@ namespace aptk
 					// 	n->h1n() = -2; 
 					
 
-					if (lf_count == 0)
-						n->h1n() = -2;
+					// if (lf_count == 0)
+					// 	n->h1n() = -2;
 					//if (lf_count < 3) //good (also when fixed)
 					//	n->h1n() = -2;
 					//if (lf_count > 0)

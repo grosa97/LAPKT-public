@@ -125,12 +125,15 @@ namespace aptk
 				int m_next;
 				Node_Comp m_node_comp;
 				// std::random_device m_rd;
-				std::mt19937::result_type seed = 42;
-    			std::mt19937 m_gen;
+				// std::mt19937::result_type seed = 42;
+    			// std::mt19937 m_gen;
+				unsigned m_max_leafs;
+				unsigned m_index_offset;
+
 
 			public:
 
-				Custom_Priority_Queue() : m_next(0), m_size_limit(0), m_gen(seed)
+				Custom_Priority_Queue() : m_next(0), m_size_limit(0), m_index_offset(0), m_max_leafs(0) //, m_gen(seed)
 				{
 					// int max_depth = 17;
 					// m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
@@ -141,7 +144,8 @@ namespace aptk
 				void init(int max_depth)
 				{
 					m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
-					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1					
+					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1	
+					m_max_leafs = m_size_limit - m_last_layer_first_element;
 				}
 
 				bool empty() const { return m_heap.empty(); }
@@ -156,8 +160,12 @@ namespace aptk
 					}
 					else
 					{
-						static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
-						int r_i = distrib(m_gen)-1;
+						// static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+						// int r_i = distrib(m_gen)-1;
+						int r_i = m_last_layer_first_element + m_index_offset;
+						m_index_offset = (++m_index_offset) % m_max_leafs;
+						// if (m_index_offset == 0 || m_index_offset == m_max_leafs-1)
+						// 	std::cout <<"DBUG: "<<m_index_offset<<std::endl;
 						if (m_node_comp(m_heap[r_i], n))
 						{
 							// int r_diff = m_size_limit - r;
