@@ -171,7 +171,7 @@ namespace aptk
 				std::vector<unsigned> bot3 = cover_compute_tuples_1(n, temp);
 				cover_compute_tuples_2(n, bot3, h_val);
 
-				if (temp < -0.3)
+				if (temp < -0.4)
 					h_val += temp;
 
 
@@ -476,7 +476,8 @@ namespace aptk
 						m = 0;
 					else
 					{
-						m = -(float)1 / (1 + tuple_count);
+						// m = -(float)1 / (1 + tuple_count);
+						m = -(float)1 / (1 + (((int)tuple_count+2) / 3));
 						if (m < metric_value)
 							metric_value = m;
 					}
@@ -532,7 +533,7 @@ namespace aptk
 					added.clear();
 					deleted.clear();
 					// temp_fv.clear();
-					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());
 					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
 				}
 				// if (!has_state)
@@ -623,7 +624,8 @@ namespace aptk
 							m = 0;
 						else
 						{
-							m = -(float)1 / (1 + tuple_count);
+							// m = -(float)1 / (1 + tuple_count);
+							m = -(float)1 / (1 + (((int)tuple_count+2) / 3));
 							if (m < metric_value_2)
 								metric_value_2 = m;
 						}	
