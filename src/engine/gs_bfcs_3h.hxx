@@ -82,8 +82,9 @@ namespace aptk
 				float h1n() const { return m_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
-				unsigned &h3n() { return m_h3; }
-				unsigned h3n() const { return m_h3; } 
+
+				float &h3n() { return m_h3; }
+				float h3n() const { return m_h3; } 
 
 				unsigned &r() { return m_r; }
 				unsigned r() const { return m_r; }
@@ -206,7 +207,7 @@ namespace aptk
 				unsigned m_g_unit;
 				float m_h1;
 				unsigned m_h2;
-				unsigned m_h3;
+				float m_h3;
 				unsigned m_r;
 				unsigned m_partition;
 				unsigned m_M;
@@ -601,7 +602,9 @@ namespace aptk
 				void eval_count_based(Search_Node *candidate)
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					m_first_h->eval(candidate, candidate->h1n());			
+					m_first_h->eval(candidate, candidate->h1n());
+					m_third_h->eval(candidate, candidate->h1n());
+
 
 
 					// if (candidate->h1n() > m_max_novelty)
