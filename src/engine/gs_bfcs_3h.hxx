@@ -303,6 +303,7 @@ namespace aptk
 					m_open.init(OPEN_MAX_DEPTH);
 
 					std::unordered_set<std::string> unique_signatures;
+					m_fluent_to_feature.resize(this->problem().task().num_fluents());
 					unsigned i_val = 0;
 					for (const Fluent* f: this->m_problem.task().fluents())
 					{
@@ -680,7 +681,7 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					candidate->partition() = (10000 * candidate->GC()) + candidate->r();
+					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					m_first_h->eval(candidate, candidate->h1n());			
 
 
@@ -702,8 +703,11 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					//std::cout << lf_count <<std::endl;
-					//float lf_c_nov = -(float)1 / (1+lf_count);
-					//n->h1n() += lf_c_nov;
+					if (lf_count < 10)
+					{
+						float lf_c_nov = -(float)1 / (1+lf_count);
+						n->h1n() += lf_c_nov;
+					}	
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -718,8 +722,8 @@ namespace aptk
 					// 	n->h1n() = -2; 
 					
 
-					if (lf_count == 0)
-						n->h1n() = -2;
+					// if (lf_count == 0)
+					// 	n->h1n() = -2;
 					//if (lf_count < 3) //good (also when fixed)
 					//	n->h1n() = -2;
 					//if (lf_count > 0)
@@ -924,11 +928,22 @@ namespace aptk
 				unsigned get_lifted_counts_state_partition(Search_Node* n)
 				{
 					unsigned partition = n->partition();
-					if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+					// {
+					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+					// }
+					
+					if (m_sign_feat_partitions.size() <= partition)
+					{
+						m_sign_feat_partitions.resize(partition + 1);
+					}
+
+					if (m_sign_feat_partitions[partition].empty())
+					{
 						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+					}
 					
 					std::unordered_map<std::vector<int>, unsigned int, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
-					
 
 
 					if (n->parent() == NULL) //root node
@@ -1408,10 +1423,11 @@ namespace aptk
 				std::unordered_map<int, unsigned> m_h1_record;
 				int m_sign_count;
 				std::unordered_map<std::string, unsigned> m_sign_to_int;
-				std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
+				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
+				std::vector<unsigned> m_fluent_to_feature;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
-				std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
-
+				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
+				std::vector<std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
 			};
