@@ -45,6 +45,24 @@ namespace aptk
 		namespace bfws_4h
 		{
 
+			// Custom hash function for std::vector<int>
+			struct VectorHash {
+				size_t operator()(const std::vector<int>& v) const {
+					size_t hash = 0;
+					for (int i : v) {
+						hash ^= std::hash<int>{}(i) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+					}
+					return hash;
+				}
+				size_t operator()(std::vector<int>& v) const {
+					size_t hash = 0;
+					for (int i : v) {
+						hash ^= std::hash<int>{}(i) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+					}
+					return hash;
+				}
+			};
+
 			template <typename Search_Model, typename State>
 			class Node
 			{
@@ -58,7 +76,9 @@ namespace aptk
 				typedef typename std::vector<Node<Search_Model, State> *>::iterator Node_Vec_Ptr_It;
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
-						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_f(0), m_h1(0), m_h2(0), m_h3(0), m_h4(0), m_partition(0), m_partition2(0), m_seen(false), m_helpful(false), m_land_consumed(NULL), m_land_unconsumed(NULL)
+						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_f(0), m_h1(0), m_h2(0), 
+						m_h3(0), m_h4(0), m_partition(0), m_partition2(0), m_seen(false), m_helpful(false), 
+						m_land_consumed(NULL), m_land_unconsumed(NULL), m_sign_features(NULL)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1.0f : 0.0f);
@@ -270,6 +290,7 @@ namespace aptk
 				size_t m_hash;
 				Bool_Vec_Ptr *m_land_consumed;
 				Bool_Vec_Ptr *m_land_unconsumed;
+				const std::vector<int>* m_sign_features;
 			};
 
 			template <typename Search_Model, typename First_Heuristic, typename Second_Heuristic, typename Third_Heuristic, typename Fourth_Heuristic, typename Open_List_Type>
@@ -284,12 +305,29 @@ namespace aptk
 
 				BFWS_4H(const Search_Model &search_problem, bool verbose)
 						: m_problem(search_problem), m_exp_count(0), m_gen_count(0), m_pruned_B_count(0),
-							m_dead_end_count(0), m_open_repl_count(0), m_B(infty), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_h4n(no_such_index), m_verbose(verbose), m_action2gen_nodes(search_problem.num_actions()), m_use_novelty(true)
+							m_dead_end_count(0), m_open_repl_count(0), m_B(infty), m_time_budget(infty), m_lgm(NULL), 
+							m_max_h2n(no_such_index), m_max_h4n(no_such_index), m_verbose(verbose), m_action2gen_nodes(search_problem.num_actions()), 
+							m_use_novelty(true), m_sign_count(0), m_num_lf_p(0)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
 					m_third_h = new Third_Heuristic(search_problem);
 					m_fourth_h = new Fourth_Heuristic(search_problem);
+
+					std::unordered_set<std::string> unique_signatures;
+					unsigned i_val = 0;
+					m_fluent_to_feature.resize(this->problem().task().num_fluents());
+					for (const Fluent* f: this->m_problem.task().fluents())
+					{
+						std::string s = signature_to_lifted_fl(f->signature());
+						if (unique_signatures.find(s) == unique_signatures.end())
+						{
+							unique_signatures.insert(s);
+							m_sign_to_int[s] = i_val++;
+						}
+						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
+					}
+					m_sign_count = i_val;
 				}
 
 				virtual ~BFWS_4H()
@@ -327,6 +365,7 @@ namespace aptk
 						eval_po(m_root);
 						eval_novel(m_root);
 						eval_po_novel(m_root);
+						eval_lf_counts(m_root);
 
 						m_root->undo_land_graph(m_lgm);
 					}
@@ -336,6 +375,7 @@ namespace aptk
 						eval_po(m_root);
 						eval_novel(m_root);
 						eval_po_novel(m_root);
+						eval_lf_counts(m_root);
 					}
 
 #ifdef DEBUG
@@ -470,6 +510,8 @@ namespace aptk
 							std::cout << "--[" << m_max_h2n << " / " << m_max_h4n << "]--" << std::endl;
 							// std::cout << "[ n:" << candidate->h1n()  <<" - hl:" << candidate->h2n() <<" - #g:" << candidate->goals_unachieved() <<" - h_a:" << candidate->h3n() <<" - gn: " << candidate->gn()  <<"]" << std::endl;
 						}
+						std::cout << "--[" << m_max_h2n << " / " << m_max_h4n << "]--" << std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
 				}
 
@@ -498,6 +540,7 @@ namespace aptk
 						m_max_h4n = candidate->h4n();
 						if (m_verbose)
 							std::cout << "--[" << m_max_h2n << " / " << m_max_h4n << "]--" << std::endl;
+						std::cout << "--[" << m_max_h2n << " / " << m_max_h4n << "]--" << std::endl;
 					}
 				}
 
@@ -508,6 +551,18 @@ namespace aptk
 					// candidate->partition2() = (1000 * candidate->h2n() )+ candidate->h4n(); //m_first_h->goal_size()
 
 					m_third_h->eval(candidate, candidate->h3n());
+				}
+
+				void eval_lf_counts(Search_Node* n)
+				{
+					// unsigned lf_count = get_lifted_counts_state(n);
+					unsigned lf_count = get_lifted_counts_state_partition(n);
+
+					if (!lf_count)
+						n->h1n() = 1;
+					// float lf_c_nov = -(float)1 / (1+lf_count);
+					// n->h1n() += lf_c_nov;
+
 				}
 
 				bool is_closed(Search_Node *n)
@@ -547,6 +602,103 @@ namespace aptk
 					// if( generated() % 1000 == 0){
 					// 	std::cout << "\nGenerated " << generated() << std::endl;
 					// }
+				}
+
+				std::string signature_to_lifted_fl(std::string signature)
+				{
+					std::stringstream ss(signature);
+
+					std::string lfl;
+					if (std::getline(ss, lfl, '_'))
+						return lfl;
+					return "";
+				}
+
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, unsigned, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+					auto it = myMap.find(keyToFind);
+					if (it != myMap.end()) {
+						return &(it->first); // Return pointer to the key vector
+					} else {
+						return nullptr; // Key not found, return null pointer
+					}
+				}
+
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, bool, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+					auto it = myMap.find(keyToFind);
+					if (it != myMap.end()) {
+						return &(it->first); // Return pointer to the key vector
+					} else {
+						return nullptr; // Key not found, return null pointer
+					}
+				}
+
+				unsigned get_lifted_counts_state_partition(Search_Node* n)
+				{
+					unsigned partition = n->partition();
+					if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, bool, VectorHash>();
+					
+					std::unordered_map<std::vector<int>, bool, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+					
+
+
+					if (n->parent() == NULL) //root node
+					{
+						std::vector<int> sign_features(m_sign_count, 0);
+						for (auto f: n->state()->fluent_vec())
+							sign_features[m_fluent_to_feature[f]]++;
+						sign_feat_occurrences[sign_features] = true;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, sign_features);
+						n->m_sign_features = kp;
+						return 0;			
+					}
+					unsigned feat_count_value;
+					
+					static Fluent_Vec added, deleted, temp_fv;
+					added.clear();
+					deleted.clear();	
+					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					
+					const std::vector<int>* parent_features = n->parent()->m_sign_features;
+					std::vector<int> child_features(*parent_features);
+					std::unordered_set<unsigned> counted_a;
+					for (auto f: added)
+					{
+						if (counted_a.find(f) == counted_a.end())
+						{
+							counted_a.insert(f);
+							if (!n->parent()->state()->entails(f))
+								child_features[m_fluent_to_feature[f]]++;
+						}
+					}
+					std::unordered_set<unsigned> counted_d;
+					for (auto f: deleted)
+					{
+						if (counted_d.find(f) == counted_d.end())
+						{
+							// if (child_features[m_fluent_to_feature[f]] > 0)
+							counted_d.insert(f);
+							if (n->parent()->state()->entails(f))
+								child_features[m_fluent_to_feature[f]]--;
+						}
+					}
+					auto it = sign_feat_occurrences.find(child_features);
+					if (it != sign_feat_occurrences.end())
+					{
+						// feat_count_value = sign_feat_occurrences[child_features]++;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+						n->m_sign_features = kp;
+						return 1;
+					}
+					else
+					{
+						sign_feat_occurrences[child_features] = true;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+						n->m_sign_features = kp;	
+						return 0;				
+					}
+					// return feat_count_value;
 				}
 
 				virtual void process(Search_Node *head)
@@ -638,6 +790,7 @@ namespace aptk
 							// n->h1n() = (2 * ( ( n->h1n() - 1 )  ) ) + 1;
 							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 1;
 							n->h3n() = (2 * (n->h3n() - 1)) + 1;
+							eval_lf_counts(n);
 						}
 						else
 						{
@@ -650,6 +803,7 @@ namespace aptk
 							// n->h1n() = (2 * ( n->h1n() - 1 ) ) + 2;
 							n->h1n() = (2 * ((n->h1n() - 1) + (n->h3n() - 1))) + 2;
 							n->h3n() = (2 * (n->h3n() - 1)) + 2;
+							eval_lf_counts(n);
 						}
 
 #ifdef DEBUG
@@ -769,6 +923,16 @@ namespace aptk
 				bool m_verbose;
 				std::vector<Search_Node *> m_action2gen_nodes;
 				bool m_use_novelty;
+
+				int m_sign_count;
+				std::unordered_map<std::string, unsigned> m_sign_to_int;
+				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
+				std::vector<unsigned> m_fluent_to_feature;
+				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
+				std::unordered_map<unsigned, std::unordered_map<std::vector<int>, bool, VectorHash>> m_sign_feat_partitions;
+
+				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
+				unsigned m_num_lf_p;
 			};
 
 		}
