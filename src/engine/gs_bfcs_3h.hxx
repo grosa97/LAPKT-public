@@ -702,21 +702,21 @@ namespace aptk
 				void eval_lf_counts(Search_Node* n)
 				{
 					//unsigned lf_count = get_lifted_counts_state(n);
-					static bool deb = false;
-					static int64_t max_t = 0;
-					auto start = std::chrono::steady_clock::now();
+					// static bool deb = false;
+					// static int64_t max_t = 0;
+					// auto start = std::chrono::steady_clock::now();
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 
-					auto end = std::chrono::steady_clock::now();
-					auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-					if (duration > max_t)
-					{
-						max_t = duration;
-						std::cout << "New max_t: "<<max_t<<std::endl;
-					}
+					// auto end = std::chrono::steady_clock::now();
+					// auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+					// if (duration > max_t)
+					// {
+					// 	max_t = duration;
+					// 	std::cout << "New max_t: "<<max_t<<std::endl;
+					// }
 
-					if (deb || duration > 0)
-						std::cout << "Time taken by myFunction: " << duration << " milliseconds" << std::endl;
+					// if (deb || duration > 0)
+					// 	std::cout << "Time taken by myFunction: " << duration << " milliseconds" << std::endl;
 
 
 					//std::cout << lf_count <<std::endl;
