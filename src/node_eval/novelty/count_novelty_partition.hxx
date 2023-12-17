@@ -62,22 +62,22 @@ namespace aptk
 
 			void init()
 			{
-				typedef typename std::vector<std::vector<Search_Node *>>::iterator Node_Vec_Ptr_It;
+				// typedef typename std::vector<std::vector<Search_Node *>>::iterator Node_Vec_Ptr_It;
 				// typedef typename std::vector<Search_Node *>::iterator Node_Ptr_It;
-				// typedef typename std::vector<std::vector<int>>::iterator Int_Vec_Ptr_It;
-				typedef typename std::vector<std::unordered_map<int, int>>::iterator Int_Vec_Ptr_It;
+				typedef typename std::vector<std::vector<int>>::iterator Int_Vec_Ptr_It;
+				// typedef typename std::vector<std::unordered_map<int, int>>::iterator Int_Vec_Ptr_It;
 
 				// for (Node_Vec_Ptr_It it_p = m_nodes_tuples_by_partition.begin(); it_p != m_nodes_tuples_by_partition.end(); it_p++)
 				// 	for (Node_Ptr_It it = it_p->begin(); it != it_p->end(); it++)
 				// 		*it = NULL;
 
-				// for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition.begin(); it_p != m_tuple_counts_by_partition.end(); it_p++)
-				// 	std::fill(it_p->begin(), it_p->end(), 0);\
+				// for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_1.begin(); it_p != m_tuple_counts_by_partition_1.end(); it_p++)
+				// 	std::fill(it_p->begin(), it_p->end(), 0);
 
-				for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_1.begin(); it_p != m_tuple_counts_by_partition_1.end(); it_p++)
-					*it_p = std::unordered_map<int, int>();
-				for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_2.begin(); it_p != m_tuple_counts_by_partition_2.end(); it_p++)
-					*it_p = std::unordered_map<int, int>();
+				// for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_1.begin(); it_p != m_tuple_counts_by_partition_1.end(); it_p++)
+				// 	*it_p = std::unordered_map<int, int>();
+				// for (Int_Vec_Ptr_It it_p = m_tuple_counts_by_partition_2.begin(); it_p != m_tuple_counts_by_partition_2.end(); it_p++)
+				// 	*it_p = std::unordered_map<int, int>();
 			}
 
 			unsigned arity() const { return m_arity; }
@@ -137,18 +137,18 @@ namespace aptk
 					// Resize the vector
 					m_tuple_counts_by_partition_2.resize(partition_size + 1);
 
-					// Add unordered maps at the new indices
-					for (int i = oldSize; i < (partition_size + 1); ++i) {
-						m_tuple_counts_by_partition_2[i] = std::unordered_map<int, int>();
-					}
+					// // Add unordered maps at the new indices
+					// for (int i = oldSize; i < (partition_size + 1); ++i) {
+					// 	m_tuple_counts_by_partition_2[i] = std::unordered_map<int, int>();
+					// }
 				}
 
 				int oldSize = m_tuple_counts_by_partition_1.size();
 				m_tuple_counts_by_partition_1.resize(partition_size + 1);
 
-				for (int i = oldSize; i < (partition_size + 1); ++i) {
-					m_tuple_counts_by_partition_1[i] = std::unordered_map<int, int>();
-				}
+				// for (int i = oldSize; i < (partition_size + 1); ++i) {
+				// 	m_tuple_counts_by_partition_1[i] = std::unordered_map<int, int>();
+				// }
 
 
 				
@@ -208,7 +208,7 @@ namespace aptk
 				if (m_partition_size < n->partition())
 				{
 					// m_nodes_tuples_by_partition.resize(n->partition() + 1);
-					// m_tuple_counts_by_partition.resize(n->partition() + 1);
+					// m_tuple_counts_by_partition_1.resize(n->partition() + 1);
 
 					m_tuple_counts_by_partition_1.resize(n->partition() + 1);
 
@@ -219,11 +219,11 @@ namespace aptk
 				// if (m_nodes_tuples_by_partition[n->partition()].empty())
 				// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
 
-				// if (m_tuple_counts_by_partition[n->partition()].empty())
-				// 	m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
-
 				if (m_tuple_counts_by_partition_1[n->partition()].empty())
-					m_tuple_counts_by_partition_1[n->partition()] = std::unordered_map<int, int>();
+					m_tuple_counts_by_partition_1[n->partition()].resize(m_num_fluents, 0);
+
+				// if (m_tuple_counts_by_partition_1[n->partition()].empty())
+				// 	m_tuple_counts_by_partition_1[n->partition()] = std::unordered_map<int, int>();
 			}
 
 			void check_table_size_2(Search_Node *n)
@@ -243,11 +243,11 @@ namespace aptk
 				// if (m_nodes_tuples_by_partition[n->partition()].empty())
 				// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
 
-				// if (m_tuple_counts_by_partition[n->partition()].empty())
-				// 	m_tuple_counts_by_partition[n->partition()].resize(m_num_tuples, 0);
-
 				if (m_tuple_counts_by_partition_2[n->partition()].empty())
-					m_tuple_counts_by_partition_2[n->partition()] = std::unordered_map<int, int>();
+					m_tuple_counts_by_partition_2[n->partition()].resize(m_num_tuples_2, 0);
+
+				// if (m_tuple_counts_by_partition_2[n->partition()].empty())
+				// 	m_tuple_counts_by_partition_2[n->partition()] = std::unordered_map<int, int>();
 			}
 			
 
@@ -447,39 +447,46 @@ namespace aptk
 					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
 
 					/*increment tuple counts for partition*/
-					if(m_use_threshold) {
-						if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
-						{
-							if( !(m_tuple_counts_by_partition_1[n->partition()][tuple_idx] >= m_count_threshold) )
-								tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
-							else
-								tuple_count = -1;
-						}
-						else {
-							m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
-							tuple_count = 0;
-						}
-					}
-					else{
-						if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
-							tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
-							// tuple_count = -1;
-						else 
-						{
-							m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
-							tuple_count = 0;
-						}
-					}
-
-
-					if (tuple_count == -1)
-						m = 0;
-					else
+					// if(m_use_threshold) {
+					// 	if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
+					// 	{
+					// 		if( !(m_tuple_counts_by_partition_1[n->partition()][tuple_idx] >= m_count_threshold) )
+					// 			tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+					// 		else
+					// 			tuple_count = -1;
+					// 	}
+					// 	else {
+					// 		m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+					// 		tuple_count = 0;
+					// 	}
+					// }
+					// else{
+					// 	if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
+					// 		tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+					// 		// tuple_count = -1;
+					// 	else 
+					// 	{
+					// 		m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+					// 		tuple_count = 0;
+					// 	}
+					// }
+					if (m_tuple_counts_by_partition_1[n->partition()][tuple_idx] > 0)
+						tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+						// tuple_count = -1;
+					else 
 					{
-						m = -(float)1 / (1 + tuple_count);
-						if (m < metric_value)
-							metric_value = m;
+						m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+						tuple_count = 0;
 					}
+
+					// if (tuple_count == -1)
+					// 	m = 0;
+					// else
+					// {
+					m = -(float)1 / (1 + tuple_count);
+					if (m < metric_value)
+						metric_value = m;
+					// }
 
 					// keepBottom3(tuple[0], tuple_count, bot3);
 				}
@@ -594,39 +601,40 @@ namespace aptk
 						 * -> n better than old_n
 						 */
 
-						/*increment tuple counts for partition*/
-						if(m_use_threshold) {
-							if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
-							{
-								if( !(m_tuple_counts_by_partition_2[n->partition()][tuple_idx] >= m_count_threshold) )
-									tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-								else
-									tuple_count = -1;
-							}
-							else {
-								m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-								tuple_count = 0;
-							}
-						}
-						else{
-							if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
-								tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-								// tuple_count = -1;
-							else 
-							{
-								m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-								tuple_count = 0;
-							}
-						}
-
-						if (tuple_count == -1)
-							m = 0;
-						else
+						// /*increment tuple counts for partition*/
+						// if(m_use_threshold) {
+						// 	if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
+						// 	{
+						// 		if( !(m_tuple_counts_by_partition_2[n->partition()][tuple_idx] >= m_count_threshold) )
+						// 			tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+						// 		else
+						// 			tuple_count = -1;
+						// 	}
+						// 	else {
+						// 		m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+						// 		tuple_count = 0;
+						// 	}
+						// }
+						// else{
+						// if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
+						if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
+							tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+							// tuple_count = -1;
+						else 
 						{
-							m = -(float)1 / (1 + tuple_count);
-							if (m < metric_value_2)
-								metric_value_2 = m;
-						}	
+							m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+							tuple_count = 0;
+						}
+						// }
+
+						// if (tuple_count == -1)
+						// 	m = 0;
+						// else
+						// {
+						m = -(float)1 / (1 + tuple_count);
+						if (m < metric_value_2)
+							metric_value_2 = m;
+						// }	
 					}
 				}
 				metric_value += metric_value_2;
@@ -1150,8 +1158,10 @@ namespace aptk
 			const STRIPS_Problem &m_strips_model;
 			// std::vector<std::vector<Search_Node *>> m_nodes_tuples_by_partition;
 			// std::vector<std::vector<int>> m_tuple_counts_by_partition;
-			std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_2;
-			std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_1;
+			// std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_2;
+			// std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_1;
+			std::vector<std::vector<int>> m_tuple_counts_by_partition_2;
+			std::vector<std::vector<int>> m_tuple_counts_by_partition_1;
 			unsigned m_arity;
 			unsigned long m_num_tuples_2;
 			unsigned m_num_fluents;
