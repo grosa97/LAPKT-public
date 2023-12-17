@@ -38,7 +38,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <hash_table.hxx>
 #include <types.hxx>
 #include <memory.hxx>
-#include <chrono>
+// #include <chrono>
+#include <cstdint>
 
 namespace aptk
 {
@@ -309,6 +310,7 @@ namespace aptk
 					m_open.init(OPEN_MAX_DEPTH);
 
 					std::unordered_set<std::string> unique_signatures;
+					m_fluent_to_feature.resize(this->problem().task().num_fluents());
 					unsigned i_val = 0;
 					for (const Fluent* f: this->m_problem.task().fluents())
 					{
@@ -687,7 +689,7 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					candidate->partition() = (10000 * candidate->GC()) + candidate->r();
+					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					m_first_h->eval(candidate, candidate->h1n());			
 
 
@@ -713,7 +715,7 @@ namespace aptk
 					{
 						float lf_c_nov = -(float)1 / (1+lf_count);
 						n->h1n() += lf_c_nov;
-					}
+					}	
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -838,6 +840,15 @@ namespace aptk
 					}
 				}
 
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, uint8_t, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+					auto it = myMap.find(keyToFind);
+					if (it != myMap.end()) {
+						return &(it->first); // Return pointer to the key vector
+					} else {
+						return nullptr; // Key not found, return null pointer
+					}
+				}
+
 				unsigned get_lifted_counts_state(Search_Node* n)
 				{
 					if (n->parent() == NULL) //root node
@@ -934,11 +945,22 @@ namespace aptk
 				unsigned get_lifted_counts_state_partition(Search_Node* n)
 				{
 					unsigned partition = n->partition();
-					if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
-						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+					// {
+					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+					// }
 					
-					std::unordered_map<std::vector<int>, unsigned int, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+					if (m_sign_feat_partitions.size() <= partition)
+					{
+						m_sign_feat_partitions.resize(partition + 1);
+					}
+
+					if (m_sign_feat_partitions[partition].empty())
+					{
+						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint8_t, VectorHash>();
+					}
 					
+					std::unordered_map<std::vector<int>, uint8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
 
 
 					if (n->parent() == NULL) //root node
@@ -985,7 +1007,11 @@ namespace aptk
 					auto it = sign_feat_occurrences.find(child_features);
 					if (it != sign_feat_occurrences.end())
 					{
-						feat_count_value = sign_feat_occurrences[child_features]++;
+						if (sign_feat_occurrences[child_features] < UINT8_MAX)
+							feat_count_value = sign_feat_occurrences[child_features]++;
+						else
+							feat_count_value = UINT8_MAX;
+
 						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
 						n->m_sign_features = kp;
 					}
@@ -1190,7 +1216,7 @@ namespace aptk
 
 						static struct rusage usage_report;
 						if (generated() % 10000 == 0){
-							auto start = std::chrono::steady_clock::now();
+							// auto start = std::chrono::steady_clock::now();
 							getrusage(RUSAGE_SELF, &usage_report);
 							// auto end = std::chrono::steady_clock::now();
 							// std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
@@ -1469,10 +1495,11 @@ namespace aptk
 				std::unordered_map<int, unsigned> m_h1_record;
 				int m_sign_count;
 				std::unordered_map<std::string, unsigned> m_sign_to_int;
-				std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
+				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
+				std::vector<unsigned> m_fluent_to_feature;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
-				std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
-
+				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
+				std::vector<std::unordered_map<std::vector<int>, uint8_t, VectorHash>> m_sign_feat_partitions;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
 

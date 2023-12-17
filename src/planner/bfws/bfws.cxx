@@ -363,9 +363,9 @@ void BFWS::solve()
 			bfs_engine.set_arity_2(m_max_novelty, 1);
 
 			m_found_plan = false;
-			float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+			float bfs_b = do_search(bfs_engine, *prob, plan_stream);
 
-			std::cout << "BFS search completed in " << bfs_t << " secs" << std::endl;
+			std::cout << "BFS search completed in " << bfs_b << " secs" << std::endl;
 		}
 
 
