@@ -92,6 +92,37 @@ namespace aptk
 		};
 
 		template <typename Node>
+		class Alt_Node_Comparer_3H_gn_unit
+		{
+		public:
+			bool operator()(Node *a, Node *b) const
+			{
+				if (dless(b->alt_h1n(), a->alt_h1n()))
+					return true;
+				if (dequal(b->alt_h1n(), a->alt_h1n()))
+				{
+					if (dless(b->h2n(), a->h2n()))
+						return true;
+					if (dequal(b->h2n(), a->h2n()))
+					{
+						if (dless(b->h3n(), a->h3n()))
+							return true;
+						if (dequal(b->h3n(), a->h3n()))
+						{
+							if (dless(b->gn_unit(), a->gn_unit()))
+								return true;
+						}
+					}
+				}
+				// if ( dless( b->gn(), a->gn() ) )  return true;
+				return false;
+
+				// return (dless(b->fn(), a->fn()) || (dequal(a->fn(), b->fn()) && dless(b->hn(), a->hn())));
+			}
+		};
+
+
+		template <typename Node>
 		class Inverse_Node_Comparer_3H_gn_unit
 		{
 		public:

@@ -102,9 +102,9 @@ namespace aptk
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
-						m_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
+						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL) //, m_alt(false)
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0) //, m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -123,6 +123,8 @@ namespace aptk
 
 				float &h1n() { return m_h1; }
 				float h1n() const { return m_h1; }
+				float &alt_h1n() { return m_alt_h1; }
+				float alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
 				unsigned &h3n() { return m_h3; }
@@ -154,6 +156,9 @@ namespace aptk
 				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
 				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 				bool &relaxed_deadend() { return m_relaxed_deadend; }
+
+				void set_expanded() { m_already_expanded=true; }
+				bool already_expanded() { return m_already_expanded; }
 				// bool is_alt() { return m_alt; }
 				// void set_alt() { m_alt = true; }
 
@@ -250,6 +255,7 @@ namespace aptk
 				float m_g;
 				unsigned m_g_unit;
 				float m_h1;
+				float m_alt_h1;
 				unsigned m_h2;
 				unsigned m_h3;
 				unsigned m_r;
@@ -269,6 +275,9 @@ namespace aptk
 				bool m_relaxed_deadend;
 
 				const std::vector<int>* m_sign_features;
+				int m_open_delete;
+				int m_pop_count;
+				bool m_already_expanded;
 				//bool m_alt;
 			};
 
@@ -339,7 +348,13 @@ namespace aptk
 					while (!m_open.empty())
 					{
 						Search_Node *n = m_open.pop();
-						delete n;
+						if (n->m_pop_count == 2 || n->m_open_delete == 1)
+							delete n;
+						else
+						{
+							n->m_pop_count++;
+							n->m_open_delete++;
+						}
 					}
 					m_closed.clear();
 
@@ -699,15 +714,17 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					// if (n->parent() != nullptr && !n->parent()->is_alt())
 					unsigned lf_count = get_lifted_counts_state_partition(n);
-					//std::cout << lf_count <<std::endl;
-					if (is_alt())
-					{
-						set_alt(false);
-						float lf_c_nov = -(float)1 / (1+lf_count);
-						n->h1n() = lf_c_nov;
-					}
-					else
-						set_alt(true);
+					n->alt_h1n() = -(float)1 / (1+lf_count);
+
+						// n->alt_h1n() = lf_c_nov;
+					// if (is_alt())
+					// {
+					// 	set_alt(false);
+					// 	float lf_c_nov = -(float)1 / (1+lf_count);
+					// 	n->h1n() = lf_c_nov;
+					// }
+					// else
+					// 	set_alt(true);
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -832,7 +849,7 @@ namespace aptk
 					}
 				}
 
-				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, uint8_t, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, int, VectorHash>& myMap, const std::vector<int>& keyToFind) {
 					auto it = myMap.find(keyToFind);
 					if (it != myMap.end()) {
 						return &(it->first); // Return pointer to the key vector
@@ -949,10 +966,10 @@ namespace aptk
 
 					if (m_sign_feat_partitions[partition].empty())
 					{
-						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint8_t, VectorHash>();
+						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, int, VectorHash>();
 					}
 					
-					std::unordered_map<std::vector<int>, uint8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+					std::unordered_map<std::vector<int>, int, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
 
 
 					if (n->parent() == NULL) //root node
@@ -999,10 +1016,10 @@ namespace aptk
 					auto it = sign_feat_occurrences.find(child_features);
 					if (it != sign_feat_occurrences.end())
 					{
-						if (sign_feat_occurrences[child_features] < UINT8_MAX)
+						// if (sign_feat_occurrences[child_features] < UINT8_MAX)
 							feat_count_value = sign_feat_occurrences[child_features]++;
-						else
-							feat_count_value = UINT8_MAX;
+						// else
+						// 	feat_count_value = UINT8_MAX;
 
 						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
 						n->m_sign_features = kp;
@@ -1233,7 +1250,7 @@ namespace aptk
 					if ( (m_exp_count % 10000) == 0 )
 					{
 						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
-							<< head->GC()<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
+							<< head->GC()<<" -- "<<head->gn_unit() << std::endl;// <<" -- " << m_open.size()<<std::endl;
 						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
 							
@@ -1264,6 +1281,11 @@ namespace aptk
 						// 	// }
 						// }
 						// auto start = std::chrono::steady_clock::now();
+						if (head->already_expanded())
+						{
+							head = get_node();
+							continue;
+						}
 
 						record_count_h(head);
 						if (head->gn() >= max_depth())
@@ -1290,13 +1312,19 @@ namespace aptk
 						if (m_memory_stop)
 							return NULL;
 
+						head->set_expanded();
+
 						if (is_closed(head))
 						{
 #ifdef DEBUG
 							if (m_verbose)
 								std::cout << "Already in CLOSED" << std::endl;
 #endif
-							delete head;
+							if (head->m_pop_count == 2 || head->m_open_delete == 1)
+								delete head;
+							else 
+								head->m_open_delete++;
+
 							head = get_node();
 							continue;
 						}
@@ -1494,7 +1522,7 @@ namespace aptk
 				std::vector<unsigned> m_fluent_to_feature;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
 				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
-				std::vector<std::unordered_map<std::vector<int>, uint8_t, VectorHash>> m_sign_feat_partitions;
+				std::vector<std::unordered_map<std::vector<int>, int, VectorHash>> m_sign_feat_partitions;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
 

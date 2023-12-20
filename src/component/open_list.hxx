@@ -113,6 +113,209 @@ namespace aptk
 			}
 		};
 
+		// template <typename Node>
+		// class Alt_Node_Comparer_3H
+		// {
+		// public:
+		// 	bool operator()(Node *a, Node *b) const
+		// 	{
+		// 		if (dless(b->alt_h1n(), a->alt_h1n()))
+		// 			return true;
+		// 		if (dequal(b->alt_h1n(), a->alt_h1n()))
+		// 		{
+		// 			if (dless(b->h2n(), a->h2n()))
+		// 				return true;
+		// 			if (dequal(b->h2n(), a->h2n()))
+		// 			{
+		// 				if (dless(b->h3n(), a->h3n()))
+		// 					return true;
+		// 			}
+		// 		}
+		// 		// if ( dless( b->gn(), a->gn() ) )  return true;
+		// 		return false;
+
+		// 		// return (dless(b->fn(), a->fn()) || (dequal(a->fn(), b->fn()) && dless(b->hn(), a->hn())));
+		// 	}
+		// };
+
+
+template <class Node_Comp, class Alt_Node_Comp, class Node>
+		class Double_Custom_Priority_Queue
+		{
+			public:
+				typedef Node Node_Type;
+			protected:
+				std::vector<Node*> m_heap_1;
+				std::vector<Node*> m_heap_2;
+				int m_size_limit;
+				int m_last_layer_first_element;
+				int m_next_1;
+				int m_next_2;
+				Node_Comp m_node_comp;
+				Alt_Node_Comp m_alt_node_comp;
+				// std::random_device m_rd;
+				std::mt19937::result_type seed = 42;
+    			std::mt19937 m_gen;
+				bool m_pop_alt;
+
+			public:
+
+				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit(0), m_gen(seed), m_pop_alt(false)
+				{
+					// int max_depth = 17;
+					// m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
+					// m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1
+				}
+				~Double_Custom_Priority_Queue() {}
+
+				void init(int max_depth)
+				{
+					m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
+					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1					
+				}
+
+				bool empty() const { return empty_1() && empty_2(); }
+				bool empty_1() const { return m_heap_1.empty(); }
+				bool empty_2() const { return m_heap_2.empty(); }
+				std::size_t size_1() const { return m_heap_1.size(); }
+				std::size_t size_2() const { return m_heap_2.size(); }
+
+				void insert(Node *n)
+				{
+					Node* d_1 = NULL;
+					Node* d_2 = NULL;
+					if (size_1() < m_size_limit)
+					{
+						m_heap_1.push_back(n);
+						std::push_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
+					}
+					else
+					{
+						static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+						int r_i = distrib(m_gen)-1;
+						if (m_node_comp(m_heap_1[r_i], n))
+						{
+							// int r_diff = m_size_limit - r;
+							// if (n->h1n() < -0.9)
+							// {
+							// 	std::cout <<"==="<<std::endl;
+							// 	std::cout << top()->h1n()<<std::endl;
+							// }
+							d_1 = m_heap_1[r_i];
+							m_heap_1[r_i] = n;
+							std::push_heap(m_heap_1.begin(), m_heap_1.begin()+r_i+1, Node_Comp());
+							// delete d;
+							// if (n->h1n() < -0.9)
+							// 	std::cout << top()->h1n()<<std::endl;
+						}
+						else
+							d_1 = n;
+							// delete n;
+
+						d_1->m_open_delete++;
+					}
+
+					if (size_2() < m_size_limit)
+					{
+						m_heap_2.push_back(n);
+						std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
+					}
+					else
+					{
+						static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+						int r_i = distrib(m_gen)-1;
+						if (m_alt_node_comp(m_heap_2[r_i], n))
+						{
+							// int r_diff = m_size_limit - r;
+							// if (n->h1n() < -0.9)
+							// {
+							// 	std::cout <<"==="<<std::endl;
+							// 	std::cout << top()->h1n()<<std::endl;
+							// }
+							d_2 = m_heap_2[r_i];
+							m_heap_2[r_i] = n;
+							std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
+							
+							// delete d;
+							// if (n->h1n() < -0.9)
+							// 	std::cout << top()->h1n()<<std::endl;
+						}
+						else
+							d_2 = n;
+							// delete n;
+						d_2->m_open_delete++;
+					}
+
+					if (d_1 != nullptr && d_1 == d_2)
+					{
+						delete d_1;
+						d_1 = d_2 = nullptr;
+					}
+					
+					if (d_1 != nullptr && d_1->m_open_delete == 2)
+						delete d_1;
+					if (d_2 != nullptr && d_2->m_open_delete == 2)
+						delete d_2;
+
+				}
+
+
+				Node* pop()
+				{
+					bool e1 = empty_1();
+					bool e2 = empty_2();
+					if (e1 && e2)
+						return NULL;
+					if (e1)
+						return pop_2();
+					else if (e2)
+						return pop_1();
+					else
+					{
+						if (m_pop_alt)
+						{
+							m_pop_alt = false;
+							return pop_2();
+						}
+						else
+						{
+							m_pop_alt = true;
+							return pop_1();
+						}
+					}
+				}
+
+				Node* pop_1()
+				{
+					Node* r = m_heap_1.front();
+					std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
+					m_heap_1.pop_back();
+					r->m_pop_count++;
+					return r;
+				}
+
+				Node* pop_2()
+				{
+					Node* r = m_heap_2.front();
+					std::pop_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
+					m_heap_2.pop_back();
+					r->m_pop_count++;
+					return r;
+				}
+
+				Node* top_heap_1()
+				{
+					return m_heap_1.front();
+				}
+
+				Node* top_heap_2()
+				{
+					return m_heap_2.front();
+				}
+
+
+		};
+
 		template <class Node_Comp, class Node>
 		class Custom_Priority_Queue
 		{
