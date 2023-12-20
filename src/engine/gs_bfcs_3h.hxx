@@ -104,7 +104,7 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL), m_alt(false)
+						m_sign_features(NULL) //, m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -154,8 +154,8 @@ namespace aptk
 				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
 				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 				bool &relaxed_deadend() { return m_relaxed_deadend; }
-				bool is_alt() { return m_alt; }
-				void set_alt() { m_alt = true; }
+				// bool is_alt() { return m_alt; }
+				// void set_alt() { m_alt = true; }
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -269,7 +269,7 @@ namespace aptk
 				bool m_relaxed_deadend;
 
 				const std::vector<int>* m_sign_features;
-				bool m_alt;
+				//bool m_alt;
 			};
 
 
@@ -298,7 +298,7 @@ namespace aptk
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
-						m_memory_stop(false) //, m_h3_only_max_nov(true)
+						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
 					m_memory_budget = 6000;
@@ -326,21 +326,6 @@ namespace aptk
 						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
 					}
 					m_sign_count = i_val;
-
-					// struct VectorHasher {
-					// 	int operator()(const std::vector<int> &V) const {
-					// 		int hash = V.size();
-					// 		for(auto &i : V) {
-					// 			hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-					// 		}
-					// 		return hash;
-					// 	}
-					// };
-
-					// std::unordered_map<std::vector<int>,std::string,VectorHasher> hashMap;
-					// std::vector<int> diocane = {1,2,3};
-					// auto it = hashMap.find( diocane);
-
 
 				}
 
@@ -712,14 +697,17 @@ namespace aptk
 				void eval_lf_counts(Search_Node* n)
 				{
 					//unsigned lf_count = get_lifted_counts_state(n);
+					// if (n->parent() != nullptr && !n->parent()->is_alt())
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					//std::cout << lf_count <<std::endl;
-					if (lf_count < 10 && n->parent() != nullptr && !n->parent()->is_alt())
+					if (is_alt())
 					{
-						n->set_alt();
+						set_alt(false);
 						float lf_c_nov = -(float)1 / (1+lf_count);
 						n->h1n() = lf_c_nov;
-					}	
+					}
+					else
+						set_alt(true);
 
 					// if (lf_count < 10) 
 					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
@@ -1361,6 +1349,9 @@ namespace aptk
 				void set_use_novelty(bool v) { m_use_novelty = v; }
 				void set_use_novelty_pruning(bool v) { m_use_novelty_pruning = v; }
 
+				bool is_alt() { return m_alt; }
+				void set_alt(bool b) { m_alt = b; }
+
 				void set_use_h2n(bool v) {m_use_h2n = v; }
 				// void set_use_h3n(bool v) { m_use_h3n = v; }
 				// void set_use_h3_only_max_nov(bool v) { m_h3_only_max_nov = v; }
@@ -1509,6 +1500,7 @@ namespace aptk
 
 				int m_memory_budget;
 				bool m_memory_stop;
+				bool m_alt;
 			};
 
 		}
