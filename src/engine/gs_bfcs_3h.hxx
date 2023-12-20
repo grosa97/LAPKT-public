@@ -104,7 +104,7 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL)
+						m_sign_features(NULL), m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -154,6 +154,8 @@ namespace aptk
 				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
 				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 				bool &relaxed_deadend() { return m_relaxed_deadend; }
+				bool is_alt() { return m_alt; }
+				void set_alt() { m_alt = true; }
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -267,6 +269,7 @@ namespace aptk
 				bool m_relaxed_deadend;
 
 				const std::vector<int>* m_sign_features;
+				bool m_alt;
 			};
 
 
@@ -298,7 +301,7 @@ namespace aptk
 						m_memory_stop(false) //, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 7500;
+					m_memory_budget = 6000;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -711,10 +714,11 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					//std::cout << lf_count <<std::endl;
-					if (lf_count < 10)
+					if (lf_count < 10 && n->parent() != nullptr && !n->parent()->is_alt())
 					{
+						n->set_alt();
 						float lf_c_nov = -(float)1 / (1+lf_count);
-						n->h1n() += lf_c_nov;
+						n->h1n() = lf_c_nov;
 					}	
 
 					// if (lf_count < 10) 
