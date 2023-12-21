@@ -218,34 +218,42 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						d_1->m_open_delete++;
 					}
 
-					if (size_2() < m_size_limit)
+					if (n->alt_h1n() < -0.1)
 					{
-						m_heap_2.push_back(n);
-						std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
+						if (size_2() < m_size_limit)
+						{
+							m_heap_2.push_back(n);
+							std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
+						}
+						else
+						{
+							static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+							int r_i = distrib(m_gen)-1;
+							if (m_alt_node_comp(m_heap_2[r_i], n))
+							{
+								// int r_diff = m_size_limit - r;
+								// if (n->h1n() < -0.9)
+								// {
+								// 	std::cout <<"==="<<std::endl;
+								// 	std::cout << top()->h1n()<<std::endl;
+								// }
+								d_2 = m_heap_2[r_i];
+								m_heap_2[r_i] = n;
+								std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
+								
+								// delete d;
+								// if (n->h1n() < -0.9)
+								// 	std::cout << top()->h1n()<<std::endl;
+							}
+							else
+								d_2 = n;
+								// delete n;
+							d_2->m_open_delete++;
+						}
 					}
 					else
 					{
-						static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
-						int r_i = distrib(m_gen)-1;
-						if (m_alt_node_comp(m_heap_2[r_i], n))
-						{
-							// int r_diff = m_size_limit - r;
-							// if (n->h1n() < -0.9)
-							// {
-							// 	std::cout <<"==="<<std::endl;
-							// 	std::cout << top()->h1n()<<std::endl;
-							// }
-							d_2 = m_heap_2[r_i];
-							m_heap_2[r_i] = n;
-							std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
-							
-							// delete d;
-							// if (n->h1n() < -0.9)
-							// 	std::cout << top()->h1n()<<std::endl;
-						}
-						else
-							d_2 = n;
-							// delete n;
+						d_2 = n;
 						d_2->m_open_delete++;
 					}
 
