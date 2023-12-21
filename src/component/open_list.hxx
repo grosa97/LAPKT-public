@@ -157,10 +157,13 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				std::mt19937::result_type seed = 42;
     			std::mt19937 m_gen;
 				bool m_pop_alt;
+				int m_alt_counter;
+				int m_alt_interval;
 
 			public:
 
-				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit(0), m_gen(seed), m_pop_alt(false)
+				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit(0), m_gen(seed), m_pop_alt(false),
+				m_alt_counter(0), m_alt_interval(4)
 				{
 					// int max_depth = 17;
 					// m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
@@ -272,14 +275,24 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						return pop_1();
 					else
 					{
-						if (m_pop_alt)
+						// if (m_pop_alt)
+						// {
+						// 	m_pop_alt = false;
+						// 	return pop_2();
+						// }
+						// else
+						// {
+						// 	m_pop_alt = true;
+						// 	return pop_1();
+						// }
+						if (m_alt_counter == 0)
 						{
-							m_pop_alt = false;
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
 							return pop_2();
 						}
 						else
 						{
-							m_pop_alt = true;
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
 							return pop_1();
 						}
 					}

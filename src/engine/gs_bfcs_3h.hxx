@@ -104,7 +104,7 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0) //, m_alt(false)
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false) //, m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -278,6 +278,7 @@ namespace aptk
 				int m_open_delete;
 				int m_pop_count;
 				bool m_already_expanded;
+				bool m_closed;
 				//bool m_alt;
 			};
 
@@ -340,22 +341,24 @@ namespace aptk
 
 				virtual ~GS_BFCS_3H()
 				{
+
+					while (!m_open.empty())
+					{
+						Search_Node *n = m_open.pop();
+						if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+							delete n;
+						// else
+						// {
+						// 	//n->m_pop_count++;
+						// 	//n->m_open_delete++;
+						// }
+					}
 					for (typename Closed_List_Type::iterator i = m_closed.begin();
 							 i != m_closed.end(); i++)
 					{
 						delete i->second;
 					}
-					while (!m_open.empty())
-					{
-						Search_Node *n = m_open.pop();
-						if (n->m_pop_count == 2 || n->m_open_delete == 1)
-							delete n;
-						else
-						{
-							n->m_pop_count++;
-							n->m_open_delete++;
-						}
-					}
+
 					m_closed.clear();
 
 					delete m_first_h;
@@ -1428,7 +1431,11 @@ namespace aptk
 
 				float t0() const { return m_t0; }
 
-				void close(Search_Node *n) { m_closed.put(n); }
+				void close(Search_Node *n) 
+				{ 
+					n->m_closed = true;
+					m_closed.put(n); 
+					}
 				Closed_List_Type &closed() { return m_closed; }
 
 				const Search_Model &problem() const { return m_problem; }
