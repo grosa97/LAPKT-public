@@ -159,12 +159,14 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				bool m_pop_alt;
 				int m_alt_counter;
 				int m_alt_interval;
+				float m_th_value;
 
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit(0), m_gen(seed), m_pop_alt(false),
 				m_alt_counter(0), m_alt_interval(4)
 				{
+					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
 					// m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
 					// m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1
@@ -218,7 +220,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						d_1->m_open_delete++;
 					}
 
-					if (n->alt_h1n() < -0.1)
+					if (n->alt_h1n() < m_th_value)
 					{
 						if (size_2() < m_size_limit)
 						{

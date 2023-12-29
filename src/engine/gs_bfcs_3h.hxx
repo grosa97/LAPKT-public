@@ -700,7 +700,7 @@ namespace aptk
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					m_first_h->eval(candidate, candidate->h1n());		
-					candidate->h3n() = candidate->h1n();
+					// candidate->h3n() = candidate->h1n();
 
 
 					// if (candidate->h1n() > m_max_novelty)
@@ -775,17 +775,17 @@ namespace aptk
 				}
 
 
-				void record_count_h(Search_Node* candidate)
-				{
-					int key = (int)(-10000*candidate->h1n());
-					if (m_h1_record.find(key) != m_h1_record.end()) {
-						// Key found in map, increment its value by 1
-						m_h1_record[key]++;
-					} else {
-						// Key not found in map, set its value to 1
-						m_h1_record[key] = 1;
-					}
-				}
+				// void record_count_h(Search_Node* candidate)
+				// {
+				// 	int key = (int)(-10000*candidate->h1n());
+				// 	if (m_h1_record.find(key) != m_h1_record.end()) {
+				// 		// Key found in map, increment its value by 1
+				// 		m_h1_record[key]++;
+				// 	} else {
+				// 		// Key not found in map, set its value to 1
+				// 		m_h1_record[key] = 1;
+				// 	}
+				// }
 
 				void printMap(const std::unordered_map<int, unsigned int>& myMap) {
 					std::cout << "--- count h1 values:" <<std::endl;
@@ -993,7 +993,7 @@ namespace aptk
 					
 					static Fluent_Vec added, deleted, temp_fv;
 					added.clear();
-					deleted.clear();	
+					deleted.clear();
 					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					
@@ -1294,7 +1294,7 @@ namespace aptk
 							continue;
 						}
 
-						record_count_h(head);
+						// record_count_h(head);
 						if (head->gn() >= max_depth())
 						{
 							close(head);
@@ -1310,7 +1310,7 @@ namespace aptk
 						{
 							close(head);
 							set_max_depth(head->gn());
-							printMap(m_h1_record);
+							// printMap(m_h1_record);
 							return head;
 						}
 						if ((time_used() - m_t0) > m_time_budget)
@@ -1347,7 +1347,7 @@ namespace aptk
 						// }
 						head = get_node();
 					}
-					printMap(m_h1_record);
+					// printMap(m_h1_record);
 					return NULL;
 				}
 
@@ -1526,7 +1526,7 @@ namespace aptk
 				// bool m_h3_only_max_nov;
 				bool m_h3_rp_fl_only;
 
-				std::unordered_map<int, unsigned> m_h1_record;
+				// std::unordered_map<int, unsigned> m_h1_record;
 				int m_sign_count;
 				std::unordered_map<std::string, unsigned> m_sign_to_int;
 				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
