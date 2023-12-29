@@ -718,9 +718,9 @@ namespace aptk
 
 				void eval_lf_counts(Search_Node* n)
 				{
-					//unsigned lf_count = get_lifted_counts_state(n);
+					unsigned lf_count = get_lifted_counts_state(n);
 					// if (n->parent() != nullptr && !n->parent()->is_alt())
-					unsigned lf_count = get_lifted_counts_state_partition(n);
+					// unsigned lf_count = get_lifted_counts_state_partition(n);
 					n->alt_h1n() = -(float)1 / (1+lf_count);
 
 						// n->alt_h1n() = lf_c_nov;
@@ -911,7 +911,10 @@ namespace aptk
 					auto it = m_sign_feat_occurrences.find(child_features);
 					if (it != m_sign_feat_occurrences.end())
 					{
-						feat_count_value = m_sign_feat_occurrences[child_features]++;
+						if (m_sign_feat_occurrences[child_features] < UINT8_MAX)
+							feat_count_value = m_sign_feat_occurrences[child_features]++;
+						else
+							feat_count_value = UINT8_MAX;
 						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
 						n->m_sign_features = kp;
 					}
@@ -1531,7 +1534,7 @@ namespace aptk
 				std::unordered_map<std::string, unsigned> m_sign_to_int;
 				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
 				std::vector<unsigned> m_fluent_to_feature;
-				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
+				std::unordered_map<std::vector<int>,uint_fast8_t, VectorHash> m_sign_feat_occurrences;
 				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
 				std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
