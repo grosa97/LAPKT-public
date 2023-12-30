@@ -147,8 +147,10 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 			protected:
 				std::vector<Node*> m_heap_1;
 				std::vector<Node*> m_heap_2;
-				int m_size_limit;
-				int m_last_layer_first_element;
+				int m_size_limit_1;
+				int m_size_limit_2;
+				int m_last_layer_first_element_1;
+				int m_last_layer_first_element_2;
 				int m_next_1;
 				int m_next_2;
 				Node_Comp m_node_comp;
@@ -163,8 +165,8 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 			public:
 
-				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit(0), m_gen(seed), m_pop_alt(false),
-				m_alt_counter(0), m_alt_interval(4)
+				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
+				m_alt_counter(0), m_alt_interval(9)
 				{
 					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
@@ -175,8 +177,11 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 				void init(int max_depth)
 				{
-					m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
-					m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1					
+					m_size_limit_1 = pow(2, max_depth+1) - 1; //for index subtract 1
+					m_last_layer_first_element_1 = (m_size_limit_1 / 2) + 1; //for index subtract 1			
+
+					m_size_limit_2 = pow(2, max_depth-1) - 1;
+					m_last_layer_first_element_2 = (m_size_limit_2 / 2) + 1;				
 				}
 
 				bool empty() const { return empty_1() && empty_2(); }
@@ -189,14 +194,14 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				{
 					Node* d_1 = NULL;
 					Node* d_2 = NULL;
-					if (size_1() < m_size_limit)
+					if (size_1() < m_size_limit_1)
 					{
 						m_heap_1.push_back(n);
 						std::push_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
 					}
 					else
 					{
-						static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+						static std::uniform_int_distribution<> distrib(m_last_layer_first_element_1, m_size_limit_1);
 						int r_i = distrib(m_gen)-1;
 						if (m_node_comp(m_heap_1[r_i], n))
 						{
@@ -222,14 +227,14 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 					if (n->alt_h1n() < m_th_value)
 					{
-						if (size_2() < m_size_limit)
+						if (size_2() < m_size_limit_2)
 						{
 							m_heap_2.push_back(n);
 							std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
 						}
 						else
 						{
-							static std::uniform_int_distribution<> distrib(m_last_layer_first_element, m_size_limit);
+							static std::uniform_int_distribution<> distrib(m_last_layer_first_element_2, m_size_limit_2);
 							int r_i = distrib(m_gen)-1;
 							if (m_alt_node_comp(m_heap_2[r_i], n))
 							{
