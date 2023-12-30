@@ -1333,7 +1333,11 @@ namespace aptk
 							if (head->m_pop_count == 2 || head->m_open_delete == 1)
 								delete head;
 							else 
+							{
 								head->m_open_delete++;
+								delete head->state();
+								head->set_state(nullptr);
+							}
 
 							head = get_node();
 							continue;
