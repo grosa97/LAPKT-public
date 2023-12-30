@@ -102,7 +102,7 @@ namespace aptk
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
-						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
+						m_h1(0), m_alt_h1(0), m_h2(0), m_alt_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
 						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false) //, m_alt(false)
 				{
@@ -127,8 +127,8 @@ namespace aptk
 				float alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
-				// unsigned &alt_h2n() { return m_h2; }
-				// unsigned alt_h2n() const { return m_h2; }
+				unsigned &alt_h2n() { return m_alt_h2; }
+				unsigned alt_h2n() const { return m_alt_h2; }
 				// unsigned &h3n() { return m_h3; }
 				// unsigned h3n() const { return m_h3; } 
 				float &h3n() { return m_h3; }
@@ -261,7 +261,7 @@ namespace aptk
 				float m_h1;
 				float m_alt_h1;
 				unsigned m_h2;
-				// unsigned m_alt_h2;
+				unsigned m_alt_h2;
 				// unsigned m_h3;
 				float m_h3;
 				unsigned m_r;
@@ -343,11 +343,11 @@ namespace aptk
 					}
 					m_sign_count = i_val;
 
-					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
-					// for (auto f: this->problem().task().goal())
-					// {
-					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
-					// }
+					m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
+					for (auto f: this->problem().task().goal())
+					{
+						m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
+					}
 
 				}
 
@@ -1048,15 +1048,15 @@ namespace aptk
 						feat_count_value = 0;
 					}
 
-					// unsigned alt_h2n = 0;
-					// for (int i = 0; i<m_sign_count; i++)
-					// {
-					// 	unsigned gfi = m_goal_partial_lf_feat[i];
-					// 	unsigned cfi = child_features[i];
-					// 	if (gfi > cfi)
-					// 		alt_h2n += ( gfi - cfi );
-					// }
-
+					unsigned alt_h2n = 0;
+					for (int i = 0; i<m_sign_count; i++)
+					{
+						unsigned gfi = m_goal_partial_lf_feat[i];
+						unsigned cfi = child_features[i];
+						if (gfi > cfi)
+							alt_h2n += ( gfi - cfi );
+					}
+					n->alt_h2n() = alt_h2n;
 					return feat_count_value;
 				}
 
@@ -1564,7 +1564,7 @@ namespace aptk
 				bool m_memory_stop;
 				bool m_alt;
 
-				// std::vector<unsigned> m_goal_partial_lf_feat;
+				std::vector<unsigned> m_goal_partial_lf_feat;
 			};
 
 		}

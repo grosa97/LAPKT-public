@@ -101,13 +101,25 @@ namespace aptk
 					return true;
 				if (dequal(b->alt_h1n(), a->alt_h1n()))
 				{
-					if (dless(b->h2n(), a->h2n()))
+					// if (dless(b->h2n(), a->h2n()))
+					// 	return true;
+					// if (dequal(b->h2n(), a->h2n()))
+					//---
+					if (dless(b->alt_h2n(), a->alt_h2n()))
 						return true;
-					if (dequal(b->h2n(), a->h2n()))
+					if (dequal(b->alt_h2n(), a->alt_h2n()))
 					{
-						if (dless(b->h3n(), a->h3n()))
+						if (dless(b->h2n(), a->h2n()))
 							return true;
-						if (dequal(b->h3n(), a->h3n()))
+						if (dequal(b->h2n(), a->h2n()))
+						//---
+						// if (dless(b->h3n(), a->h3n()))
+						// 	return true;
+						// if (dequal(b->h3n(), a->h3n()))
+						//---
+						// if (dless(b->alt_h2n(), a->alt_h2n()))
+						// 	return true;
+						// if (dequal(b->alt_h2n(), a->alt_h2n()))
 						{
 							if (dless(b->gn_unit(), a->gn_unit()))
 								return true;
