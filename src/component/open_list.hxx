@@ -165,11 +165,12 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				int m_alt_counter;
 				int m_alt_interval;
 				float m_th_value;
+				int m_use_mini;
 
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
-				m_alt_counter(0), m_alt_interval(8)
+				m_alt_counter(0), m_alt_interval(8), m_use_mini(true)
 				{
 					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
@@ -353,7 +354,33 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				// 	}
 				// }
 
-				//ties prioritise heap_1_mini
+				// //ties prioritise heap_1_mini
+				// Node* pop_1()
+				// {
+				// 	Node* r = nullptr;
+				// 	Node* r_mini = nullptr;
+				// 	//already ensuring !(empty_1 && empty_1_mini) before calling pop_1
+				// 	if (!empty_1())
+				// 		r = m_heap_1.front();
+				// 	if (!empty_1_mini())
+				// 		r_mini = m_heap_1_mini.front();
+				// 	if ( !empty_1() && (empty_1_mini() || m_node_comp(r_mini, r)) ) //if r is better than r_mini (ties favor r_mini)
+				// 	{
+				// 		std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
+				// 		m_heap_1.pop_back();
+				// 		r->m_pop_count++;
+				// 		return r;
+				// 	}
+				// 	else
+				// 	{
+				// 		std::pop_heap(m_heap_1_mini.begin(), m_heap_1_mini.end(), Node_Comp());
+				// 		m_heap_1_mini.pop_back();
+				// 		r_mini->m_pop_count++;
+				// 		return r_mini;
+				// 	}
+				// }
+
+				//alternates when possible
 				Node* pop_1()
 				{
 					Node* r = nullptr;
@@ -363,11 +390,12 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						r = m_heap_1.front();
 					if (!empty_1_mini())
 						r_mini = m_heap_1_mini.front();
-					if ( !empty_1() && (empty_1_mini() || m_node_comp(r_mini, r)) ) //if r is better than r_mini (ties favor r_mini)
+					if ( empty_1_mini() || (!empty_1() && !m_use_mini)) //if r is better than r_mini (ties favor r_mini)
 					{
 						std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
 						m_heap_1.pop_back();
 						r->m_pop_count++;
+						m_use_mini = true;
 						return r;
 					}
 					else
@@ -375,6 +403,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						std::pop_heap(m_heap_1_mini.begin(), m_heap_1_mini.end(), Node_Comp());
 						m_heap_1_mini.pop_back();
 						r_mini->m_pop_count++;
+						m_use_mini = false;
 						return r_mini;
 					}
 				}
