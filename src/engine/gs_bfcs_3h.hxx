@@ -856,7 +856,7 @@ namespace aptk
 					}
 				}
 
-				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, int, VectorHash>& myMap, const std::vector<int>& keyToFind) {
 					auto it = myMap.find(keyToFind);
 					if (it != myMap.end()) {
 						return &(it->first); // Return pointer to the key vector
@@ -960,7 +960,8 @@ namespace aptk
 
 				unsigned get_lifted_counts_state_partition(Search_Node* n)
 				{
-					unsigned partition = n->partition();
+					// unsigned partition = n->partition();
+					unsigned partition = n->h2n();
 					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
 					// {
 					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
@@ -973,10 +974,10 @@ namespace aptk
 
 					if (m_sign_feat_partitions[partition].empty())
 					{
-						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>();
+						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, int, VectorHash>();
 					}
 					
-					std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+					std::unordered_map<std::vector<int>, int, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
 
 
 					if (n->parent() == NULL) //root node
@@ -1023,10 +1024,10 @@ namespace aptk
 					auto it = sign_feat_occurrences.find(child_features);
 					if (it != sign_feat_occurrences.end())
 					{
-						if (sign_feat_occurrences[child_features] < UINT8_MAX)
+						// if (sign_feat_occurrences[child_features] < UINT8_MAX)
 							feat_count_value = sign_feat_occurrences[child_features]++;
-						else
-							feat_count_value = UINT8_MAX;
+						// else
+						// 	feat_count_value = UINT8_MAX;
 
 						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
 						n->m_sign_features = kp;
@@ -1533,7 +1534,7 @@ namespace aptk
 				std::vector<unsigned> m_fluent_to_feature;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
 				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
-				std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
+				std::vector<std::unordered_map<std::vector<int>, int, VectorHash>> m_sign_feat_partitions;
 				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
 
