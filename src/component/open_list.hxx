@@ -146,11 +146,14 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				typedef Node Node_Type;
 			protected:
 				std::vector<Node*> m_heap_1;
+				std::vector<Node*> m_heap_1_mini;
 				std::vector<Node*> m_heap_2;
 				int m_size_limit_1;
 				int m_size_limit_2;
+				int m_size_limit_1_mini;
 				int m_last_layer_first_element_1;
 				int m_last_layer_first_element_2;
+				int m_last_layer_first_element_1_mini;
 				int m_next_1;
 				int m_next_2;
 				Node_Comp m_node_comp;
@@ -166,7 +169,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
-				m_alt_counter(0), m_alt_interval(9)
+				m_alt_counter(0), m_alt_interval(8)
 				{
 					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
@@ -178,45 +181,55 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				void init(int max_depth)
 				{
 					m_size_limit_1 = pow(2, max_depth+1) - 1; //for index subtract 1
-					m_last_layer_first_element_1 = (m_size_limit_1 / 2) + 1; //for index subtract 1			
+					m_last_layer_first_element_1 = (m_size_limit_1 / 2) + 1; //for index subtract 1		
+
+					m_size_limit_1_mini = pow(2, max_depth-2) - 1; //for index subtract 1
+					m_last_layer_first_element_1_mini = (m_size_limit_1_mini / 2) + 1; //for index subtract 1
 
 					m_size_limit_2 = pow(2, max_depth-1) - 1;
 					m_last_layer_first_element_2 = (m_size_limit_2 / 2) + 1;				
 				}
 
-				bool empty() const { return empty_1() && empty_2(); }
+				bool empty() const { return empty_1() && empty_2() && empty_1_mini(); }
 				bool empty_1() const { return m_heap_1.empty(); }
 				bool empty_2() const { return m_heap_2.empty(); }
+				bool empty_1_mini() const { return m_heap_1_mini.empty(); }
 				std::size_t size_1() const { return m_heap_1.size(); }
 				std::size_t size_2() const { return m_heap_2.size(); }
+				std::size_t size_1_mini() const { return m_heap_1_mini.size(); }
 
 				void insert(Node *n)
 				{
 					Node* d_1 = NULL;
 					Node* d_2 = NULL;
-					if (size_1() < m_size_limit_1)
+					if (size_1_mini() < m_size_limit_1_mini)
+					{
+						m_heap_1_mini.push_back(n);
+						std::push_heap(m_heap_1_mini.begin(), m_heap_1_mini.end(), Node_Comp());
+					}
+					else if (size_1() < m_size_limit_1)
 					{
 						m_heap_1.push_back(n);
 						std::push_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
 					}
 					else
 					{
+						static std::uniform_int_distribution<> distrib_mini(m_last_layer_first_element_1_mini, m_size_limit_1_mini);
+						int r_i_mini = distrib_mini(m_gen)-1;
 						static std::uniform_int_distribution<> distrib(m_last_layer_first_element_1, m_size_limit_1);
 						int r_i = distrib(m_gen)-1;
-						if (m_node_comp(m_heap_1[r_i], n))
+
+						if (m_node_comp(m_heap_1_mini[r_i_mini], n))
 						{
-							// int r_diff = m_size_limit - r;
-							// if (n->h1n() < -0.9)
-							// {
-							// 	std::cout <<"==="<<std::endl;
-							// 	std::cout << top()->h1n()<<std::endl;
-							// }
+							d_1 = m_heap_1[r_i_mini];
+							m_heap_1[r_i_mini] = n;
+							std::push_heap(m_heap_1_mini.begin(), m_heap_1_mini.begin()+r_i_mini+1, Node_Comp());
+						}
+						else if (m_node_comp(m_heap_1[r_i], n))
+						{
 							d_1 = m_heap_1[r_i];
 							m_heap_1[r_i] = n;
 							std::push_heap(m_heap_1.begin(), m_heap_1.begin()+r_i+1, Node_Comp());
-							// delete d;
-							// if (n->h1n() < -0.9)
-							// 	std::cout << top()->h1n()<<std::endl;
 						}
 						else
 							d_1 = n;
@@ -282,9 +295,10 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				{
 					bool e1 = empty_1();
 					bool e2 = empty_2();
-					if (e1 && e2)
+					bool e1_mini = empty_1_mini();
+					if (e1 && e2 && e1_mini)
 						return NULL;
-					if (e1)
+					if (e1 && e1_mini)
 						return pop_2();
 					else if (e2)
 						return pop_1();
@@ -313,14 +327,59 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					}
 				}
 
+				// //ties prioritise heap_1
+				// Node* pop_1()
+				// {
+				// 	Node* r = nullptr;
+				// 	Node* r_mini = nullptr;
+				// 	//already ensuring !(empty_1 && empty_1_mini) before calling pop_1
+				// 	if (!empty_1())
+				// 		r = m_heap_1.front();
+				// 	if (!empty_1_mini())
+				// 		r_mini = m_heap_1_mini.front();
+				// 	if ( !empty_1_mini() && (empty_1() || m_node_comp(r, r_mini)) ) //if r_mini is better than r (ties favor r)
+				// 	{
+				// 		std::pop_heap(m_heap_1_mini.begin(), m_heap_1_mini.end(), Node_Comp());
+				// 		m_heap_1_mini.pop_back();
+				// 		r_mini->m_pop_count++;
+				// 		return r_mini;
+				// 	}
+				// 	else
+				// 	{
+				// 		std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
+				// 		m_heap_1.pop_back();
+				// 		r->m_pop_count++;
+				// 		return r;
+				// 	}
+				// }
+
+				//ties prioritise heap_1_mini
 				Node* pop_1()
 				{
-					Node* r = m_heap_1.front();
-					std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
-					m_heap_1.pop_back();
-					r->m_pop_count++;
-					return r;
+					Node* r = nullptr;
+					Node* r_mini = nullptr;
+					//already ensuring !(empty_1 && empty_1_mini) before calling pop_1
+					if (!empty_1())
+						r = m_heap_1.front();
+					if (!empty_1_mini())
+						r_mini = m_heap_1_mini.front();
+					if ( !empty_1() && (empty_1_mini() || m_node_comp(r_mini, r)) ) //if r is better than r_mini (ties favor r_mini)
+					{
+						std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
+						m_heap_1.pop_back();
+						r->m_pop_count++;
+						return r;
+					}
+					else
+					{
+						std::pop_heap(m_heap_1_mini.begin(), m_heap_1_mini.end(), Node_Comp());
+						m_heap_1_mini.pop_back();
+						r_mini->m_pop_count++;
+						return r_mini;
+					}
 				}
+
+				// TODO: pop_1 with alternation instead of node value comparison
 
 				Node* pop_2()
 				{
@@ -331,15 +390,15 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					return r;
 				}
 
-				Node* top_heap_1()
-				{
-					return m_heap_1.front();
-				}
+				// Node* top_heap_1()
+				// {
+				// 	return m_heap_1.front();
+				// }
 
-				Node* top_heap_2()
-				{
-					return m_heap_2.front();
-				}
+				// Node* top_heap_2()
+				// {
+				// 	return m_heap_2.front();
+				// }
 
 
 		};
