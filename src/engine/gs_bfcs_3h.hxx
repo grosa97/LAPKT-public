@@ -1250,7 +1250,7 @@ namespace aptk
 #endif
 
 						static struct rusage usage_report;
-						if (generated() % 10000 == 0){
+						if (generated() % 1000 == 0){
 							// auto start = std::chrono::steady_clock::now();
 							getrusage(RUSAGE_SELF, &usage_report);
 							// auto end = std::chrono::steady_clock::now();

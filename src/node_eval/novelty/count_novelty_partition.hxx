@@ -121,7 +121,7 @@ namespace aptk
 				{
 					// for (unsigned k = 0; k < m_arity; k++)
 						m_num_tuples_2 *= m_num_fluents;
-
+				}
 					// // m_nodes_tuples_by_partition.resize(partition_size + 1);
 					// m_tuple_counts_by_partition.resize(partition_size + 1);
 
@@ -132,18 +132,18 @@ namespace aptk
 					// }
 					
 
-					int oldSize = m_tuple_counts_by_partition_2.size();
+				//int oldSize = m_tuple_counts_by_partition_2.size();
 
-					// Resize the vector
-					m_tuple_counts_by_partition_2.resize(partition_size + 1);
+				// Resize the vector
+				m_tuple_counts_by_partition_2.resize(partition_size + 1);
 
 					// // Add unordered maps at the new indices
 					// for (int i = oldSize; i < (partition_size + 1); ++i) {
 					// 	m_tuple_counts_by_partition_2[i] = std::unordered_map<int, int>();
 					// }
-				}
+				// }
 
-				int oldSize = m_tuple_counts_by_partition_1.size();
+				//int oldSize = m_tuple_counts_by_partition_1.size();
 				m_tuple_counts_by_partition_1.resize(partition_size + 1);
 
 				// for (int i = oldSize; i < (partition_size + 1); ++i) {
@@ -169,12 +169,11 @@ namespace aptk
 				// update_counts(n);
 				float temp = 0;
 				std::vector<unsigned> bot3 = cover_compute_tuples_1(n, temp);
-				cover_compute_tuples_2(n, bot3, h_val);
+				// if (m_arity == 2)
+					cover_compute_tuples_2(n, bot3, h_val);
 
 				if (temp < -0.3)
 					h_val += temp;
-
-
 
 			}
 
