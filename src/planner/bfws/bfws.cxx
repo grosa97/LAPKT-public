@@ -376,24 +376,76 @@ void BFWS::solve()
 
 
 	}
-	else if (m_search_alg.compare("BFCS-1-rp") == 0)
+	else if (m_search_alg.compare("BFCS-1-tarski") == 0)
 	{
+		bool tarski_lifted_fluents = true;
+		//PARTITIONED BUT WITH NO H2 TIE BREAK
+		BFCS_1_p_pruned* bfs_eng_p = new BFCS_1_p_pruned(search_prob, m_verbose, tarski_lifted_fluents);
+		// BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned& bfs_engine = *bfs_eng_p;
 
-		std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
-
-		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
-
-		unsigned max_width = 1;
+		unsigned max_width = 2;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
+		bfs_engine.set_use_h2n(true);
 
-		bfs_engine.set_use_count_rp_fl_only(true);
 		// bfs_engine.set_use_h3n(true);
-
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+
+		delete bfs_eng_p;
+
+		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
+		{
+			std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
+
+			BFWS_w_hlm_hadd bfs_engine(search_prob, m_verbose);
+			bfs_engine.h4().ignore_rp_h_value(true);
+
+			/**
+			 * Use landmark count instead of goal count
+			 */
+			Gen_Lms_Fwd gen_lms(search_prob);
+			gen_lms.set_only_goals(false);
+			Landmarks_Graph graph1(*prob);
+			gen_lms.compute_lm_graph_set_additive(graph1);
+
+			Land_Graph_Man lgm(search_prob, &graph1);
+			bfs_engine.use_land_graph_manager(&lgm);
+
+			std::cout << "Landmarks found: " << graph1.num_landmarks() << std::endl;
+			std::cout << "Landmarks_Edges found: " << graph1.num_landmarks_and_edges() << std::endl;
+
+			bfs_engine.set_arity(m_max_novelty, graph1.num_landmarks_and_edges());
+			bfs_engine.set_arity_2(m_max_novelty, 1);
+
+			m_found_plan = false;
+			float bfs_b = do_search(bfs_engine, *prob, plan_stream);
+
+			std::cout << "BFS search completed in " << bfs_b << " secs" << std::endl;
+		}
+
+
 	}
+	// else if (m_search_alg.compare("BFCS-1-rp") == 0)
+	// {
+
+	// 	std::cout << "Starting search with BFWS-f5-h3count-p..." << std::endl;
+
+	// 	BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
+
+	// 	unsigned max_width = 1;
+	// 	bfws_options(search_prob, bfs_engine, max_width, graph);
+
+	// 	bfs_engine.set_use_count_rp_fl_only(true);
+	// 	// bfs_engine.set_use_h3n(true);
+
+
+	// 	float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+
+	// 	std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+	// }
 	else if (m_search_alg.compare("BFCS-1-p") == 0)
 	{
 		////PARTITIONED BUT WITH H2 TIE BREAK

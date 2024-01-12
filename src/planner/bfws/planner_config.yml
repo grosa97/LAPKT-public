@@ -53,7 +53,7 @@ BFWS:
         - 'DUAL-BFWS'
         - 'BFWS-goalcount-h3blind'
         - 'BFCS-1'
-        - 'BFCS-1-rp'
+        - 'BFCS-1-tarski'
         - 'BFCS-1-p'
         - 'BFCS-1-p-rp'
 

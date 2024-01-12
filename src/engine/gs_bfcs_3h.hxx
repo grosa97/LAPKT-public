@@ -314,7 +314,7 @@ namespace aptk
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
-						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
+						m_memory_stop(false), m_alt(false), m_tarski_lifted_fluents(false) //, m_h3_only_max_nov(true)
 				{
 
 					m_memory_budget = 6000;
@@ -333,7 +333,7 @@ namespace aptk
 					unsigned i_val = 0;
 					for (const Fluent* f: this->m_problem.task().fluents())
 					{
-						std::string s = signature_to_lifted_fl(f->signature());
+						std::string s = signature_to_lifted_fl(f->signature(), m_tarski_lifted_fluents);
 						if (unique_signatures.find(s) == unique_signatures.end())
 						{
 							unique_signatures.insert(s);
@@ -348,7 +348,47 @@ namespace aptk
 					// {
 					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
 					// }
+				}
 
+				GS_BFCS_3H(const Search_Model &search_problem, bool verbose, bool tarski_lifted_fluents)
+						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), 
+						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
+						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
+						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
+						m_memory_stop(false), m_alt(false), m_tarski_lifted_fluents(tarski_lifted_fluents) //, m_h3_only_max_nov(true)
+				{
+
+					m_memory_budget = 6000;
+
+					m_first_h = new First_Heuristic(search_problem);
+					m_second_h = new Second_Heuristic(search_problem);
+					m_third_h = new Third_Heuristic(search_problem);
+					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
+
+					//max depth determined size of list (2^17 = 262143)					
+					int OPEN_MAX_DEPTH =18;
+					m_open.init(OPEN_MAX_DEPTH);
+
+					std::unordered_set<std::string> unique_signatures;
+					m_fluent_to_feature.resize(this->problem().task().num_fluents());
+					unsigned i_val = 0;
+					for (const Fluent* f: this->m_problem.task().fluents())
+					{
+						std::string s = signature_to_lifted_fl(f->signature(), m_tarski_lifted_fluents);
+						if (unique_signatures.find(s) == unique_signatures.end())
+						{
+							unique_signatures.insert(s);
+							m_sign_to_int[s] = i_val++;
+						}
+						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
+					}
+					m_sign_count = i_val;
+
+					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
+					// for (auto f: this->problem().task().goal())
+					// {
+					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
+					// }
 				}
 
 				virtual ~GS_BFCS_3H()
@@ -387,7 +427,6 @@ namespace aptk
 					//no need to delete lifted features count table elements->not allocated dynamically
 				}
 				
-
 
 				/**
 				 * Set the relevant fluents from node n
@@ -846,13 +885,20 @@ namespace aptk
 				// 	return this->problem().task().fluents()[ai]->signature();
 				// }
 
-				std::string signature_to_lifted_fl(std::string signature)
+				std::string signature_to_lifted_fl(std::string signature, bool tarski=false)
 				{
 					std::stringstream ss(signature);
-
 					std::string lfl;
-					if (std::getline(ss, lfl, '_'))
-						return lfl;
+					if (tarski)
+					{
+						if (std::getline(ss, lfl, '('))
+							return lfl;					
+					}
+					else
+					{
+						if (std::getline(ss, lfl, '_'))
+							return lfl;
+					}
 					return "";
 				}
 
@@ -1563,6 +1609,8 @@ namespace aptk
 				int m_memory_budget;
 				bool m_memory_stop;
 				bool m_alt;
+
+				bool m_tarski_lifted_fluents;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};
