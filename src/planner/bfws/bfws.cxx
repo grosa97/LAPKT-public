@@ -147,6 +147,9 @@ float BFWS::do_search(Search_Engine &engine, aptk::STRIPS_Problem &plan_prob, st
 		std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
 		std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
 		std::cout << "Plan found with cost: NOTFOUND" << std::endl;
+#ifdef __linux__
+		aptk::report_memory_usage();
+#endif
 		details.close();
 		return total_time;
 	}
@@ -326,7 +329,9 @@ void BFWS::solve()
 		// std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
-		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned* bfs_eng_p = new BFCS_1_p_pruned(search_prob, m_verbose);
+		// BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
+		BFCS_1_p_pruned& bfs_engine = *bfs_eng_p;
 
 		unsigned max_width = 2;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
@@ -337,6 +342,7 @@ void BFWS::solve()
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
+		delete bfs_eng_p;
 
 		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
 		{

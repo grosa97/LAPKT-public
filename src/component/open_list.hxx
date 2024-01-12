@@ -166,7 +166,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
-				m_alt_counter(0), m_alt_interval(9)
+				m_alt_counter(0), m_alt_interval(8)
 				{
 					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
