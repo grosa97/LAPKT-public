@@ -179,6 +179,11 @@ namespace aptk
 				else
 					this->insert(std::make_pair(n->state()->hash(), n));
 			}
+
+			void put_insert(size_t hash, Node *n)
+			{
+				this->insert(std::make_pair(hash, n));
+			}
 		};
 
 		template <typename Node>

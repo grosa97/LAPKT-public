@@ -314,10 +314,11 @@ namespace aptk
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
-						m_memory_stop(false), m_alt(false), m_tarski_lifted_fluents(false) //, m_h3_only_max_nov(true)
+						m_memory_stop(false), m_alt(false), m_tarski_lifted_fluents(false),  m_second_iter(false) //, m_h3_only_max_nov(true)
 				{
 
 					m_memory_budget = 6000;
+					// m_memory_budget = 400;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -342,6 +343,15 @@ namespace aptk
 						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
 					}
 					m_sign_count = i_val;
+
+
+					m_goal_set.resize(this->problem().task().num_fluents());
+
+					for (const auto& element : m_problem.task().goal()) {
+						// Use std::binary_search to check if the element is in vector2
+						m_goal_set.set(element);
+					}
+					std::cout << m_goal_set.size() <<std::endl;
 
 					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
 					// for (auto f: this->problem().task().goal())
@@ -355,7 +365,7 @@ namespace aptk
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
-						m_memory_stop(false), m_alt(false), m_tarski_lifted_fluents(tarski_lifted_fluents) //, m_h3_only_max_nov(true)
+						m_memory_stop(false), m_alt(false), m_tarski_lifted_fluents(tarski_lifted_fluents), m_second_iter(false) //, m_h3_only_max_nov(true)
 				{
 
 					m_memory_budget = 6000;
@@ -383,6 +393,13 @@ namespace aptk
 						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
 					}
 					m_sign_count = i_val;
+
+					m_goal_set.resize(this->problem().task().num_fluents());
+
+					for (const auto& element : m_problem.task().goal()) {
+						// Use std::binary_search to check if the element is in vector2
+						m_goal_set.set(element);
+					}
 
 					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
 					// for (auto f: this->problem().task().goal())
@@ -427,6 +444,124 @@ namespace aptk
 					//no need to delete lifted features count table elements->not allocated dynamically
 				}
 				
+				void prepare_repeat()
+				{
+
+					for (typename Closed_List_Type::iterator i = m_curr_subgoals_set.begin(); i != m_curr_subgoals_set.end(); i++)
+					{
+						// if (!is_closed(i->second))
+						// 	std::cout << "DEBUG: not closed" << std::endl;
+						m_prev_subgoals_set.put_insert(i->first, i->second);
+						Search_Node *n = i->second;
+						if (!n->has_state())
+							n->set_state(m_problem.next(*(n->parent()->state()), n->action()));
+						n->m_action = no_op;
+						n->m_parent = nullptr;
+						n->m_already_expanded = false;
+						n->m_sign_features = nullptr;
+						n->h1n() = -3;
+						n->alt_h1n() = -3;
+
+
+						Fluent_Set fset = n->state()->fluent_set();
+						std::cout << m_goal_set.intersection_size(fset) <<std::endl;
+					}
+
+					std::cout << "DEBUG: prepare_repeat: n new subgoals:  " << m_curr_subgoals_set.size() << std::endl;
+					for (typename Closed_List_Type::iterator i = m_closed.begin(); i != m_closed.end(); i++)
+					{
+						// if (!is_closed(i->second))
+						// 	std::cout << "DEBUG: not closed" << std::endl;
+						if (!is_curr_subgoal(i->second) && !is_prev_subgoal(i->second))
+							delete i->second;
+					}
+
+					// while (!m_open.empty())
+					// {
+					// 	Search_Node *n = m_open.pop();
+					// 	if (!is_curr_subgoal(n))
+					// 		delete n;
+					// }
+					for (typename Closed_List_Type::iterator i = m_prev_subgoals_set.begin(); i != m_prev_subgoals_set.end(); i++)
+					{
+						// if (!is_closed(i->second))
+						// 	std::cout << "DEBUG: not closed" << std::endl;
+					}
+
+					while (!m_open.empty())
+					{
+						Search_Node *n = m_open.pop();
+						if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1) && !is_curr_subgoal(n) && !is_prev_subgoal(n))
+							delete n;
+					}
+
+
+					// Clear the contents of the vector
+					m_sign_feat_partitions.clear();
+					// deallocate the memory associated with the vector
+					std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>>().swap(m_sign_feat_partitions);
+
+
+					for (typename Closed_List_Type::iterator i = m_curr_subgoals_set.begin(); i != m_curr_subgoals_set.end(); i++)
+					{
+						Search_Node *n = i->second;
+						open_node(n);
+							
+						get_lifted_counts_state_partition(n);
+
+					}
+
+					m_closed.clear();
+					m_curr_subgoals_set.clear();
+					// delete m_first_h;
+					// // delete m_second_h;
+					// // delete m_relevant_fluents_h;
+
+					// m_first_h = new First_Heuristic(m_problem);
+					// m_first_h->init();
+					// m_second_h = new Second_Heuristic(m_problem);
+					// m_relevant_fluents_h = new Relevant_Fluents_Heuristic(m_problem);
+					
+					//uncomment for resetting count novelty h1 (not sure if not have bugs)
+					// delete m_first_h;
+					// m_first_h = new First_Heuristic(m_problem);
+				}
+
+				void check_subgoal_info(Search_Node* candidate)
+				{
+					// if land/goal counter has changed, to account for negative changes
+					// if (candidate->parent() && candidate->h2n() != candidate->parent()->h2n())
+					if (candidate->parent() && candidate->h2n() < candidate->parent()->h2n())
+							record_subgoal_info_tuple(candidate);
+				}
+
+
+				void record_subgoal_info_tuple(Search_Node* candidate)
+				{
+					if (!is_prev_subgoal(candidate) && !is_curr_subgoal(candidate)) 
+					{	
+						// std::cout <<"DEBUG: new subgoal node: "<< candidate->hash() << " -- "<<candidate->h2n() << std::endl;
+						m_curr_subgoals_set.put(candidate);
+					}
+				}
+
+				bool is_prev_subgoal(Search_Node *n)
+				{
+					Search_Node *n2 = this->m_prev_subgoals_set.retrieve(n);
+
+					if (n2 != NULL)
+						return true;
+					return false;
+				}
+
+				bool is_curr_subgoal(Search_Node *n)
+				{
+					Search_Node *n2 = this->m_curr_subgoals_set.retrieve(n);
+
+					if (n2 != NULL)
+						return true;
+					return false;
+				}
 
 				/**
 				 * Set the relevant fluents from node n
@@ -523,7 +658,7 @@ namespace aptk
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL, m_problem.num_actions());
 					// Init Novelty
 					// m_third_h->init();
-					m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
+					// m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
 
 					if (m_use_rp)
 						set_relplan(this->m_root, this->m_root->state());
@@ -633,7 +768,20 @@ namespace aptk
 					}
 
 					// Count land/goal unachieved
-					m_second_h->eval(*(candidate->state()), candidate->GC());
+					// m_second_h->eval(*(candidate->state()), candidate->GC());    
+					State* s = nullptr;
+					Fluent_Set fset;	
+					if (candidate->state() == nullptr)
+					{
+						s = m_problem.next(*(candidate->parent()->state()), candidate->action());
+						fset = s->fluent_set();
+					}
+					else
+						fset = candidate->state()->fluent_set();
+					candidate->GC() = m_goal_set.size() - m_goal_set.intersection_size(fset);
+					if (s != nullptr) 
+						delete s;
+
 					if (m_use_h2n)
 						candidate->h2n() = candidate->GC();
 
@@ -1246,7 +1394,8 @@ namespace aptk
 							}
 #endif
 							inc_dead_end();
-							delete n;
+							if (!is_prev_subgoal(n) && !is_curr_subgoal(n))
+								delete n;
 							continue;
 						}
 
@@ -1303,11 +1452,12 @@ namespace aptk
 							// std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
 							// std::chrono::duration<double, std::milli> duration = end - start;
 							// std::cout << duration.count() <<std::endl;
-							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+							if ((usage_report.ru_maxrss / 1024) > m_memory_budget && !m_second_iter) {
 
 							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
 							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 							m_memory_stop = true;
+							m_second_iter = true;
 							// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
 							// 	std::cout << "Search: Memory limit exceeded." << std::endl;
 							// 	return NULL;
@@ -1332,89 +1482,107 @@ namespace aptk
 				{
 					Search_Node *head = get_node();
 					int counter = 0;
-
+					bool start = true;
+					m_second_iter = false;
 					// static struct rusage usage_report;
-					while (head)
+					while((start || !m_curr_subgoals_set.empty()))
 					{
-						// bool timer = false;
-						// if (generated() % 100000 < 100){
-						// 	auto start = std::chrono::steady_clock::now();
-						// 	getrusage(RUSAGE_SELF, &usage_report);
-						// 	auto end = std::chrono::steady_clock::now();
-						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
-						// 	std::chrono::duration<double, std::milli> duration = end - start;
-						// 	std::cout << duration.count() <<std::endl;
-						// 	timer = true;
-						// 	// if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
-						// 	// 	// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
-						// 	// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
-						// 	// 	std::cout << "Search: Memory limit exceeded." << std::endl;
-						// 	// 	return NULL;
-						// 	// }
-						// }
-						// auto start = std::chrono::steady_clock::now();
-						if (head->already_expanded())
+						if (!start)
 						{
+							prepare_repeat();
 							head = get_node();
-							continue;
+							m_memory_stop = false;
 						}
-
-						// record_count_h(head);
-						if (head->gn() >= max_depth())
+						while (head && !m_memory_stop)
 						{
-							close(head);
-							head = get_node();
-							continue;
-						}
-
-						// Generate state
-						if (!head->has_state())
-							head->set_state(m_problem.next(*(head->parent()->state()), head->action()));
-
-						if (m_problem.goal(*(head->state())))
-						{
-							close(head);
-							set_max_depth(head->gn());
-							// printMap(m_h1_record);
-							return head;
-						}
-						if ((time_used() - m_t0) > m_time_budget)
-							return NULL;
-
-						if (m_memory_stop)
-							return NULL;
-
-						head->set_expanded();
-
-						if (is_closed(head))
-						{
-#ifdef DEBUG
-							if (m_verbose)
-								std::cout << "Already in CLOSED" << std::endl;
-#endif
-							if (head->m_pop_count == 2 || head->m_open_delete == 1)
-								delete head;
-							else 
+							start = false;
+							// bool timer = false;
+							// if (generated() % 100000 < 100){
+							// 	auto start = std::chrono::steady_clock::now();
+							// 	getrusage(RUSAGE_SELF, &usage_report);
+							// 	auto end = std::chrono::steady_clock::now();
+							// 	std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+							// 	std::chrono::duration<double, std::milli> duration = end - start;
+							// 	std::cout << duration.count() <<std::endl;
+							// 	timer = true;
+							// 	// if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+							// 	// 	// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
+							// 	// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
+							// 	// 	std::cout << "Search: Memory limit exceeded." << std::endl;
+							// 	// 	return NULL;
+							// 	// }
+							// }
+							// auto start = std::chrono::steady_clock::now();
+							if (head->already_expanded())
 							{
-								head->m_open_delete++;
-								delete head->state();
-								head->set_state(nullptr);
+								head = get_node();
+								continue;
 							}
 
+							// record_count_h(head);
+							if (head->gn() >= max_depth())
+							{
+								close(head);
+								head = get_node();
+								continue;
+							}
+
+							// Generate state
+							if (!head->has_state())
+								head->set_state(m_problem.next(*(head->parent()->state()), head->action()));
+
+							if (m_problem.goal(*(head->state())))
+							{
+								close(head);
+								set_max_depth(head->gn());
+								// printMap(m_h1_record);
+								return head;
+							}
+							if ((time_used() - m_t0) > m_time_budget)
+								return NULL;
+
+							// if (m_memory_stop)
+							// 	return NULL;
+
+							head->set_expanded();
+
+							if (is_closed(head))
+							{
+	#ifdef DEBUG
+								if (m_verbose)
+									std::cout << "Already in CLOSED" << std::endl;
+	#endif
+								if (head->m_pop_count == 2 || head->m_open_delete == 1)
+								{
+									if (!is_prev_subgoal(head) && !is_curr_subgoal(head))
+										delete head;
+								}
+								else 
+								{
+									head->m_open_delete++;
+									if (!is_prev_subgoal(head) && !is_curr_subgoal(head))
+									{
+										delete head->state();
+										head->set_state(nullptr);
+									}
+								}
+
+								head = get_node();
+								continue;
+							}
+							process(head);
+							check_subgoal_info(head);
+							close(head);
+							counter++;
+							// auto end = std::chrono::steady_clock::now();
+							// if (timer)
+							// {
+							// 	std::chrono::duration<double, std::milli> duration = end - start;
+							// 	std::cout << duration.count() <<std::endl;
+							// 	timer = false;
+							// }
 							head = get_node();
-							continue;
 						}
-						process(head);
-						close(head);
-						counter++;
-						// auto end = std::chrono::steady_clock::now();
-						// if (timer)
-						// {
-						// 	std::chrono::duration<double, std::milli> duration = end - start;
-						// 	std::cout << duration.count() <<std::endl;
-						// 	timer = false;
-						// }
-						head = get_node();
 					}
 					// printMap(m_h1_record);
 					return NULL;
@@ -1611,6 +1779,11 @@ namespace aptk
 				bool m_alt;
 
 				bool m_tarski_lifted_fluents;
+
+				Closed_List_Type m_prev_subgoals_set;
+				Closed_List_Type m_curr_subgoals_set;
+				bool m_second_iter;
+				Fluent_Set m_goal_set;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};
