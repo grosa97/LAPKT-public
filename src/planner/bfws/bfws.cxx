@@ -396,7 +396,7 @@ void BFWS::solve()
 
 		delete bfs_eng_p;
 
-		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
+		if (!m_found_plan && (m_search_alg.compare("BFCS-1-tarski") == 0))
 		{
 			std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
 
