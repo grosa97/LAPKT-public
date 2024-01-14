@@ -139,7 +139,7 @@ namespace aptk
 		// };
 
 
-template <class Node_Comp, class Alt_Node_Comp, class Node>
+template <class Node_Comp, class Alt_Node_Comp, class Alt_2_Node_Comp, class Node>
 		class Double_Custom_Priority_Queue
 		{
 			public:
@@ -147,14 +147,19 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 			protected:
 				std::vector<Node*> m_heap_1;
 				std::vector<Node*> m_heap_2;
+				std::vector<Node*> m_heap_3;
 				int m_size_limit_1;
 				int m_size_limit_2;
+				int m_size_limit_3;
 				int m_last_layer_first_element_1;
 				int m_last_layer_first_element_2;
+				int m_last_layer_first_element_3;
 				int m_next_1;
 				int m_next_2;
+				int m_next_3;
 				Node_Comp m_node_comp;
 				Alt_Node_Comp m_alt_node_comp;
+				Alt_2_Node_Comp m_alt_2_node_comp;
 				// std::random_device m_rd;
 				std::mt19937::result_type seed = 42;
     			std::mt19937 m_gen;
@@ -180,20 +185,23 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					m_size_limit_1 = pow(2, max_depth+1) - 1; //for index subtract 1
 					m_last_layer_first_element_1 = (m_size_limit_1 / 2) + 1; //for index subtract 1			
 
-					m_size_limit_2 = pow(2, max_depth-1) - 1;
-					m_last_layer_first_element_2 = (m_size_limit_2 / 2) + 1;				
+					m_size_limit_3 = m_size_limit_2 = pow(2, max_depth-1) - 1;
+					m_last_layer_first_element_3 = m_last_layer_first_element_2 = (m_size_limit_2 / 2) + 1;		
 				}
 
 				bool empty() const { return empty_1() && empty_2(); }
 				bool empty_1() const { return m_heap_1.empty(); }
 				bool empty_2() const { return m_heap_2.empty(); }
+				bool empty_3() const { return m_heap_3.empty(); }
 				std::size_t size_1() const { return m_heap_1.size(); }
 				std::size_t size_2() const { return m_heap_2.size(); }
+				std::size_t size_3() const { return m_heap_3.size(); }
 
 				void insert(Node *n)
 				{
 					Node* d_1 = NULL;
 					Node* d_2 = NULL;
+					Node* d_3 = NULL;
 					if (size_1() < m_size_limit_1)
 					{
 						m_heap_1.push_back(n);
@@ -264,17 +272,56 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						d_2->m_open_delete++;
 					}
 
-					if (d_1 != nullptr && d_1 == d_2)
+					if (n->alt_2_h1n() < m_th_value)
+					{
+						if (size_3() < m_size_limit_3)
+						{
+							m_heap_3.push_back(n);
+							std::push_heap(m_heap_3.begin(), m_heap_3.end(), Alt_2_Node_Comp());
+						}
+						else
+						{
+							static std::uniform_int_distribution<> distrib(m_last_layer_first_element_3, m_size_limit_3);
+							int r_i = distrib(m_gen)-1;
+							if (m_alt_2_node_comp(m_heap_3[r_i], n))
+							{
+								d_3 = m_heap_3[r_i];
+								m_heap_3[r_i] = n;
+								std::push_heap(m_heap_3.begin(), m_heap_3.begin()+r_i+1, Alt_2_Node_Comp());
+							}
+							else
+								d_3 = n;
+
+							d_3->m_open_delete++;
+						}
+					}
+					else
+					{
+						d_3 = n;
+						d_3->m_open_delete++;
+					}
+
+					if (d_1 != nullptr && d_1 == d_2 && d_1 == d_3)
 					{
 						delete d_1;
-						d_1 = d_2 = nullptr;
+						d_1 = d_2 = d_3 = nullptr;
 					}
-					
-					if (d_1 != nullptr && d_1->m_open_delete == 2)
-						delete d_1;
-					if (d_2 != nullptr && d_2->m_open_delete == 2)
-						delete d_2;
 
+					if (d_1 != nullptr && d_1->m_open_delete == 3)
+					{
+						delete d_1;
+						d_1 = nullptr;
+					}
+					if (d_2 != nullptr && d_2->m_open_delete == 3)
+					{
+						delete d_2;
+						d_2 = nullptr;
+					}
+					if (d_3 != nullptr && d_3->m_open_delete == 3)
+					{
+						delete d_3;
+						d_3 = nullptr;
+					}
 				}
 
 
@@ -282,12 +329,60 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				{
 					bool e1 = empty_1();
 					bool e2 = empty_2();
-					if (e1 && e2)
+					bool e3 = empty_3();
+
+					if (e1 && e2 && e3)
 						return NULL;
-					if (e1)
-						return pop_2();
-					else if (e2)
+					
+					if( !e1 && e2 && e3 )
 						return pop_1();
+					else if ( !e2 && e1 && e3)
+						return pop_2();
+					else if ( !e3 && e1 && e2)
+						return pop_3();
+
+					else if (e1 && !e2 && !e3)
+					{
+						if (m_alt_counter % 2 == 0)
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_2();
+						}
+						else 
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_3();
+						}
+					}
+
+					else if (e3 && !e2 && !e1)
+					{
+						if (m_alt_counter == 0)
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_2();
+						}
+						else
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_1();
+						}
+					}
+
+					else if (e2 && !e3 && !e1)
+					{
+						if (m_alt_counter == 1)
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_3();
+						}
+						else
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_1();
+						}
+					}
+
 					else
 					{
 						// if (m_pop_alt)
@@ -305,12 +400,46 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 							m_alt_counter = ++m_alt_counter % m_alt_interval;
 							return pop_2();
 						}
+						else if (m_alt_counter == 1)
+						{
+							m_alt_counter = ++m_alt_counter % m_alt_interval;
+							return pop_3();
+						}
 						else
 						{
 							m_alt_counter = ++m_alt_counter % m_alt_interval;
 							return pop_1();
 						}
 					}
+					// if (e1 && e2)
+					// 	return NULL;
+					// if (e1)
+					// 	return pop_2();
+					// else if (e2)
+					// 	return pop_1();
+					// else
+					// {
+					// 	// if (m_pop_alt)
+					// 	// {
+					// 	// 	m_pop_alt = false;
+					// 	// 	return pop_2();
+					// 	// }
+					// 	// else
+					// 	// {
+					// 	// 	m_pop_alt = true;
+					// 	// 	return pop_1();
+					// 	// }
+					// 	if (m_alt_counter == 0)
+					// 	{
+					// 		m_alt_counter = ++m_alt_counter % m_alt_interval;
+					// 		return pop_2();
+					// 	}
+					// 	else
+					// 	{
+					// 		m_alt_counter = ++m_alt_counter % m_alt_interval;
+					// 		return pop_1();
+					// 	}
+					// }
 				}
 
 				Node* pop_1()
@@ -331,6 +460,15 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					return r;
 				}
 
+				Node* pop_3()
+				{
+					Node* r = m_heap_3.front();
+					std::pop_heap(m_heap_3.begin(), m_heap_3.end(), Alt_2_Node_Comp());
+					m_heap_3.pop_back();
+					r->m_pop_count++;
+					return r;
+				}
+
 				Node* top_heap_1()
 				{
 					return m_heap_1.front();
@@ -339,6 +477,11 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				Node* top_heap_2()
 				{
 					return m_heap_2.front();
+				}
+
+				Node* top_heap_3()
+				{
+					return m_heap_3.front();
 				}
 
 
