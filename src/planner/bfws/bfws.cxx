@@ -12,12 +12,15 @@
 using aptk::agnostic::Fwd_Search_Problem;
 
 BFWS::BFWS()
-		: STRIPS_Interface(), m_log_filename("de.log"), m_plan_filename("plan.ipc"), m_M(32), m_max_novelty(2), m_anytime(false), m_found_plan(false), m_cost(infty), m_cost_bound(infty)
+		: STRIPS_Interface(), m_log_filename("de.log"), m_plan_filename("plan.ipc"), m_M(32), m_max_novelty(2), m_anytime(false), m_found_plan(false), m_cost(infty), m_cost_bound(infty),
+		m_partition_size(0)
 {
 }
 
 BFWS::BFWS(std::string domain_file, std::string instance_file)
-		: STRIPS_Interface(domain_file, instance_file), m_log_filename("bfws.log"), m_plan_filename("plan.ipc"), m_M(32), m_max_novelty(2), m_anytime(false), m_found_plan(false), m_cost(infty), m_cost_bound(infty)
+		: STRIPS_Interface(domain_file, instance_file), 
+		m_log_filename("bfws.log"), m_plan_filename("plan.ipc"), m_M(32), m_max_novelty(2), m_anytime(false), m_found_plan(false), m_cost(infty), m_cost_bound(infty),
+		m_partition_size(0)
 {
 }
 
@@ -219,6 +222,168 @@ float BFWS::do_anytime(Anytime_RWA &engine)
 	return total_time;
 }
 
+template <typename Search_Engine>
+void BFWS::apx_bfws_options(Fwd_Search_Problem &search_prob, Search_Engine &bfs_engine, unsigned max_novelty, Landmarks_Graph &graph)
+{
+
+  bfs_engine.set_max_novelty(max_novelty);
+  bfs_engine.set_use_novelty(true);
+  bfs_engine.rel_fl_h().ignore_rp_h_value(true);
+
+  Land_Graph_Man *lgm = new Land_Graph_Man(search_prob, &graph);
+  bfs_engine.use_land_graph_manager(lgm);
+
+  H_Add_Rp_Fwd hadd(search_prob);
+  float h_init = 0;
+  const aptk::State *s_0 = search_prob.init();
+  hadd.eval(*s_0, h_init);
+  m_partition_size = graph.num_landmarks() * h_init;
+
+  bfs_engine.set_arity(max_novelty, m_partition_size);
+}
+
+template <typename Search_Engine>
+float BFWS::do_search_iterative(Search_Engine &engine,
+  aptk::STRIPS_Problem &plan_prob, bool has_arity_2, float prev_time_taken)
+{
+  std::ofstream details("execution.details");
+  std::vector<aptk::Action_Idx> plan;
+  m_cost = infty;
+
+  float ref = aptk::time_used();
+  float t0 = aptk::time_used();
+
+  unsigned expanded_0 = engine.expanded();
+  unsigned generated_0 = engine.generated();
+
+  unsigned i = has_arity_2 ? 1 : 0;
+  std::cout << "Num Partitions: " << m_partition_size << std::endl;
+  while (!m_found_plan && ++i <= plan_prob.num_fluents())
+  {
+    std::cout << "Iteration- k=" << i << std::endl;
+    engine.set_max_novelty(i);
+    engine.set_arity(i, m_partition_size);
+    if (has_arity_2)
+      engine.set_arity_2(i, 1);
+
+    std::cout << "Clearing Engine..." << std::endl;
+    engine.clear();
+    std::cout << "Staring Engine..." << std::endl;
+    engine.start(m_cost_bound);
+    std::cout << "Finding Solution..." << std::endl;
+    m_found_plan = engine.find_solution(m_cost, plan);
+  }
+
+  if (m_found_plan)
+  {
+    std::ofstream plan_stream;
+    plan_stream.open(m_plan_filename);
+    details << "Plan found with cost: " << m_cost << std::endl;
+    for (unsigned k = 0; k < plan.size(); k++)
+    {
+      details << k + 1 << ". ";
+      const aptk::Action &a = *(plan_prob.actions()[plan[k]]);
+      details << a.signature();
+      details << std::endl;
+      plan_stream << a.signature() << std::endl;
+    }
+    float tf = aptk::time_used();
+    unsigned expanded_f = engine.expanded();
+    unsigned generated_f = engine.generated();
+    details << "Time: " << tf - t0 << std::endl;
+    details << "Generated: " << generated_f - generated_0 << std::endl;
+    details << "Expanded: " << expanded_f - expanded_0 << std::endl;
+    t0 = tf;
+    expanded_0 = expanded_f;
+    generated_0 = generated_f;
+    plan.clear();
+
+    float total_time = aptk::time_used() - ref;
+    std::cout << "Total time: " << total_time << std::endl;
+    std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
+    std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
+    std::cout << "Plan found with cost: " << m_cost << std::endl;
+    std::cout << "Max novelty node generated: " << engine.get_max_novelty_generated()
+          << std::endl;
+    std::cout << "Max novelty node expanded: " << engine.get_max_novelty_expanded()
+          << std::endl;
+    const unsigned *generated_nov = engine.generated_by_novelty();
+    const unsigned *expanded_nov = engine.expanded_by_novelty();
+    const unsigned *count_sol_nodes_by_nov =
+      engine.count_solution_nodes_by_novelty();
+    for (unsigned j = 0; j < i + 2; j++)
+    {
+      std::cout << "Count novelty " << j + 1 << " generated nodes: " << generated_nov[j] << std::endl;
+    }
+    for (unsigned j = 0; j < i + 2; j++)
+    {
+      std::cout << "Count novelty " << j + 1 << " expanded nodes: " << expanded_nov[j] << std::endl;
+    }
+    for (unsigned j = 0; j < i + 2; j++)
+    {
+      std::cout << "Solution nodes of novelty " << j + 1 << ": " << count_sol_nodes_by_nov[j] << std::endl;
+    }
+    if (engine.check_holding_queue_expansion())
+      std::cout << "Holding Queue was Popped" << std::endl;
+    std::cout << "Plan found in iteration: " << i << std::endl;
+    std::cout << "Num nodes random pruned: "
+          << engine.count_random_pruned() << std::endl;
+#ifdef __linux__
+    aptk::report_memory_usage();
+#endif
+    details.close();
+    plan_stream.close();
+    return total_time;
+  }
+  else
+  {
+    float tf = aptk::time_used();
+    unsigned expanded_f = engine.expanded();
+    unsigned generated_f = engine.generated();
+    details << "Time: " << tf - t0 + prev_time_taken << std::endl;
+    details << "Generated: " << generated_f - generated_0 << std::endl;
+    details << "Expanded: " << expanded_f - expanded_0 << std::endl;
+    t0 = tf;
+    expanded_0 = expanded_f;
+    generated_0 = generated_f;
+
+    float total_time = aptk::time_used() - ref;
+    std::cout << "Total time: " << total_time + prev_time_taken << std::endl;
+    std::cout << "Nodes generated during search: " << engine.generated() << std::endl;
+    std::cout << "Nodes expanded during search: " << engine.expanded() << std::endl;
+    std::cout << "Plan found with cost: NOTFOUND" << std::endl;
+    std::cout << "Max novelty node generated: " << engine.get_max_novelty_generated()
+          << std::endl;
+    std::cout << "Max novelty node expanded: " << engine.get_max_novelty_expanded()
+          << std::endl;
+    const unsigned *generated_nov = engine.generated_by_novelty();
+    const unsigned *expanded_nov = engine.expanded_by_novelty();
+    const unsigned *count_sol_nodes_by_nov =
+      engine.count_solution_nodes_by_novelty();
+    for (unsigned j = 0; j < i + 1; j++)
+    {
+      std::cout << "Count novelty " << j + 1 << " generated nodes: " << generated_nov[j] << std::endl;
+    }
+    for (unsigned j = 0; j < i + 1; j++)
+    {
+      std::cout << "Count novelty " << j + 1 << " expanded nodes: " << expanded_nov[j] << std::endl;
+    }
+    for (unsigned j = 0; j < i + 1; j++)
+    {
+      std::cout << "Solution nodes of novelty " << j + 1 << ": " << count_sol_nodes_by_nov[j] << std::endl;
+    }
+    if (engine.check_holding_queue_expansion())
+      std::cout << "Holding Queue was Popped" << std::endl;
+    std::cout << "Num nodes random pruned: "
+          << engine.count_random_pruned() << std::endl;
+#ifdef __linux__
+    aptk::report_memory_usage();
+#endif
+    details.close();
+    return total_time;
+  }
+}
+
 void BFWS::solve()
 {
 
@@ -346,32 +511,67 @@ void BFWS::solve()
 
 		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
 		{
-			std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
 
-			BFWS_w_hlm_hadd bfs_engine(search_prob, m_verbose);
-			bfs_engine.h4().ignore_rp_h_value(true);
+			std::cout << "Starting search with k-BFWS iterative..." << std::endl;
 
-			/**
-			 * Use landmark count instead of goal count
-			 */
-			Gen_Lms_Fwd gen_lms(search_prob);
-			gen_lms.set_only_goals(false);
-			Landmarks_Graph graph1(*prob);
-			gen_lms.compute_lm_graph_set_additive(graph1);
+			int m_sample_factor = 1;
+			std::string m_sampling_strategy = "rand";
+			int m_rand_seed = 101;
+			int m_min_k4sample = 1;
+			bool m_verbose = false;
+			int m_sample_fs = 0;
+			int m_bf_fs_gb = 0;
+			float m_bf_max_size_gb = 0.5;
 
-			Land_Graph_Man lgm(search_prob, &graph1);
-			bfs_engine.use_land_graph_manager(&lgm);
+			apx_k_BFWS bfs_engine(
+					search_prob, m_sample_factor, m_sampling_strategy,
+					m_rand_seed, m_min_k4sample, m_verbose, m_sample_fs,
+					m_bf_fs_gb, m_bf_max_size_gb);
 
-			std::cout << "Landmarks found: " << graph1.num_landmarks() << std::endl;
-			std::cout << "Landmarks_Edges found: " << graph1.num_landmarks_and_edges() << std::endl;
+			apx_bfws_options(search_prob, bfs_engine, 1, graph);
 
-			bfs_engine.set_arity(m_max_novelty, graph1.num_landmarks_and_edges());
-			bfs_engine.set_arity_2(m_max_novelty, 1);
+			bfs_engine.set_use_novelty_pruning(true);
+			int m_alpha_rand_prune = 1;
+			bool m_enable_hold_q = false;
+			int m_rand_prune_slack = 0;
+			bfs_engine.set_use_random_pruning(true, m_alpha_rand_prune,
+							m_enable_hold_q, m_rand_prune_slack);
 
-			m_found_plan = false;
-			float bfs_b = do_search(bfs_engine, *prob, plan_stream);
+			float bfs_t = do_search_iterative(bfs_engine, *prob, false);
 
-			std::cout << "BFS search completed in " << bfs_b << " secs" << std::endl;
+			std::cout << "k-BFWS iterative search completed in " << bfs_t << " secs" << std::endl;
+
+			return;
+
+
+
+			// std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
+
+			// BFWS_w_hlm_hadd bfs_engine(search_prob, m_verbose);
+			// bfs_engine.h4().ignore_rp_h_value(true);
+
+			// /**
+			//  * Use landmark count instead of goal count
+			//  */
+			// Gen_Lms_Fwd gen_lms(search_prob);
+			// gen_lms.set_only_goals(false);
+			// Landmarks_Graph graph1(*prob);
+			// gen_lms.compute_lm_graph_set_additive(graph1);
+
+			// Land_Graph_Man lgm(search_prob, &graph1);
+			// bfs_engine.use_land_graph_manager(&lgm);
+
+			// std::cout << "Landmarks found: " << graph1.num_landmarks() << std::endl;
+			// std::cout << "Landmarks_Edges found: " << graph1.num_landmarks_and_edges() << std::endl;
+
+			// bfs_engine.set_arity(m_max_novelty, graph1.num_landmarks_and_edges());
+			// bfs_engine.set_arity_2(m_max_novelty, 1);
+
+			// m_found_plan = false;
+			// float bfs_b = do_search(bfs_engine, *prob, plan_stream);
+
+			// std::cout << "BFS search completed in " << bfs_b << " secs" << std::endl;
+			
 		}
 
 

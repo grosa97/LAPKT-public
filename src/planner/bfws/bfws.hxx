@@ -54,6 +54,10 @@
 #include <count_novelty_partition.hxx>
 
 
+#include <approx_novelty_bfws_2h.hxx>
+#include <approximate_novelty_partition_1.hxx>
+#include <approximate_novelty_partition_2.hxx>
+
 namespace po = boost::program_options;
 
 /**
@@ -202,6 +206,15 @@ typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H
 typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_2h_ignore_costs, Search_Node_2h> Testing_Open_List_2h;
 // typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, Testing_Open_List_2h> k_BFWS;
 
+using aptk::agnostic::Approximate_Novelty_Partition;
+using aptk::agnostic::Approximate_Novelty_Partition_2;
+
+typedef aptk::search::approximate_bfws_2h::Node<Fwd_Search_Problem, aptk::State> apx_Search_Node_2h;
+typedef Node_Comparer_2H_gn_unit<apx_Search_Node_2h> apx_Tie_Breaking_Algorithm_2h_ignore_costs;
+typedef Open_List<apx_Tie_Breaking_Algorithm_2h_ignore_costs, apx_Search_Node_2h> apx_BFS_Open_List_2h;
+typedef Approximate_Novelty_Partition<Fwd_Search_Problem, apx_Search_Node_2h> apx_H_Novel_Fwd_2h;
+typedef aptk::search::approximate_bfws_2h::BFWS_2H<Fwd_Search_Problem, apx_H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, apx_BFS_Open_List_2h> apx_k_BFWS;
+
 class BFWS : public STRIPS_Interface
 {
 public:
@@ -223,12 +236,26 @@ public:
 	float m_cost_bound;
 	bool m_verbose = false;
 
+	std::string m_domain_file;
+	std::string m_instance_file;
+
+ 	unsigned m_partition_size;
+
 protected:
 	template <typename Search_Engine>
 	void bfws_options(Fwd_Search_Problem &search_prob, Search_Engine &bfs_engine, unsigned max_novelty, Landmarks_Graph &graph);
 
 	template <typename Search_Engine>
+	void apx_bfws_options(Fwd_Search_Problem &search_prob,
+				Search_Engine &bfs_engine, unsigned max_novelty,
+				Landmarks_Graph &graph);
+
+	template <typename Search_Engine>
 	float do_search(Search_Engine &engine, aptk::STRIPS_Problem &plan_prob, std::ofstream &plan_stream);
+
+	template <typename Search_Engine>
+	float do_search_iterative(Search_Engine &engine, aptk::STRIPS_Problem &plan_prob,
+					bool has_arity_2 = true, float prev_time_taken = 0.0);
 
 	float do_anytime(Anytime_RWA &engine);
 };
