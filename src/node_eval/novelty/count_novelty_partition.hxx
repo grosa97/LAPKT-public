@@ -107,7 +107,7 @@ namespace aptk
 				float size_novelty = ((float)pow(m_num_fluents, 1) / 1024000.) * (float)partition_size * sizeof(int);
 				if (m_arity == 2)
 					size_novelty += ((float)pow(m_num_fluents, 2) / 1024000.) * (float)partition_size * sizeof(int);
-				// std::cout << "Try allocate size: "<< size_novelty<<" MB"<<std::endl;
+				std::cout << "Try allocate size: "<< size_novelty<<" MB"<<std::endl;
 				if (size_novelty > m_max_memory_size_MB)
 				{
 					m_arity = 1;
@@ -159,7 +159,7 @@ namespace aptk
 				
 			// }
 
-			virtual void eval(Search_Node *n, float &h_val)
+			virtual std::tuple<Fluent_Vec, Fluent_Vec> eval(Search_Node *n, float &h_val)
 			{
 				// if (m_rp_fl_only)
 				// 	compute_count_metric_rp_fl_only(n, h_val);
@@ -170,10 +170,13 @@ namespace aptk
 				float temp = 0;
 				std::vector<unsigned> bot3 = cover_compute_tuples_1(n, temp);
 				// if (m_arity == 2)
-					cover_compute_tuples_2(n, bot3, h_val);
+				
+				std::tuple<Fluent_Vec, Fluent_Vec> ad = cover_compute_tuples_2(n, bot3, h_val);
 
 				if (temp < -0.3)
 					h_val += temp;
+
+				return ad;
 
 			}
 
@@ -400,7 +403,7 @@ namespace aptk
 
 				float m = 0;
 
-				std::map<unsigned, unsigned> bot3;
+				// std::map<unsigned, unsigned> bot3;
 
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
@@ -469,14 +472,18 @@ namespace aptk
 					// 		tuple_count = 0;
 					// 	}
 					// }
-					if (m_tuple_counts_by_partition_1[n->partition()][tuple_idx] > 0)
-						tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
-						// tuple_count = -1;
-					else 
-					{
-						m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
-						tuple_count = 0;
-					}
+
+					// if (m_tuple_counts_by_partition_1[n->partition()][tuple_idx] > 0)
+					// 	tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+					// 	// tuple_count = -1;
+					// else 
+					// {
+					// 	m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+					// 	tuple_count = 0;
+					// }
+					tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx];
+					if (tuple_count < UINT8_MAX)
+						m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
 
 					// if (tuple_count == -1)
 					// 	m = 0;
@@ -519,14 +526,15 @@ namespace aptk
 						// 				}
 
 
-			bool cover_compute_tuples_2(Search_Node *n, std::vector<unsigned> &bot_3_fl, float &metric_value)
+			std::tuple<Fluent_Vec, Fluent_Vec> cover_compute_tuples_2(Search_Node *n, std::vector<unsigned> &bot_3_fl, float &metric_value)
 			{
 				float metric_value_2 = 0;
 				unsigned arity = m_arity;
 				// assert(arity == 1);
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
-					return false;
+					return std::make_tuple(std::vector<unsigned>(),std::vector<unsigned>());
+					// return false;
 
 				check_table_size_2(n);
 
@@ -638,6 +646,7 @@ namespace aptk
 				}
 				metric_value += metric_value_2;
 
+				std::tuple<Fluent_Vec, Fluent_Vec> added_deleted = std::make_tuple(added, deleted);
 				if (!has_state)
 				{
 					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
@@ -646,7 +655,8 @@ namespace aptk
 				// if (!has_state)
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				return new_covers;
+				// return new_covers;
+				return added_deleted;
 
 
 
@@ -1160,7 +1170,7 @@ namespace aptk
 			// std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_2;
 			// std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_1;
 			std::vector<std::vector<int>> m_tuple_counts_by_partition_2;
-			std::vector<std::vector<int>> m_tuple_counts_by_partition_1;
+			std::vector<std::vector<uint_fast8_t>> m_tuple_counts_by_partition_1;
 			unsigned m_arity;
 			unsigned long m_num_tuples_2;
 			unsigned m_num_fluents;

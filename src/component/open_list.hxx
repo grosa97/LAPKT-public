@@ -180,7 +180,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					m_size_limit_1 = pow(2, max_depth+1) - 1; //for index subtract 1
 					m_last_layer_first_element_1 = (m_size_limit_1 / 2) + 1; //for index subtract 1			
 
-					m_size_limit_2 = pow(2, max_depth-1) - 1;
+					m_size_limit_2 = pow(2, max_depth+1) - 1;
 					m_last_layer_first_element_2 = (m_size_limit_2 / 2) + 1;				
 				}
 

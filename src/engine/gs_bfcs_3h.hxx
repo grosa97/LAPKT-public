@@ -553,8 +553,10 @@ namespace aptk
 							eval_rp(m_root);
 							eval_relevant_fluents(m_root);
 						}
-						eval_count_based(m_root);
-						eval_lf_counts(m_root);
+						// eval_count_based(m_root);
+						// eval_lf_counts(m_root);
+						std::tuple<Fluent_Vec, Fluent_Vec> fd = eval_count_based(m_root);
+						eval_lf_counts(m_root, fd);
 						// if (m_use_novelty)
 						// 	eval_novel(m_root);
 
@@ -744,10 +746,10 @@ namespace aptk
 				// 	m_first_h->eval(candidate, candidate->h1n());
 				// }
 
-				void eval_count_based(Search_Node *candidate)
+				std::tuple<Fluent_Vec, Fluent_Vec> eval_count_based(Search_Node *candidate)
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					m_first_h->eval(candidate, candidate->h1n());		
+					return m_first_h->eval(candidate, candidate->h1n());		
 					// candidate->h3n() = candidate->h1n();
 
 
@@ -764,11 +766,11 @@ namespace aptk
 					// }	
 				}
 
-				void eval_lf_counts(Search_Node* n)
+				void eval_lf_counts(Search_Node* n, std::tuple<Fluent_Vec, Fluent_Vec> ad)
 				{
 					//unsigned lf_count = get_lifted_counts_state(n);
 					// if (n->parent() != nullptr && !n->parent()->is_alt())
-					unsigned lf_count = get_lifted_counts_state_partition(n);
+					unsigned lf_count = get_lifted_counts_state_partition(n, ad);
 					n->alt_h1n() = -(float)1 / (1+lf_count);
 
 						// n->alt_h1n() = lf_c_nov;
@@ -934,7 +936,7 @@ namespace aptk
 					}
 					unsigned feat_count_value;
 					
-					static Fluent_Vec added, deleted, temp_fv;
+					static Fluent_Vec added, deleted;
 					added.clear();
 					deleted.clear();	
 					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
@@ -1013,7 +1015,7 @@ namespace aptk
 					return feat_count_value;
 				}
 
-				unsigned get_lifted_counts_state_partition(Search_Node* n)
+				unsigned get_lifted_counts_state_partition(Search_Node* n, std::tuple<Fluent_Vec, Fluent_Vec> ad)
 				{
 					unsigned partition = n->partition();
 					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
@@ -1046,11 +1048,13 @@ namespace aptk
 					}
 					unsigned feat_count_value;
 					
-					static Fluent_Vec added, deleted, temp_fv;
+					static Fluent_Vec added, deleted;
 					added.clear();
 					deleted.clear();
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					added = std::get<0>(ad);
+					deleted = std::get<1>(ad);
+					// n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					// n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					
 					const std::vector<int>* parent_features = n->parent()->m_sign_features;
 					std::vector<int> child_features(*parent_features);
@@ -1122,7 +1126,7 @@ namespace aptk
 					}
 					unsigned feat_count_value;
 					
-					static Fluent_Vec added, deleted, temp_fv;
+					static Fluent_Vec added, deleted;
 					added.clear();
 					deleted.clear();
 					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
@@ -1254,8 +1258,8 @@ namespace aptk
 							// if(n->h2n() == head->h2n())
 							eval_relevant_fluents(n);
 
-						eval_count_based(n);
-						eval_lf_counts(n);
+						std::tuple<Fluent_Vec, Fluent_Vec> ad = eval_count_based(n);
+						eval_lf_counts(n, ad);
 
 						// int tv = get_lifted_counts_state(n);
 						// std::cout << "DEBUG: " << tv <<std::endl;
