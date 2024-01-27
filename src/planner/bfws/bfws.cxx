@@ -329,7 +329,18 @@ void BFWS::solve()
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 2;
-		bfws_options(search_prob, bfs_engine, max_width, graph);
+		// bfws_options(search_prob, bfs_engine, max_width, graph);
+
+		/**
+		 * Use landmark count instead of goal count
+		 */
+		Gen_Lms_Fwd gen_lms(search_prob);
+		gen_lms.set_only_goals(false);
+		Landmarks_Graph graph1(*prob);
+		gen_lms.compute_lm_graph_set_additive(graph1);
+
+		bfws_options(search_prob, bfs_engine, m_max_novelty, graph1);
+
 		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
 

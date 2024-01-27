@@ -343,6 +343,16 @@ namespace aptk
 					}
 					m_sign_count = i_val;
 
+
+					m_goal_set.resize(this->problem().task().num_fluents());
+
+					for (const auto& element : m_problem.task().goal()) {
+						// Use std::binary_search to check if the element is in vector2
+						m_goal_set.set(element);
+					}
+					std::cout << m_goal_set.size() <<std::endl;
+
+
 					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
 					// for (auto f: this->problem().task().goal())
 					// {
@@ -594,9 +604,27 @@ namespace aptk
 					}
 
 					// Count land/goal unachieved
-					m_second_h->eval(*(candidate->state()), candidate->GC());
-					if (m_use_h2n)
-						candidate->h2n() = candidate->GC();
+					m_second_h->eval(*(candidate->state()), candidate->h2n());
+
+
+					// Count land/goal unachieved
+					// m_second_h->eval(*(candidate->state()), candidate->GC());    
+					State* s = nullptr;
+					Fluent_Set fset;	
+					if (candidate->state() == nullptr)
+					{
+						s = m_problem.next(*(candidate->parent()->state()), candidate->action());
+						fset = s->fluent_set();
+					}
+					else
+						fset = candidate->state()->fluent_set();
+					candidate->GC() = m_goal_set.size() - m_goal_set.intersection_size(fset);
+					if (s != nullptr) 
+						delete s;
+
+
+					// if (m_use_h2n)
+					// 	candidate->h2n() = candidate->GC();
 
 					if (candidate->GC() < m_max_h2n)
 					{
@@ -611,6 +639,8 @@ namespace aptk
 						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
 				}
+
+				
 
 			void eval_rp(Search_Node *candidate)
 			{
@@ -1563,7 +1593,7 @@ namespace aptk
 				int m_memory_budget;
 				bool m_memory_stop;
 				bool m_alt;
-
+				Fluent_Set m_goal_set;
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};
 
