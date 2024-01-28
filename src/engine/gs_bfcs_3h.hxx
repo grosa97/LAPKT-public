@@ -321,7 +321,7 @@ namespace aptk
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
-					m_third_h = new Third_Heuristic(search_problem);
+					// m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
@@ -354,6 +354,61 @@ namespace aptk
 				virtual ~GS_BFCS_3H()
 				{
 
+					// while (!m_open.empty())
+					// {
+					// 	Search_Node *n = m_open.pop();
+					// 	if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+					// 		delete n;
+					// 	// else
+					// 	// {
+					// 	// 	//n->m_pop_count++;
+					// 	// 	//n->m_open_delete++;
+					// 	// }
+					// }
+					// for (typename Closed_List_Type::iterator i = m_closed.begin();
+					// 		 i != m_closed.end(); i++)
+					// {
+					// 	delete i->second;
+					// }
+
+					// m_closed.clear();
+
+					// delete m_first_h;
+					// delete m_second_h;
+
+					// delete m_relevant_fluents_h;
+					// if (m_expanded_count_by_novelty != nullptr)
+					// 	free(m_expanded_count_by_novelty);
+					// if (m_generated_count_by_novelty != nullptr)
+					// 	free(m_generated_count_by_novelty);
+					// if (m_novelty_count_plan != nullptr)
+					// 	free(m_novelty_count_plan);
+						
+
+					//no need to delete lifted features count table elements->not allocated dynamically
+				}
+
+				void delete_heuristics()
+				{
+					if (m_first_h != nullptr)
+						delete m_first_h;
+					m_first_h = nullptr;
+					if (m_second_h != nullptr)
+						delete m_second_h;
+					m_second_h = nullptr;
+					if (m_relevant_fluents_h != nullptr)
+						delete m_relevant_fluents_h;
+					m_relevant_fluents_h = nullptr;
+					if (m_expanded_count_by_novelty != nullptr)
+						free(m_expanded_count_by_novelty);
+					if (m_generated_count_by_novelty != nullptr)
+						free(m_generated_count_by_novelty);
+					if (m_novelty_count_plan != nullptr)
+						free(m_novelty_count_plan);
+				}
+
+				void delete_lists_nodes()
+				{
 					while (!m_open.empty())
 					{
 						Search_Node *n = m_open.pop();
@@ -372,19 +427,6 @@ namespace aptk
 					}
 
 					m_closed.clear();
-
-					delete m_first_h;
-					delete m_second_h;
-					delete m_relevant_fluents_h;
-					if (m_expanded_count_by_novelty != nullptr)
-						free(m_expanded_count_by_novelty);
-					if (m_generated_count_by_novelty != nullptr)
-						free(m_generated_count_by_novelty);
-					if (m_novelty_count_plan != nullptr)
-						free(m_novelty_count_plan);
-						
-
-					//no need to delete lifted features count table elements->not allocated dynamically
 				}
 				
 
