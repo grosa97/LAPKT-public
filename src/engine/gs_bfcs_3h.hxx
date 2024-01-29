@@ -353,7 +353,7 @@ namespace aptk
 
 				virtual ~GS_BFCS_3H()
 				{
-
+					delete_lists_nodes();
 					// while (!m_open.empty())
 					// {
 					// 	Search_Node *n = m_open.pop();

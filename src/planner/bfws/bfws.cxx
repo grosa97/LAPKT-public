@@ -335,7 +335,6 @@ void BFWS::solve()
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
-		bfs_engine.delete_lists_nodes();
 		bfs_engine.delete_heuristics();
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
