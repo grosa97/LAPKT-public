@@ -79,10 +79,21 @@ class Planner:
     # process
     def __init__(self, config: dict):
         self.config = config
-        self._spawn_container(config['planner']['value'])
-        self._configure_planner()
-        with time_taken('LAPKT_PARSE_GROUND_TASK'):
-            self._load_problem()
+        try:
+            self._spawn_container(config['planner']['value'])
+            self._configure_planner()
+            with time_taken('LAPKT_PARSE_GROUND_TASK'):
+                self._load_problem()
+        except SystemExit as e:
+            if e.code == 76:
+                self.config['grounder']['value'] = 'Tarski'
+                self._spawn_container(config['planner']['value'])
+                self._configure_planner()
+                with time_taken('LAPKT_PARSE_GROUND_TASK'):
+                    self._load_problem()
+            else:
+                exit()
+                
     
     def solve(self):
         with time_taken('LAPKT_SOLVE_TASK'):
@@ -140,6 +151,31 @@ class Planner:
             process_task(
                 self.config['domain']['value'],
                 self.config['problem']['value'], self.planner_instance)
+
+        # elif (self.config['grounder']['value'] == 'Tarski'):
+        #       ##in ['Tarski', 'FD']):
+        #     process_task(
+        #         self.config['domain']['value'],
+        #         self.config['problem']['value'], self.planner_instance)
+        # elif (self.config['grounder']['value'] == 'FD'):
+        #     try:
+        #         process_task(
+        #             self.config['domain']['value'],
+        #             self.config['problem']['value'], self.planner_instance)
+        #     except SystemExit as e:   
+        #         ## TESTING
+        #         if e.code == 76:
+        #             try:
+        #                 from .pddl.tarski import ground_generate_task as process_task
+        #             except Exception:
+        #                 print('Tarski PDDL translator is not installed!')
+        #                 exit()
+
+        #             process_task(
+        #                 self.config['domain']['value'],
+        #                 self.config['problem']['value'], self.planner_instance) 
+        #         ###
+
         else:
             # We can add handle  procedurally generated problems here
             pass

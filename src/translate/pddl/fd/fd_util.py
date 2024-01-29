@@ -343,6 +343,11 @@ def default( domain_file, problem_file, output_task ) :
         index += 1
 
     print("Axioms %d"%len(axioms))
+    ## TESTING =======
+    if len(axioms) > 0:
+        print("FD grounder: Axioms detected: fall back to Tarski grounder")
+        sys.exit(76)
+    ##==================
     
     print("Deterministic %d actions" % len(actions))
     nd_actions = []
