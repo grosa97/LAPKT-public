@@ -348,6 +348,30 @@ namespace aptk
 					// {
 					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
 					// }
+					for (auto* act_p: m_problem.task().actions())
+					{
+						std::string act_sign = act_p->signature();
+						// std::cout << m_problem.task().actions()[a]->signature() <<std::endl;
+						std::string subString = "move-painting pos-1-1 pos-2-1 g1 n3 n2";
+						std::string sub2 = "g1";
+						if (act_sign.find(subString) != std::string::npos && act_sign.find(sub2) != std::string::npos)
+							std::cout << act_p->index()  << " " <<  act_sign << std::endl;
+					}
+
+					// start-painting pos-5-1 g2 n3 n2 --> found
+					// 1107 --> move-painting pos-5-1 pos-5-2 g2 n2 n1
+					// 1333 --> move-painting pos-5-2 pos-5-3 g2 n1 n0 --> never generated
+					// end-painting g2 -->found
+
+					// start-painting pos-1-1 g1 n4 n3 -->found
+					// move-painting pos-1-1 pos-2-1 g1 n3 n2 --> found
+					// move-painting pos-2-1 pos-2-2 g1 n2 n1 --> found --> never generated
+					// move-painting pos-2-2 pos-3-2 g1 n1 n0 --> found
+
+					//issue seems to be that move-painting has errors which then does not allow the next move-painting / end-painting
+					// to be generated, thus potentially issue with effects?
+
+
 
 				}
 
@@ -1209,6 +1233,17 @@ namespace aptk
 					for (unsigned i = 0; i < app_set.size(); ++i)
 					{
 						int a = app_set[i];
+
+
+
+						std::string act_sign = m_problem.task().actions()[a]->signature();
+						// std::cout << m_problem.task().actions()[a]->signature() <<std::endl;
+						std::string subString = "move-painting pos-5-2 pos-5-3 g2 n1 n0";
+						if (act_sign.find(subString) != std::string::npos)
+							std::cout << act_sign << std::endl;
+
+
+
 
 						float a_cost = m_problem.cost(*(head->state()), a);
 

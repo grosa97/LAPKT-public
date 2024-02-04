@@ -135,6 +135,9 @@ class PropositionalDetAction :
                                 has_axiom = True
                         if has_axiom is False:
                             self.negated_conditions.append( c[0] )
+
+                        # DEBUG: must add negated fluent index to "condition" list
+
                     else:
                         condition.append(c)                                            
                                 #Reencode axioms from universal quantifier introduced by the normalize.remove_universal_quantifier function
@@ -366,6 +369,10 @@ def default( domain_file, problem_file, output_task ) :
         #print( "action: %s cost: %d"%(action.name,action.cost) )
         nd_action = PropositionalDetAction( action.name, action.cost )
         nd_action.set_precondition( action.precondition, atom_table )
+        #debug ----------
+        if (action.name == '(move-painting pos-1-1 pos-2-1 g1 n3 n2)'):
+            pass
+        # ---------------
         nd_action.add_effect( action.add_effects, action.del_effects, atom_table,atom_names, axioms   )
         if len(nd_action.negated_conditions) > 0 :
             output_task.notify_negated_conditions( nd_action.negated_conditions )
