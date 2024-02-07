@@ -117,85 +117,114 @@ class PropositionalDetAction :
         for sym in negprecset:
             self.negated_conditions.append( sym )
     
-    def add_effect( self, adds, dels, atom_table, atom_names, axioms ) :
+    # def add_effect( self, adds, dels, atom_table, atom_names, axioms ) :
+    def add_effect( self, adds, dels, atom_table ) :
         effs = []
         for cond, lit in adds :
             if len(cond) == 0 :
                 effs.append( ( atom_table[lit.text()], False )  )
             else :
-                condition_unfiltered = [ ( atom_table[cond_lit.text()], cond_lit.negated  ) for cond_lit in cond ]
-                condition = []
-                axioms_changed = []
-                for c in condition_unfiltered :
+                condition = [ ( atom_table[cond_lit.text()], cond_lit.negated ) for cond_lit in cond ]
+                for c in condition :
                     if c[1] and c[0] not in self.negated_conditions :
-                        has_axiom = False
-                        for a in axioms:
-                            if '('+atom_names[c[0]]+')' == a.name:
-                                axioms_changed.append(a)
-                                has_axiom = True
-                        if has_axiom is False:
-                            self.negated_conditions.append( c[0] )
+                        self.negated_conditions.append( c[0] )
+                condition = tuple( condition ) 
+                try:
+                    self.cond_effs[condition].append( ( atom_table[lit.text()], False ) )
+                except KeyError:
+                        self.cond_effs[condition] = [( atom_table[lit.text()], False )]
 
-                        # DEBUG: must add negated fluent index to "condition" list
+                # condition_unfiltered = [ ( atom_table[cond_lit.text()], cond_lit.negated  ) for cond_lit in cond ]
+                # condition = []
+                # axioms_changed = []
+                # for c in condition_unfiltered :
+                #     if c[1] and c[0] not in self.negated_conditions :
+                #         has_axiom = False
+                #         for a in axioms:
+                #             if '('+atom_names[c[0]]+')' == a.name:
+                #                 axioms_changed.append(a)
+                #                 has_axiom = True
+                #         if has_axiom is False:
+                #             self.negated_conditions.append( c[0] )
 
-                    else:
-                        condition.append(c)                                            
-                                #Reencode axioms from universal quantifier introduced by the normalize.remove_universal_quantifier function
-                                #Remove once we add proper support for axioms
-                has_axiom = False
-                for a in axioms_changed:
-                    has_axiom = True
-                    for c in a.condition:                                      
-                        if c.negated == False:
-                            self.negated_conditions.append( atom_table[c.text()] )
-                            condition.append( (atom_table[c.text()], True ) )
-                        else:
-                            condition.append( (atom_table[c.text()], False ) )
+                #         # DEBUG: must add negated fluent index to "condition" list
+
+                #     else:
+                #         condition.append(c)                                            
+                #                 #Reencode axioms from universal quantifier introduced by the normalize.remove_universal_quantifier function
+                #                 #Remove once we add proper support for axioms
+                # has_axiom = False
+                # for a in axioms_changed:
+                #     has_axiom = True
+                #     for c in a.condition:                                      
+                #         if c.negated == False:
+                #             self.negated_conditions.append( atom_table[c.text()] )
+                #             condition.append( (atom_table[c.text()], True ) )
+                #         else:
+                #             condition.append( (atom_table[c.text()], False ) )
                                             
 
-                condition = tuple( condition )
-                try :
-                    self.cond_effs[condition].append( ( atom_table[lit.text()], False ) )
-                except KeyError :
-                    self.cond_effs[condition] = [( atom_table[lit.text()], False )]
+                # condition = tuple( condition )
+                # try :
+                #     self.cond_effs[condition].append( ( atom_table[lit.text()], False ) )
+                # except KeyError :
+                #     self.cond_effs[condition] = [( atom_table[lit.text()], False )]
+                
         for cond, lit in dels :
             if len(cond) == 0 :
                 effs.append( (atom_table[lit.text()], True) )
             else :
-                condition_unfiltered = [ ( atom_table[cond_lit.text()], cond_lit.negated  ) for cond_lit in cond ]
-                condition = []
-                axioms_changed = []
-                for c in condition_unfiltered :
+                condition = [ ( atom_table[cond_lit.text()], cond_lit.negated ) for cond_lit in cond ]
+                for c in condition :
                     if c[1] and c[0] not in self.negated_conditions :
-                        has_axiom = False                                                
-                        for a in axioms:
-                            if '('+atom_names[c[0]]+')' == a.name:
-                                axioms_changed.append(a)
-                                has_axiom = True
-                        if has_axiom is False:
-                            self.negated_conditions.append( c[0] )
-                    else:
-                        condition.append(c)
-                                #Reencode axioms from universal quantifier introduced by the normalize.remove_universal_quantifier function
-                                #Remove once we add proper support for axioms
-                has_axiom = False
-                for a in axioms_changed:
-                    has_axiom = True
-                    for c in a.condition:
-                        if c.negated == False:
-                            self.negated_conditions.append( atom_table[c.text()] )
-                            condition.append( (atom_table[c.text()], True ) )
-                        else:
-                            condition.append( (atom_table[c.text()], False ) )
-                                        
+                        self.negated_conditions.append( c[0] )
                 condition = tuple( condition )
                 try :
                     self.cond_effs[condition].append( ( atom_table[lit.text()], True ) )
                 except KeyError :
                     self.cond_effs[condition] = [( atom_table[lit.text()], True )]
 
+                # condition_unfiltered = [ ( atom_table[cond_lit.text()], cond_lit.negated  ) for cond_lit in cond ]
+                # condition = []
+                # axioms_changed = []
+                # for c in condition_unfiltered :
+                #     if c[1] and c[0] not in self.negated_conditions :
+                #         has_axiom = False                                                
+                #         for a in axioms:
+                #             if '('+atom_names[c[0]]+')' == a.name:
+                #                 axioms_changed.append(a)
+                #                 has_axiom = True
+                #         if has_axiom is False:
+                #             self.negated_conditions.append( c[0] )
+                #     else:
+                #         condition.append(c)
+                #                 #Reencode axioms from universal quantifier introduced by the normalize.remove_universal_quantifier function
+                #                 #Remove once we add proper support for axioms
+                # has_axiom = False
+                # for a in axioms_changed:
+                #     has_axiom = True
+                #     for c in a.condition:
+                #         if c.negated == False:
+                #             self.negated_conditions.append( atom_table[c.text()] )
+                #             condition.append( (atom_table[c.text()], True ) )
+                #         else:
+                #             condition.append( (atom_table[c.text()], False ) )
+                                        
+                # condition = tuple( condition )
+                # try :
+                #     self.cond_effs[condition].append( ( atom_table[lit.text()], True ) )
+                # except KeyError :
+                #     self.cond_effs[condition] = [( atom_table[lit.text()], True )]
+
         if len(effs) > 0 :
             self.effects.append( effs )
+
+		#if len(self.cond_effs) > 0 :
+		#	print( "Conditional effects: \n" )
+		#	for cond, eff in self.cond_effs.iteritems() :
+		#		print( "Condition: %s %s\n"%(cond,eff) )
+
+
         # if len(self.cond_effs) > 0 :
         #   print( "Conditional effects: \n" )
         #   for cond, eff in self.cond_effs.iteritems() :
@@ -299,7 +328,8 @@ def fodet( domain_file, problem_file, output_task ) :
         #print( "action: %s cost: %d"%(action.name,action.cost) )
         nd_action = PropositionalDetAction( action.name, action.cost )
         nd_action.set_precondition( action.precondition, atom_table )
-        nd_action.add_effect( action.add_effects, action.del_effects, atom_table,atom_names, axioms )
+        # nd_action.add_effect( action.add_effects, action.del_effects, atom_table,atom_names, axioms )
+        nd_action.add_effect( action.add_effects, action.del_effects, atom_table )
         nd_actions.append( (nd_action.name, nd_action) )
 
 
@@ -373,7 +403,8 @@ def default( domain_file, problem_file, output_task ) :
         if (action.name == '(move-painting pos-1-1 pos-2-1 g1 n3 n2)'):
             pass
         # ---------------
-        nd_action.add_effect( action.add_effects, action.del_effects, atom_table,atom_names, axioms   )
+        # nd_action.add_effect( action.add_effects, action.del_effects, atom_table,atom_names, axioms   )
+        nd_action.add_effect( action.add_effects, action.del_effects, atom_table )
         if len(nd_action.negated_conditions) > 0 :
             output_task.notify_negated_conditions( nd_action.negated_conditions )
         nd_actions.append( ( nd_action.name, nd_action ) )
