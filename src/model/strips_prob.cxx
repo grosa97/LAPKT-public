@@ -299,7 +299,8 @@ namespace aptk
 			for (auto a : actions())
 				if (a->retracts(p->index()))
 				{
-					a->edel_vec().push_back(p->index());
+					if (!a->edel_set().isset(p->index()))
+						a->edel_vec().push_back(p->index());
 					a->edel_set().set(p->index());
 					actions_edeleting(p->index()).push_back((const Action *)&a);
 				}
