@@ -210,8 +210,16 @@ namespace aptk
 		 * progress action
 		 */
 		Fluent_Vec::iterator it = m_fluent_vec.begin();
+		//static Fluent_Set check_dupl(m_problem.num_fluents());
+		//check_dupl.reset();
 		while (it != m_fluent_vec.end())
 		{
+		//	if (check_dupl.isset(*it))
+		//	{
+		//		it++;
+		//		continue;
+		//	}
+		//	check_dupl.set(*it);
 			if (a->retracts(*it))
 			{
 				if (deleted)
