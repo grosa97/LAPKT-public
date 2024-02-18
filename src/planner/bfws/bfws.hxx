@@ -189,7 +189,6 @@ typedef Inverse_Node_Comparer_3H_gn_unit<Search_Node_3h> Inverse_Tie_Breaking_Al
 
 typedef Pruned_Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Inverse_Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Pruned_BFS_Open_List_3h;
 
-
 typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Testing_Open_List;
 typedef Double_Custom_Priority_Queue<Tie_Breaking_Algorithm_3h_ignore_costs, Alt_Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Double_Testing_Open_List;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
@@ -197,7 +196,8 @@ typedef Double_Custom_Priority_Queue<Tie_Breaking_Algorithm_3h_ignore_costs, Alt
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Pruned_BFS_Open_List_3h> BFCS_1_p_pruned;
 
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Testing_Open_List> BFCS_1_p_pruned;
-typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Double_Testing_Open_List> BFCS_1_p_pruned;
+// typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Double_Testing_Open_List> BFCS_1_p_pruned;
+typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> basic_BFCS;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p_pruned;
 typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_2h_ignore_costs, Search_Node_2h> Testing_Open_List_2h;
 // typedef BFWS_2H<Fwd_Search_Problem, H_Novel_Fwd_2h, H_Lmcount_Fwd, H_Add_Rp_Fwd, Testing_Open_List_2h> k_BFWS;

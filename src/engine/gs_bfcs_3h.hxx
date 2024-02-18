@@ -317,7 +317,7 @@ namespace aptk
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 6000;
+					// m_memory_budget = 6000;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -325,23 +325,23 @@ namespace aptk
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
-					int OPEN_MAX_DEPTH =18;
-					m_open.init(OPEN_MAX_DEPTH);
+					// int OPEN_MAX_DEPTH =18;
+					// m_open.init(OPEN_MAX_DEPTH);
 
-					std::unordered_set<std::string> unique_signatures;
-					m_fluent_to_feature.resize(this->problem().task().num_fluents());
-					unsigned i_val = 0;
-					for (const Fluent* f: this->m_problem.task().fluents())
-					{
-						std::string s = signature_to_lifted_fl(f->signature());
-						if (unique_signatures.find(s) == unique_signatures.end())
-						{
-							unique_signatures.insert(s);
-							m_sign_to_int[s] = i_val++;
-						}
-						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
-					}
-					m_sign_count = i_val;
+					// std::unordered_set<std::string> unique_signatures;
+					// m_fluent_to_feature.resize(this->problem().task().num_fluents());
+					// unsigned i_val = 0;
+					// for (const Fluent* f: this->m_problem.task().fluents())
+					// {
+					// 	std::string s = signature_to_lifted_fl(f->signature());
+					// 	if (unique_signatures.find(s) == unique_signatures.end())
+					// 	{
+					// 		unique_signatures.insert(s);
+					// 		m_sign_to_int[s] = i_val++;
+					// 	}
+					// 	m_fluent_to_feature[f->index()] = m_sign_to_int[s];
+					// }
+					// m_sign_count = i_val;
 
 					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
 					// for (auto f: this->problem().task().goal())
@@ -356,6 +356,7 @@ namespace aptk
 
 				virtual ~GS_BFCS_3H()
 				{
+					delete_heuristics();
 					delete_lists_nodes();
 					// while (!m_open.empty())
 					// {
@@ -414,14 +415,22 @@ namespace aptk
 				{
 					while (!m_open.empty())
 					{
+						//CODE FOR DOUBLE PRUNED OPEN -----
+						//Search_Node *n = m_open.pop();
+						//if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+						//	delete n;
+						//// else
+						//// {
+						//// 	//n->m_pop_count++;
+						//// 	//n->m_open_delete++;
+						//// }
+						//---------------------------------
+
+						//CODE FOR SINGLE PRUNED OPEN ----	
 						Search_Node *n = m_open.pop();
-						if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+						if ( !n->m_closed )
 							delete n;
-						// else
-						// {
-						// 	//n->m_pop_count++;
-						// 	//n->m_open_delete++;
-						// }
+						//-----------
 					}
 					for (typename Closed_List_Type::iterator i = m_closed.begin();
 							 i != m_closed.end(); i++)
@@ -560,7 +569,7 @@ namespace aptk
 							eval_relevant_fluents(m_root);
 						}
 						eval_count_based(m_root);
-						eval_lf_counts(m_root);
+						// eval_lf_counts(m_root);
 						// if (m_use_novelty)
 						// 	eval_novel(m_root);
 
@@ -770,63 +779,13 @@ namespace aptk
 					// }	
 				}
 
-				void eval_lf_counts(Search_Node* n)
-				{
-					//unsigned lf_count = get_lifted_counts_state(n);
-					// if (n->parent() != nullptr && !n->parent()->is_alt())
-					unsigned lf_count = get_lifted_counts_state_partition(n);
-					n->alt_h1n() = -(float)1 / (1+lf_count);
-
-						// n->alt_h1n() = lf_c_nov;
-					// if (is_alt())
-					// {
-					// 	set_alt(false);
-					// 	float lf_c_nov = -(float)1 / (1+lf_count);
-					// 	n->h1n() = lf_c_nov;
-					// }
-					// else
-					// 	set_alt(true);
-
-					// if (lf_count < 10) 
-					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
-
-					// if (lf_count > 10)  //testing good, also good with partitions in bm
-					// 	n->h1n() += 0.5;
-
-					//if (lf_count > 10)  //testing good, also good with partitions in bm 12 29865 exp
-					//	n->h1n() *= 0.9999;
-
-					//if (lf_count < 10)  //with partition seems to do well, bm 12 in 28604 expansions
-					// 	n->h1n() = -2; 
-					
-
-					// if (lf_count == 0)
-					// 	n->h1n() = -2;
-					//if (lf_count < 3) //good (also when fixed)
-					//	n->h1n() = -2;
-					//if (lf_count > 0)
-					//	n->h1n() += 0.5; //(using lf_count > 1 & adding)
-					
-					//if (lf_count < 3 && -(float)1/(lf_count + 1) < n->h1n())
-					//	n->h1n() = -(float)1/(lf_count + 1);
-					// if (lf_count < 3)
-					// 	n->h1n() += lf_c_nov;
-
-					// if (lf_count < 1) 
-					// 	n->h1n() = -2;
-					
-
-					// float lf_c_nov = -(float)1 / (1+lf_count);
-					// if (lf_c_nov < n->h1n())
-					// 	n->h1n() = lf_c_nov;
-
-					// float lf_c_nov = 1000*-(float)1 / (1+lf_count) ;
-
-					// if (lf_count < 1)
-					// 	n->h3n() = 0;
-					// else 
-					// 	n->h3n() = 1;
-				}
+				// void eval_lf_counts(Search_Node* n)
+				// {
+				// 	//unsigned lf_count = get_lifted_counts_state(n);
+				// 	// if (n->parent() != nullptr && !n->parent()->is_alt())
+				// 	unsigned lf_count = get_lifted_counts_state_partition(n);
+				// 	n->alt_h1n() = -(float)1 / (1+lf_count);
+				// }
 
 
 				// void record_count_h(Search_Node* candidate)
@@ -919,259 +878,259 @@ namespace aptk
 					}
 				}
 
-				unsigned get_lifted_counts_state(Search_Node* n)
-				{
-					if (n->parent() == NULL) //root node
-					{
-						std::vector<int> sign_features(m_sign_count, 0);
-						for (auto f: n->state()->fluent_vec())
-							sign_features[m_fluent_to_feature[f]]++;
-						m_sign_feat_occurrences[sign_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, sign_features);
-						n->m_sign_features = kp;
-						return 0;			
-					}
-					unsigned feat_count_value;
+				// unsigned get_lifted_counts_state(Search_Node* n)
+				// {
+				// 	if (n->parent() == NULL) //root node
+				// 	{
+				// 		std::vector<int> sign_features(m_sign_count, 0);
+				// 		for (auto f: n->state()->fluent_vec())
+				// 			sign_features[m_fluent_to_feature[f]]++;
+				// 		m_sign_feat_occurrences[sign_features] = 1;
+				// 		const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, sign_features);
+				// 		n->m_sign_features = kp;
+				// 		return 0;			
+				// 	}
+				// 	unsigned feat_count_value;
 					
-					static Fluent_Vec added, deleted, temp_fv;
-					added.clear();
-					deleted.clear();	
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+				// 	static Fluent_Vec added, deleted, temp_fv;
+				// 	added.clear();
+				// 	deleted.clear();	
+				// 	n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+				// 	n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					
-					const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					std::vector<int> child_features(*parent_features);
-					std::unordered_set<unsigned> counted_a;
-					for (auto f: added)
-					{
-						if (counted_a.find(f) == counted_a.end())
-						{
-							counted_a.insert(f);
-							if (!n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]++;
-						}
-					}
-					std::unordered_set<unsigned> counted_d;
-					for (auto f: deleted)
-					{
-						if (counted_d.find(f) == counted_d.end())
-						{
-							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
-					}
-					auto it = m_sign_feat_occurrences.find(child_features);
-					if (it != m_sign_feat_occurrences.end())
-					{
-						feat_count_value = m_sign_feat_occurrences[child_features]++;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-					}
-					else
-					{
-						m_sign_feat_occurrences[child_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
-					}
+				// 	const std::vector<int>* parent_features = n->parent()->m_sign_features;
+				// 	std::vector<int> child_features(*parent_features);
+				// 	std::unordered_set<unsigned> counted_a;
+				// 	for (auto f: added)
+				// 	{
+				// 		if (counted_a.find(f) == counted_a.end())
+				// 		{
+				// 			counted_a.insert(f);
+				// 			if (!n->parent()->state()->entails(f))
+				// 				child_features[m_fluent_to_feature[f]]++;
+				// 		}
+				// 	}
+				// 	std::unordered_set<unsigned> counted_d;
+				// 	for (auto f: deleted)
+				// 	{
+				// 		if (counted_d.find(f) == counted_d.end())
+				// 		{
+				// 			// if (child_features[m_fluent_to_feature[f]] > 0)
+				// 			counted_d.insert(f);
+				// 			if (n->parent()->state()->entails(f))
+				// 				child_features[m_fluent_to_feature[f]]--;
+				// 		}
+				// 	}
+				// 	auto it = m_sign_feat_occurrences.find(child_features);
+				// 	if (it != m_sign_feat_occurrences.end())
+				// 	{
+				// 		feat_count_value = m_sign_feat_occurrences[child_features]++;
+				// 		const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
+				// 		n->m_sign_features = kp;
+				// 	}
+				// 	else
+				// 	{
+				// 		m_sign_feat_occurrences[child_features] = 1;
+				// 		const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
+				// 		n->m_sign_features = kp;					
+				// 	}
 
-					// std::unordered_set<unsigned> counted;
-					// std::vector<int> child_features(m_sign_count, 0);
-					// // const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					// // std::vector<int> child_features(*parent_features);
-					// // for (auto f: added)
-					// // 	child_features[m_fluent_to_feature[f]]++;
-					// // for (auto f: deleted)
-					// // {
-					// // 	if (child_features[m_fluent_to_feature[f]] > 0)
-					// // 		child_features[m_fluent_to_feature[f]]--;
-					// // }
+				// 	// std::unordered_set<unsigned> counted;
+				// 	// std::vector<int> child_features(m_sign_count, 0);
+				// 	// // const std::vector<int>* parent_features = n->parent()->m_sign_features;
+				// 	// // std::vector<int> child_features(*parent_features);
+				// 	// // for (auto f: added)
+				// 	// // 	child_features[m_fluent_to_feature[f]]++;
+				// 	// // for (auto f: deleted)
+				// 	// // {
+				// 	// // 	if (child_features[m_fluent_to_feature[f]] > 0)
+				// 	// // 		child_features[m_fluent_to_feature[f]]--;
+				// 	// // }
 					
-					// for (auto f: n->parent()->state()->fluent_vec())
-					// {
-					// 	if (counted.find(f) != counted.end())
-					// 	{
-					// 		counted.insert(f);
-					// 		child_features[m_fluent_to_feature[f]]++;
-					// 	}
-					// }
-					// auto it = m_sign_feat_occurrences.find(child_features);
-					// if (it != m_sign_feat_occurrences.end())
-					// {
-					// 	feat_count_value = m_sign_feat_occurrences[child_features]++;
-					// 	const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-					// 	n->m_sign_features = kp;
-					// }
-					// else
-					// {
-					// 	m_sign_feat_occurrences[child_features] = 1;
-					// 	const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-					// 	n->m_sign_features = kp;					
-					// }
-					return feat_count_value;
-				}
+				// 	// for (auto f: n->parent()->state()->fluent_vec())
+				// 	// {
+				// 	// 	if (counted.find(f) != counted.end())
+				// 	// 	{
+				// 	// 		counted.insert(f);
+				// 	// 		child_features[m_fluent_to_feature[f]]++;
+				// 	// 	}
+				// 	// }
+				// 	// auto it = m_sign_feat_occurrences.find(child_features);
+				// 	// if (it != m_sign_feat_occurrences.end())
+				// 	// {
+				// 	// 	feat_count_value = m_sign_feat_occurrences[child_features]++;
+				// 	// 	const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
+				// 	// 	n->m_sign_features = kp;
+				// 	// }
+				// 	// else
+				// 	// {
+				// 	// 	m_sign_feat_occurrences[child_features] = 1;
+				// 	// 	const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
+				// 	// 	n->m_sign_features = kp;					
+				// 	// }
+				// 	return feat_count_value;
+				// }
 
-				unsigned get_lifted_counts_state_partition(Search_Node* n)
-				{
-					unsigned partition = n->partition();
-					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
-					// {
-					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
-					// }
+				// unsigned get_lifted_counts_state_partition(Search_Node* n)
+				// {
+				// 	unsigned partition = n->partition();
+				// 	// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+				// 	// {
+				// 	// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+				// 	// }
 					
-					if (m_sign_feat_partitions.size() <= partition)
-					{
-						m_sign_feat_partitions.resize(partition + 1);
-					}
+				// 	if (m_sign_feat_partitions.size() <= partition)
+				// 	{
+				// 		m_sign_feat_partitions.resize(partition + 1);
+				// 	}
 
-					if (m_sign_feat_partitions[partition].empty())
-					{
-						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>();
-					}
+				// 	if (m_sign_feat_partitions[partition].empty())
+				// 	{
+				// 		m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>();
+				// 	}
 					
-					std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+				// 	std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
 
 
-					if (n->parent() == NULL) //root node
-					{
-						std::vector<int> sign_features(m_sign_count, 0);
-						for (auto f: n->state()->fluent_vec())
-							sign_features[m_fluent_to_feature[f]]++;
-						sign_feat_occurrences[sign_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, sign_features);
-						n->m_sign_features = kp;
-						return 0;			
-					}
-					unsigned feat_count_value;
+				// 	if (n->parent() == NULL) //root node
+				// 	{
+				// 		std::vector<int> sign_features(m_sign_count, 0);
+				// 		for (auto f: n->state()->fluent_vec())
+				// 			sign_features[m_fluent_to_feature[f]]++;
+				// 		sign_feat_occurrences[sign_features] = 1;
+				// 		const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, sign_features);
+				// 		n->m_sign_features = kp;
+				// 		return 0;			
+				// 	}
+				// 	unsigned feat_count_value;
 					
-					static Fluent_Vec added, deleted, temp_fv;
-					added.clear();
-					deleted.clear();
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+				// 	static Fluent_Vec added, deleted, temp_fv;
+				// 	added.clear();
+				// 	deleted.clear();
+				// 	n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+				// 	n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					
-					const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					std::vector<int> child_features(*parent_features);
-					std::unordered_set<unsigned> counted_a;
-					for (auto f: added)
-					{
-						if (counted_a.find(f) == counted_a.end())
-						{
-							counted_a.insert(f);
-							if (!n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]++;
-						}
-					}
-					std::unordered_set<unsigned> counted_d;
-					for (auto f: deleted)
-					{
-						if (counted_d.find(f) == counted_d.end())
-						{
-							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
-					}
-					auto it = sign_feat_occurrences.find(child_features);
-					if (it != sign_feat_occurrences.end())
-					{
-						if (sign_feat_occurrences[child_features] < UINT8_MAX)
-							feat_count_value = sign_feat_occurrences[child_features]++;
-						else
-							feat_count_value = UINT8_MAX;
+				// 	const std::vector<int>* parent_features = n->parent()->m_sign_features;
+				// 	std::vector<int> child_features(*parent_features);
+				// 	std::unordered_set<unsigned> counted_a;
+				// 	for (auto f: added)
+				// 	{
+				// 		if (counted_a.find(f) == counted_a.end())
+				// 		{
+				// 			counted_a.insert(f);
+				// 			if (!n->parent()->state()->entails(f))
+				// 				child_features[m_fluent_to_feature[f]]++;
+				// 		}
+				// 	}
+				// 	std::unordered_set<unsigned> counted_d;
+				// 	for (auto f: deleted)
+				// 	{
+				// 		if (counted_d.find(f) == counted_d.end())
+				// 		{
+				// 			// if (child_features[m_fluent_to_feature[f]] > 0)
+				// 			counted_d.insert(f);
+				// 			if (n->parent()->state()->entails(f))
+				// 				child_features[m_fluent_to_feature[f]]--;
+				// 		}
+				// 	}
+				// 	auto it = sign_feat_occurrences.find(child_features);
+				// 	if (it != sign_feat_occurrences.end())
+				// 	{
+				// 		if (sign_feat_occurrences[child_features] < UINT8_MAX)
+				// 			feat_count_value = sign_feat_occurrences[child_features]++;
+				// 		else
+				// 			feat_count_value = UINT8_MAX;
 
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-					}
-					else
-					{
-						sign_feat_occurrences[child_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
-						feat_count_value = 0;
-					}
+				// 		const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+				// 		n->m_sign_features = kp;
+				// 	}
+				// 	else
+				// 	{
+				// 		sign_feat_occurrences[child_features] = 1;
+				// 		const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+				// 		n->m_sign_features = kp;					
+				// 		feat_count_value = 0;
+				// 	}
 
-					// unsigned alt_h2n = 0;
-					// for (int i = 0; i<m_sign_count; i++)
-					// {
-					// 	unsigned gfi = m_goal_partial_lf_feat[i];
-					// 	unsigned cfi = child_features[i];
-					// 	if (gfi > cfi)
-					// 		alt_h2n += ( gfi - cfi );
-					// }
+				// 	// unsigned alt_h2n = 0;
+				// 	// for (int i = 0; i<m_sign_count; i++)
+				// 	// {
+				// 	// 	unsigned gfi = m_goal_partial_lf_feat[i];
+				// 	// 	unsigned cfi = child_features[i];
+				// 	// 	if (gfi > cfi)
+				// 	// 		alt_h2n += ( gfi - cfi );
+				// 	// }
 
-					return feat_count_value;
-				}
+				// 	return feat_count_value;
+				// }
 
-				unsigned get_lifted_counts_p_number(Search_Node* n)
-				{
-					if (n->parent() == NULL) //root node
-					{
-						std::vector<int> sign_features(m_sign_count, 0);
-						for (auto f: n->state()->fluent_vec())
-							sign_features[m_fluent_to_feature[f]]++;
-						m_sign_feat_occurrences[sign_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, sign_features);
-						n->m_sign_features = kp;
+				// unsigned get_lifted_counts_p_number(Search_Node* n)
+				// {
+				// 	if (n->parent() == NULL) //root node
+				// 	{
+				// 		std::vector<int> sign_features(m_sign_count, 0);
+				// 		for (auto f: n->state()->fluent_vec())
+				// 			sign_features[m_fluent_to_feature[f]]++;
+				// 		m_sign_feat_occurrences[sign_features] = 1;
+				// 		const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, sign_features);
+				// 		n->m_sign_features = kp;
 
-						m_sign_feat_to_p[sign_features] = m_num_lf_p++;
-						return 0;
-					}
-					unsigned feat_count_value;
+				// 		m_sign_feat_to_p[sign_features] = m_num_lf_p++;
+				// 		return 0;
+				// 	}
+				// 	unsigned feat_count_value;
 					
-					static Fluent_Vec added, deleted, temp_fv;
-					added.clear();
-					deleted.clear();
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+				// 	static Fluent_Vec added, deleted, temp_fv;
+				// 	added.clear();
+				// 	deleted.clear();
+				// 	n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+				// 	n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					
-					const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					std::vector<int> child_features(*parent_features);
-					std::unordered_set<unsigned> counted_a;
-					for (auto f: added)
-					{
-						if (counted_a.find(f) == counted_a.end())
-						{
-							counted_a.insert(f);
-							if (!n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]++;
-						}
-					}
-					std::unordered_set<unsigned> counted_d;
-					for (auto f: deleted)
-					{
-						if (counted_d.find(f) == counted_d.end())
-						{
-							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
-					}
+				// 	const std::vector<int>* parent_features = n->parent()->m_sign_features;
+				// 	std::vector<int> child_features(*parent_features);
+				// 	std::unordered_set<unsigned> counted_a;
+				// 	for (auto f: added)
+				// 	{
+				// 		if (counted_a.find(f) == counted_a.end())
+				// 		{
+				// 			counted_a.insert(f);
+				// 			if (!n->parent()->state()->entails(f))
+				// 				child_features[m_fluent_to_feature[f]]++;
+				// 		}
+				// 	}
+				// 	std::unordered_set<unsigned> counted_d;
+				// 	for (auto f: deleted)
+				// 	{
+				// 		if (counted_d.find(f) == counted_d.end())
+				// 		{
+				// 			// if (child_features[m_fluent_to_feature[f]] > 0)
+				// 			counted_d.insert(f);
+				// 			if (n->parent()->state()->entails(f))
+				// 				child_features[m_fluent_to_feature[f]]--;
+				// 		}
+				// 	}
 
-					if (m_sign_feat_to_p.find(child_features) == m_sign_feat_to_p.end())
-						m_sign_feat_to_p[child_features] = m_num_lf_p++;
+				// 	if (m_sign_feat_to_p.find(child_features) == m_sign_feat_to_p.end())
+				// 		m_sign_feat_to_p[child_features] = m_num_lf_p++;
 					
 
-					auto it = m_sign_feat_occurrences.find(child_features);
-					if (it != m_sign_feat_occurrences.end())
-					{
-						feat_count_value = m_sign_feat_occurrences[child_features]++;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-					}
-					else
-					{
-						m_sign_feat_occurrences[child_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
-					}
+				// 	auto it = m_sign_feat_occurrences.find(child_features);
+				// 	if (it != m_sign_feat_occurrences.end())
+				// 	{
+				// 		feat_count_value = m_sign_feat_occurrences[child_features]++;
+				// 		const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
+				// 		n->m_sign_features = kp;
+				// 	}
+				// 	else
+				// 	{
+				// 		m_sign_feat_occurrences[child_features] = 1;
+				// 		const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
+				// 		n->m_sign_features = kp;					
+				// 	}
 
-					return m_sign_feat_to_p[child_features];
-					// return feat_count_value;
-				}
+				// 	return m_sign_feat_to_p[child_features];
+				// 	// return feat_count_value;
+				// }
 
 
 				virtual void process(Search_Node *head)
@@ -1212,17 +1171,6 @@ namespace aptk
 					for (unsigned i = 0; i < app_set.size(); ++i)
 					{
 						int a = app_set[i];
-
-
-
-						std::string act_sign = m_problem.task().actions()[a]->signature();
-						// std::cout << m_problem.task().actions()[a]->signature() <<std::endl;
-						std::string subString = "move-painting pos-5-2 pos-5-3 g2 n1 n0";
-						if (act_sign.find(subString) != std::string::npos)
-							std::cout << act_sign << std::endl;
-
-
-
 
 						float a_cost = m_problem.cost(*(head->state()), a);
 
@@ -1265,19 +1213,12 @@ namespace aptk
 							eval_relevant_fluents(n);
 
 						eval_count_based(n);
-						eval_lf_counts(n);
+						// eval_lf_counts(n);
 
 						// int tv = get_lifted_counts_state(n);
 						// std::cout << "DEBUG: " << tv <<std::endl;
 						// std::cout << m_sign_feat_occurrences.size() << std::endl;
 
-
-						// if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
-						// {
-						// 	inc_dead_end();
-						// 	delete n;
-						// 	continue;
-						// }
 
 // 						if (m_use_novelty)
 // 						{
@@ -1305,24 +1246,25 @@ namespace aptk
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 
-						static struct rusage usage_report;
-						if (generated() % 1000 == 0){
-							// auto start = std::chrono::steady_clock::now();
-							getrusage(RUSAGE_SELF, &usage_report);
-							// auto end = std::chrono::steady_clock::now();
-							// std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
-							// std::chrono::duration<double, std::milli> duration = end - start;
-							// std::cout << duration.count() <<std::endl;
-							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+						// static struct rusage usage_report;
+						// if (generated() % 1000 == 0){
+						// 	// auto start = std::chrono::steady_clock::now();
+						// 	getrusage(RUSAGE_SELF, &usage_report);
+						// 	// auto end = std::chrono::steady_clock::now();
+						// 	// std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
+						// 	// std::chrono::duration<double, std::milli> duration = end - start;
+						// 	// std::cout << duration.count() <<std::endl;
+						// 	if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 
-							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
-							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
-							m_memory_stop = true;
-							// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
-							// 	std::cout << "Search: Memory limit exceeded." << std::endl;
-							// 	return NULL;
-							}
-						}
+						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+						// 	std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+						// 	m_memory_stop = true;
+						// 	// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
+						// 	// 	std::cout << "Search: Memory limit exceeded." << std::endl;
+						// 	// 	return NULL;
+						// 	}
+						// }
+
 						open_node(n);
 					}
 					inc_eval();
@@ -1402,15 +1344,19 @@ namespace aptk
 							if (m_verbose)
 								std::cout << "Already in CLOSED" << std::endl;
 #endif
-							if (head->m_pop_count == 2 || head->m_open_delete == 1)
-								delete head;
-							else 
-							{
-								head->m_open_delete++;
-								delete head->state();
-								head->set_state(nullptr);
-							}
-
+							// CODE FOR DOUBLE PRUNED OPEN LIST
+							//if (head->m_pop_count == 2 || head->m_open_delete == 1)
+							//	delete head;
+							//else 
+							//{
+							//	head->m_open_delete++;
+							//	delete head->state();
+							//	head->set_state(nullptr);
+							//}
+							//---------------------------------
+							// CODE FOR SINGLE PRUNED OPEN LIST
+							delete head;
+							//---------------------------------
 							head = get_node();
 							continue;
 						}
@@ -1609,11 +1555,11 @@ namespace aptk
 				int m_sign_count;
 				std::unordered_map<std::string, unsigned> m_sign_to_int;
 				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
-				std::vector<unsigned> m_fluent_to_feature;
-				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
+				// std::vector<unsigned> m_fluent_to_feature;
+				// std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
 				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
-				std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
-				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
+				// std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
+				// std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
 
 				int m_memory_budget;
