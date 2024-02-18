@@ -167,13 +167,20 @@ namespace aptk
 				// 	compute_count_metric(n, h_val);
 				
 				// update_counts(n);
-				float temp = 0;
-				std::vector<unsigned> bot3 = cover_compute_tuples_1(n, temp);
-				// if (m_arity == 2)
-					cover_compute_tuples_2(n, bot3, h_val);
+				if (m_arity == 1)
+				{
+					cover_compute_tuples_1(n, h_val);
+				}
+				else 
+				{
+					float temp = 0;
+					std::vector<unsigned> bot3 = cover_compute_tuples_1(n, temp);
+					// if (m_arity == 2)
+						cover_compute_tuples_2(n, bot3, h_val);
 
-				if (temp < -0.3)
-					h_val += temp;
+					if (temp < -0.3)
+						h_val += temp;
+				}
 
 			}
 
