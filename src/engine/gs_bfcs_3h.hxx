@@ -325,8 +325,8 @@ namespace aptk
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
-					// int OPEN_MAX_DEPTH =18;
-					// m_open.init(OPEN_MAX_DEPTH);
+					int OPEN_MAX_DEPTH =18;
+					m_open.init(OPEN_MAX_DEPTH);
 
 					// std::unordered_set<std::string> unique_signatures;
 					// m_fluent_to_feature.resize(this->problem().task().num_fluents());

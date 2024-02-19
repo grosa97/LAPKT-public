@@ -327,7 +327,7 @@ void BFWS::solve()
 
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
 		// BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
-		basic_BFCS bfs_engine(search_prob, m_verbose);
+		basic_BFCS_pruned_open bfs_engine(search_prob, m_verbose);
 
 		unsigned max_width = 2;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
@@ -371,9 +371,11 @@ void BFWS::solve()
 
 		// 	std::cout << "BFS search completed in " << bfs_b << " secs" << std::endl;
 		// }
-
-
 	}
+
+
+
+
 	// else if (m_search_alg.compare("BFCS-1-rp") == 0)
 	// {
 

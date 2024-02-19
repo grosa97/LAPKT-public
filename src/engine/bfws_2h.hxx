@@ -240,6 +240,9 @@ namespace aptk
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
+
+					int OPEN_MAX_DEPTH =18;
+					m_open.init(OPEN_MAX_DEPTH);
 				}
 
 				virtual ~BFWS_2H()
