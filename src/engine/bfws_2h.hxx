@@ -46,6 +46,24 @@ namespace aptk
 		namespace bfws_2h
 		{
 
+			// Custom hash function for std::vector<int>
+			struct VectorHash {
+				size_t operator()(const std::vector<int>& v) const {
+					size_t hash = 0;
+					for (int i : v) {
+						hash ^= std::hash<int>{}(i) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+					}
+					return hash;
+				}
+				size_t operator()(std::vector<int>& v) const {
+					size_t hash = 0;
+					for (int i : v) {
+						hash ^= std::hash<int>{}(i) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+					}
+					return hash;
+				}
+			};
+
 			template <typename Search_Model, typename State>
 			class Node
 			{
@@ -59,7 +77,9 @@ namespace aptk
 				typedef typename std::vector<Node<Search_Model, State> *>::iterator Node_Vec_Ptr_It;
 
 				Node(State *s, float cost, Action_Idx action, Node<Search_Model, State> *parent, int num_actions)
-						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_h1(0), m_h2(0), m_r(0), m_partition(0), m_M(0), m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false)
+						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), m_h1(0), m_h2(0), m_r(0), 
+						m_partition(0), m_M(0), m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false), 
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false) 
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -78,8 +98,13 @@ namespace aptk
 
 				unsigned &h1n() { return m_h1; }
 				unsigned h1n() const { return m_h1; }
+				float &alt_h1n() { return m_alt_h1; }
+				float alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
+				float &h3n() { return m_h3; }
+				float h3n() const { return m_h3; }
+				
 				unsigned &r() { return m_r; }
 				unsigned r() const { return m_r; }
 				unsigned &M() { return m_M; }
@@ -104,6 +129,9 @@ namespace aptk
 				Fluent_Vec *&rp_vec() { return m_rp_fl_vec; }
 				Fluent_Set *&rp_set() { return m_rp_fl_set; }
 				bool &relaxed_deadend() { return m_relaxed_deadend; }
+
+				void set_expanded() { m_already_expanded=true; }
+				bool already_expanded() { return m_already_expanded; }
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -198,7 +226,9 @@ namespace aptk
 				float m_g;
 				unsigned m_g_unit;
 				unsigned m_h1;
+				float m_alt_h1;
 				unsigned m_h2;
+				float m_h3;
 				unsigned m_r;
 				unsigned m_partition;
 				unsigned m_M;
@@ -213,6 +243,12 @@ namespace aptk
 				Fluent_Vec m_goal_candidates;
 
 				bool m_relaxed_deadend;
+
+				const std::vector<int>* m_sign_features;
+				int m_open_delete;
+				int m_pop_count;
+				bool m_already_expanded;
+				bool m_closed;
 			};
 
 			/**
@@ -243,31 +279,95 @@ namespace aptk
 
 					int OPEN_MAX_DEPTH =18;
 					m_open.init(OPEN_MAX_DEPTH);
+
+					std::unordered_set<std::string> unique_signatures;
+					m_fluent_to_feature.resize(this->problem().task().num_fluents());
+					unsigned i_val = 0;
+					for (const Fluent* f: this->m_problem.task().fluents())
+					{
+						std::string s = signature_to_lifted_fl(f->signature());
+						if (unique_signatures.find(s) == unique_signatures.end())
+						{
+							unique_signatures.insert(s);
+							m_sign_to_int[s] = i_val++;
+						}
+						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
+					}
+					m_sign_count = i_val;
 				}
 
 				virtual ~BFWS_2H()
 				{
-					for (typename Closed_List_Type::iterator i = m_closed.begin();
-							 i != m_closed.end(); i++)
-					{
-						delete i->second;
-					}
-					while (!m_open.empty())
-					{
-						Search_Node *n = m_open.pop();
-						delete n;
-					}
-					m_closed.clear();
+					delete_heuristics();
+					delete_lists_nodes();
 
-					delete m_first_h;
-					delete m_second_h;
-					delete m_relevant_fluents_h;
+
+					// for (typename Closed_List_Type::iterator i = m_closed.begin();
+					// 		 i != m_closed.end(); i++)
+					// {
+					// 	delete i->second;
+					// }
+					// while (!m_open.empty())
+					// {
+					// 	Search_Node *n = m_open.pop();
+					// 	delete n;
+					// }
+					// m_closed.clear();
+
+					// delete m_first_h;
+					// delete m_second_h;
+					// delete m_relevant_fluents_h;
+					// if (m_expanded_count_by_novelty != nullptr)
+					// 	free(m_expanded_count_by_novelty);
+					// if (m_generated_count_by_novelty != nullptr)
+					// 	free(m_generated_count_by_novelty);
+					// if (m_novelty_count_plan != nullptr)
+					// 	free(m_novelty_count_plan);
+				}
+
+				void delete_heuristics()
+				{
+					if (m_first_h != nullptr)
+						delete m_first_h;
+					m_first_h = nullptr;
+					if (m_second_h != nullptr)
+						delete m_second_h;
+					m_second_h = nullptr;
+					if (m_relevant_fluents_h != nullptr)
+						delete m_relevant_fluents_h;
+					m_relevant_fluents_h = nullptr;
 					if (m_expanded_count_by_novelty != nullptr)
 						free(m_expanded_count_by_novelty);
 					if (m_generated_count_by_novelty != nullptr)
 						free(m_generated_count_by_novelty);
 					if (m_novelty_count_plan != nullptr)
 						free(m_novelty_count_plan);
+				}
+
+				void delete_lists_nodes()
+				{
+					while (!m_open.empty())
+					{
+						//CODE FOR DOUBLE PRUNED OPEN -----
+						Search_Node *n = m_open.pop();
+						if ( !n->m_closed && (n->m_pop_count + n->m_open_delete == 2))
+							delete n;
+
+						//---------------------------------
+
+						// //CODE FOR SINGLE PRUNED OPEN ----	
+						// Search_Node *n = m_open.pop();
+						// if ( !n->m_closed )
+						// 	delete n;
+						// //-----------
+					}
+					for (typename Closed_List_Type::iterator i = m_closed.begin();
+							 i != m_closed.end(); i++)
+					{
+						delete i->second;
+					}
+
+					m_closed.clear();
 				}
 
 				/**
@@ -398,6 +498,8 @@ namespace aptk
 						}
 						if (m_use_novelty)
 							eval_novel(m_root);
+
+						eval_lf_counts(m_root);
 
 						m_root->undo_land_graph(m_lgm);
 					}
@@ -573,6 +675,14 @@ namespace aptk
 					m_first_h->eval(candidate, candidate->h1n());
 				}
 
+				void eval_lf_counts(Search_Node* n)
+				{
+					//unsigned lf_count = get_lifted_counts_state(n);
+					// if (n->parent() != nullptr && !n->parent()->is_alt())
+					unsigned lf_count = get_lifted_counts_state_partition(n);
+					n->alt_h1n() = -(float)1 / (1+lf_count);
+				}
+
 				bool is_closed(Search_Node *n)
 				{
 					Search_Node *n2 = this->closed().retrieve(n);
@@ -608,6 +718,132 @@ namespace aptk
 					inc_gen();
 					m_generated_count_by_novelty[n->h1n() - 1]++;
 				}
+
+
+				std::string signature_to_lifted_fl(std::string signature)
+				{
+					std::stringstream ss(signature);
+
+					std::string lfl;
+					if (std::getline(ss, lfl, '_'))
+						return lfl;
+					return "";
+				}
+
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, unsigned, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+					auto it = myMap.find(keyToFind);
+					if (it != myMap.end()) {
+						return &(it->first); // Return pointer to the key vector
+					} else {
+						return nullptr; // Key not found, return null pointer
+					}
+				}
+
+				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& myMap, const std::vector<int>& keyToFind) {
+					auto it = myMap.find(keyToFind);
+					if (it != myMap.end()) {
+						return &(it->first); // Return pointer to the key vector
+					} else {
+						return nullptr; // Key not found, return null pointer
+					}
+				}
+
+				unsigned get_lifted_counts_state_partition(Search_Node* n)
+				{
+					unsigned partition = n->partition();
+					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
+					// {
+					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
+					// }
+					
+					if (m_sign_feat_partitions.size() <= partition)
+					{
+						m_sign_feat_partitions.resize(partition + 1);
+					}
+
+					if (m_sign_feat_partitions[partition].empty())
+					{
+						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>();
+					}
+					
+					std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
+
+
+					if (n->parent() == NULL) //root node
+					{
+						std::vector<int> sign_features(m_sign_count, 0);
+						for (auto f: n->state()->fluent_vec())
+							sign_features[m_fluent_to_feature[f]]++;
+						sign_feat_occurrences[sign_features] = 1;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, sign_features);
+						n->m_sign_features = kp;
+						return 0;			
+					}
+					unsigned feat_count_value;
+					
+					static Fluent_Vec added, deleted, temp_fv;
+					added.clear();
+					deleted.clear();
+					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+					
+					const std::vector<int>* parent_features = n->parent()->m_sign_features;
+					std::vector<int> child_features(*parent_features);
+					std::unordered_set<unsigned> counted_a;
+					for (auto f: added)
+					{
+						if (counted_a.find(f) == counted_a.end())
+						{
+							counted_a.insert(f);
+							if (!n->parent()->state()->entails(f))
+								child_features[m_fluent_to_feature[f]]++;
+						}
+					}
+					std::unordered_set<unsigned> counted_d;
+					for (auto f: deleted)
+					{
+						if (counted_d.find(f) == counted_d.end())
+						{
+							// if (child_features[m_fluent_to_feature[f]] > 0)
+							counted_d.insert(f);
+							if (n->parent()->state()->entails(f))
+								child_features[m_fluent_to_feature[f]]--;
+						}
+					}
+					auto it = sign_feat_occurrences.find(child_features);
+					if (it != sign_feat_occurrences.end())
+					{
+						if (sign_feat_occurrences[child_features] < UINT8_MAX)
+							feat_count_value = sign_feat_occurrences[child_features]++;
+						else
+							feat_count_value = UINT8_MAX;
+
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+						n->m_sign_features = kp;
+					}
+					else
+					{
+						sign_feat_occurrences[child_features] = 1;
+						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+						n->m_sign_features = kp;					
+						feat_count_value = 0;
+					}
+
+					// unsigned alt_h2n = 0;
+					// for (int i = 0; i<m_sign_count; i++)
+					// {
+					// 	unsigned gfi = m_goal_partial_lf_feat[i];
+					// 	unsigned cfi = child_features[i];
+					// 	if (gfi > cfi)
+					// 		alt_h2n += ( gfi - cfi );
+					// }
+
+					return feat_count_value;
+				}
+
+
+
+
 
 				virtual void process(Search_Node *head)
 				{
@@ -705,6 +941,8 @@ namespace aptk
 								}
 						}
 
+						eval_lf_counts(n);
+
 #ifdef DEBUG
 						if (m_verbose)
 							std::cout << "Inserted into OPEN" << std::endl;
@@ -715,7 +953,7 @@ namespace aptk
 					m_expanded_count_by_novelty[head->h1n() - 1]++;
 					if ( (m_exp_count % 10000) == 0 )
 						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<<" -- "
-							<<" -- "<<head->gn_unit() <<" -- " << m_open.size()<<std::endl;
+							<<" -- "<<head->gn_unit() << std::endl;
 				}
 
 				virtual Search_Node *do_search()
@@ -724,6 +962,13 @@ namespace aptk
 
 					while (head)
 					{
+
+						if (head->already_expanded())
+						{
+							head = get_node();
+							continue;
+						}
+
 						if (head->gn() >= max_depth())
 						{
 							close(head);
@@ -744,15 +989,28 @@ namespace aptk
 						if ((time_used() - m_t0) > m_time_budget)
 							return NULL;
 
+						head->set_expanded();
+
 						if (is_closed(head))
 						{
 #ifdef DEBUG
 							if (m_verbose)
 								std::cout << "Already in CLOSED" << std::endl;
 #endif
-							delete head;
+							if (head->m_pop_count == 2 || head->m_open_delete == 1)
+								delete head;
+							else 
+							{
+								head->m_open_delete++;
+								delete head->state();
+								head->set_state(nullptr);
+							}
+
 							head = get_node();
 							continue;
+							// delete head;
+							// head = get_node();
+							// continue;
 						}
 						process(head);
 						close(head);
@@ -834,7 +1092,10 @@ namespace aptk
 
 				float t0() const { return m_t0; }
 
-				void close(Search_Node *n) { m_closed.put(n); }
+				void close(Search_Node *n) { 
+					n->m_closed = true;
+					m_closed.put(n); 
+				}
 				Closed_List_Type &closed() { return m_closed; }
 
 				const Search_Model &problem() const { return m_problem; }
@@ -914,6 +1175,14 @@ namespace aptk
 				bool m_use_novelty_pruning;
 				bool m_use_rp;
 				bool m_use_rp_from_init_only;
+
+				int m_sign_count;
+				std::unordered_map<std::string, unsigned> m_sign_to_int;
+				std::vector<unsigned> m_fluent_to_feature;
+				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
+				std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
+				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
+				unsigned m_num_lf_p;
 			};
 
 		}

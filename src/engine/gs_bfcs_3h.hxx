@@ -132,7 +132,7 @@ namespace aptk
 				// unsigned &h3n() { return m_h3; }
 				// unsigned h3n() const { return m_h3; } 
 				float &h3n() { return m_h3; }
-				float h3n() const { return m_h3; } 
+				float h3n() const { return m_h3; }
 
 				unsigned &r() { return m_r; }
 				unsigned r() const { return m_r; }
