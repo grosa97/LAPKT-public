@@ -161,19 +161,21 @@ namespace aptk
 
 			virtual void eval(Search_Node *n, float &h_val)
 			{
-				// if (m_rp_fl_only)
-				// 	compute_count_metric_rp_fl_only(n, h_val);
-				// else
-				// 	compute_count_metric(n, h_val);
-				
-				// update_counts(n);
-				float temp = 0;
-				std::vector<unsigned> bot3 = cover_compute_tuples_1(n, temp);
-				// if (m_arity == 2)
-					cover_compute_tuples_2(n, bot3, h_val);
+				compute(n, h_val);
 
-				if (temp < -0.3)
-					h_val += temp;
+				// // if (m_rp_fl_only)
+				// // 	compute_count_metric_rp_fl_only(n, h_val);
+				// // else
+				// // 	compute_count_metric(n, h_val);
+				
+				// // update_counts(n);
+				// float temp = 0;
+				// std::vector<unsigned> bot3 = cover_compute_tuples_1_op(n, temp);
+				// // if (m_arity == 2)
+				// 	cover_compute_tuples_2_op(n, bot3, h_val);
+
+				// if (temp < -0.3)
+				// 	h_val += temp;
 
 			}
 
@@ -250,50 +252,78 @@ namespace aptk
 			}
 			
 
-			/**
-			 * If parent node is in the same space partition, check only new atoms,
-			 * otherwise check all atoms in state
-			 */
-			void compute(Search_Node *n, float &novelty)
+			void compute(Search_Node *n, float &h_val)
 			{
-				assert(m_arity == 1);
-
-				novelty = (float)m_arity + 1;
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
 					return;
 
-				check_table_size(n);
-
-				for (unsigned i = 1; i <= m_arity; i++)
+				if (n->parent() != nullptr && n->partition() == n->parent()->partition())
 				{
-#ifdef DEBUG
-					if (m_verbose)
-						std::cout << "search state node: " << &(n) << std::endl;
-#endif
+					float temp = 0;
+					std::vector<unsigned> bot3 = cover_compute_tuples_1_op(n, temp);
+					// if (m_arity == 2)
+						cover_compute_tuples_2_op(n, bot3, h_val);
 
-					bool new_covers;
+					if (temp < -0.3)
+					h_val += temp;
+				}
+				else
+				{
+					float temp = 0;
+					cover_compute_tuples_1(n, temp);
+					// if (m_arity == 2)
+					cover_compute_tuples_2(n, h_val);
 
-					// if (n->parent() == nullptr || m_always_full_state)
-					// 	new_covers = cover_tuples(n, i);
-					// else
-					// 	new_covers = (n->partition() == n->parent()->partition()) ? cover_tuples_op(n, i) : cover_tuples(n, i);
-
-					new_covers = cover_tuples(n, i);
-
-#ifdef DEBUG
-					if (m_verbose && !new_covers)
-						std::cout << "\t \t PRUNE! search node: " << &(n) << std::endl;
-#endif
-					if (new_covers)
-						if (i < novelty)
-							novelty = i;
+					if (temp < -0.3)
+					h_val += temp;
 				}
 			}
 
-			bool n_has_state(Search_Node *n){
-				return n->state() != NULL;
-			}
+			/**
+			 * If parent node is in the same space partition, check only new atoms,
+			 * otherwise check all atoms in state
+			 */
+// 			void compute(Search_Node *n, float &novelty)
+// 			{
+// 				assert(m_arity == 1);
+
+// 				novelty = (float)m_arity + 1;
+
+// 				if (n->partition() == std::numeric_limits<unsigned>::max())
+// 					return;
+
+// 				check_table_size(n);
+
+// 				for (unsigned i = 1; i <= m_arity; i++)
+// 				{
+// #ifdef DEBUG
+// 					if (m_verbose)
+// 						std::cout << "search state node: " << &(n) << std::endl;
+// #endif
+
+// 					bool new_covers;
+
+// 					// if (n->parent() == nullptr || m_always_full_state)
+// 					// 	new_covers = cover_tuples(n, i);
+// 					// else
+// 					// 	new_covers = (n->partition() == n->parent()->partition()) ? cover_tuples_op(n, i) : cover_tuples(n, i);
+
+// 					new_covers = cover_tuples(n, i);
+
+// #ifdef DEBUG
+// 					if (m_verbose && !new_covers)
+// 						std::cout << "\t \t PRUNE! search node: " << &(n) << std::endl;
+// #endif
+// 					if (new_covers)
+// 						if (i < novelty)
+// 							novelty = i;
+// 				}
+// 			}
+
+// 			bool n_has_state(Search_Node *n){
+// 				return n->state() != NULL;
+// 			}
  
 
 //  			std::vector<unsigned> initialValues = {0,0,0};
@@ -333,7 +363,7 @@ namespace aptk
 				}
 			}
 
-			std::vector<unsigned> cover_compute_tuples_1(Search_Node *n, float &metric_value)
+			std::vector<unsigned> cover_compute_tuples_1_op(Search_Node *n, float &metric_value)
 			{
 				metric_value = 0;
 				unsigned arity = 1;
@@ -519,7 +549,7 @@ namespace aptk
 						// 				}
 
 
-			bool cover_compute_tuples_2(Search_Node *n, std::vector<unsigned> &bot_3_fl, float &metric_value)
+			bool cover_compute_tuples_2_op(Search_Node *n, std::vector<unsigned> &bot_3_fl, float &metric_value)
 			{
 				float metric_value_2 = 0;
 				unsigned arity = m_arity;
@@ -580,17 +610,19 @@ namespace aptk
 						}
 						else
 						{
+							
+							exit(1); //undefined for width > 2
 
-							// If all elements in the tuple are equal, ignore the tuple
-							if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
-															{ return x != tuple[0]; }))
-								continue;
-							/**
-							 * get tuples from indexes
-							 */
-							idx2tuple(tuple, fl, idx, atoms_arity);
+							// // If all elements in the tuple are equal, ignore the tuple
+							// if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+							// 								{ return x != tuple[0]; }))
+							// 	continue;
+							// /**
+							//  * get tuples from indexes
+							//  */
+							// idx2tuple(tuple, fl, idx, atoms_arity);
 
-							tuple_idx = tuple2idx(tuple, arity);
+							// tuple_idx = tuple2idx(tuple, arity);
 						}
 
 						/**
@@ -751,6 +783,183 @@ namespace aptk
 
 				// return new_covers;
 			}
+
+			bool cover_compute_tuples_2(Search_Node *n, float &metric_value)
+			{
+				float metric_value_2 = 0;
+				unsigned arity = m_arity;
+				// assert(arity == 1);
+
+				if (n->partition() == std::numeric_limits<unsigned>::max())
+					return false;
+
+				check_table_size_2(n);
+
+				const bool has_state = n->has_state();
+
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					added.clear();
+					deleted.clear();
+					// temp_fv.clear();
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+				bool new_covers = false;
+
+				std::vector<unsigned> tuple(arity);
+
+				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
+
+				float m = 0;
+
+				for (unsigned idx = 0; idx < n_combinations; idx++)
+				{
+
+
+					/**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, fl, idx, arity);
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					int tuple_count;
+
+					if (arity == 1)
+					{
+						tuple_idx = tuple2idx(tuple, arity);
+					}
+					else if (arity == 2)
+					{
+						if (tuple[0] == tuple[1])
+							continue; // don't check singleton tuples
+						tuple_idx = tuple2idx_size2(tuple, arity);
+					}
+					else
+					{
+
+						// If all elements in the tuple are equal, ignore the tuple
+						if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+														{ return x != tuple[0]; }))
+							continue;
+					}
+
+					if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
+						tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+						// tuple_count = -1;
+					else 
+					{
+						m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+						tuple_count = 0;
+					}
+
+					m = -(float)1 / (1 + tuple_count);
+					if (m < metric_value_2)
+						metric_value_2 = m;
+				}
+
+				metric_value += metric_value_2;
+
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				return new_covers;
+			}
+
+			bool cover_compute_tuples_1(Search_Node *n, float &metric_value)
+			{
+				float metric_value_2 = 0;
+				unsigned arity = 1;
+				// assert(arity == 1);
+
+				if (n->partition() == std::numeric_limits<unsigned>::max())
+					return false;
+
+				check_table_size_2(n);
+
+				const bool has_state = n->has_state();
+
+				static Fluent_Vec added, deleted, temp_fv;
+				if (!has_state)
+				{
+					added.clear();
+					deleted.clear();
+					// temp_fv.clear();
+					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
+					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+				bool new_covers = false;
+
+				std::vector<unsigned> tuple(arity);
+
+				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
+
+				float m = 0;
+
+				for (unsigned idx = 0; idx < n_combinations; idx++)
+				{
+
+
+					/**
+					 * get tuples from indexes
+					 */
+					idx2tuple(tuple, fl, idx, arity);
+
+					/**
+					 * Check if tuple is covered
+					 */
+					unsigned tuple_idx;
+					int tuple_count;
+
+					tuple_idx = tuple2idx(tuple, arity);
+
+					if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
+						tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+						// tuple_count = -1;
+					else 
+					{
+						m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+						tuple_count = 0;
+					}
+
+					m = -(float)1 / (1 + tuple_count);
+					if (m < metric_value_2)
+						metric_value_2 = m;
+				}
+
+				metric_value += metric_value_2;
+
+				if (!has_state)
+				{
+					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+				}
+				// if (!has_state)
+				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+
+				return new_covers;
+			}
+
+
 
 // 			bool cover_tuples(Search_Node *n, unsigned arity)
 // 			{
