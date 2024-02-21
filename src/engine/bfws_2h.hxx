@@ -36,6 +36,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <algorithm>
 #include <iostream>
 #include <hash_table.hxx>
+#include <chrono>
+
+
 
 namespace aptk
 {
@@ -680,7 +683,8 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					// if (n->parent() != nullptr && !n->parent()->is_alt())
 					unsigned lf_count = get_lifted_counts_state_partition(n);
-					n->alt_h1n() = -(float)1 / (1+lf_count);
+					// n->alt_h1n() = -(float)1 / (1+lf_count);
+					n->alt_h1n() = lf_count;
 				}
 
 				bool is_closed(Search_Node *n)
@@ -801,21 +805,25 @@ namespace aptk
 						return 0;
 					}
 					unsigned feat_count_value;
-					
+
+					auto start = std::chrono::high_resolution_clock::now(); //time
+
 					static Fluent_Vec added, deleted, temp_fv;
 					added.clear();
 					deleted.clear();
 					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
 					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
+
+					auto t1 = std::chrono::high_resolution_clock::now(); //time
 					
 					const std::vector<int>* parent_features = n->parent()->m_sign_features;
 					std::vector<int> child_features(*parent_features);
 					std::unordered_set<unsigned> counted_a;
 					for (auto f: added)
 					{
-						if (counted_a.find(f) == counted_a.end())
+						auto already_ins = counted_a.emplace(f);
+						if (already_ins.second)
 						{
-							counted_a.insert(f);
 							if (!n->parent()->state()->entails(f))
 								child_features[m_fluent_to_feature[f]]++;
 						}
@@ -823,34 +831,48 @@ namespace aptk
 					std::unordered_set<unsigned> counted_d;
 					for (auto f: deleted)
 					{
-						if (counted_d.find(f) == counted_d.end())
-						{
+						//if (counted_d.find(f) == counted_d.end())
+						//{
 							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
+							auto already_ins = counted_d.emplace(f);
+							if (already_ins.second)
+							{
+								if (n->parent()->state()->entails(f))
+									child_features[m_fluent_to_feature[f]]--;
+							}
+						//}
 					}
-					auto it = sign_feat_occurrences.find(child_features);
-					if (it != sign_feat_occurrences.end())
-					{
-						// if (sign_feat_occurrences[child_features] < UINT8_MAX)
-						// 	feat_count_value = sign_feat_occurrences[child_features]++;
-						// else
-						// 	feat_count_value = UINT8_MAX;
 
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-						feat_count_value = 1;
-					}
-					else
-					{
-						// sign_feat_occurrences[child_features] = true;
-						sign_feat_occurrences.insert(child_features);
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
+					auto t2 = std::chrono::high_resolution_clock::now(); //time
+				
+					auto found = sign_feat_occurrences.emplace(child_features);
+					if (found.second)
 						feat_count_value = 0;
-					}
+					else
+						feat_count_value = 1;
+					const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+					n->m_sign_features = kp;
+
+					// auto it = sign_feat_occurrences.find(child_features);
+					// if (it != sign_feat_occurrences.end())
+					// {
+					// 	// if (sign_feat_occurrences[child_features] < UINT8_MAX)
+					// 	// 	feat_count_value = sign_feat_occurrences[child_features]++;
+					// 	// else
+					// 	// 	feat_count_value = UINT8_MAX;
+
+					// 	const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+					// 	n->m_sign_features = kp;
+					// 	feat_count_value = 1;
+					// }
+					// else
+					// {
+					// 	// sign_feat_occurrences[child_features] = true;
+					// 	sign_feat_occurrences.insert(child_features);
+					// 	const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
+					// 	n->m_sign_features = kp;					
+					// 	feat_count_value = 0;
+					// }
 
 					// unsigned alt_h2n = 0;
 					// for (int i = 0; i<m_sign_count; i++)
@@ -860,6 +882,26 @@ namespace aptk
 					// 	if (gfi > cfi)
 					// 		alt_h2n += ( gfi - cfi );
 					// }
+
+					auto t3 = std::chrono::high_resolution_clock::now(); //time
+
+					std::chrono::duration<double> d1 = t1 - start;
+					std::chrono::duration<double> d2 = t2 - t1;
+					std::chrono::duration<double> d3 = t3 - t2;
+
+					std::cout << d1.count() << " - " <<d2.count() << " - " << d3.count() <<std::endl;
+
+					static double max_d1 = 0;
+					static double max_d2 = 0;
+					static double max_d3 = 0;
+
+					if (d1.count() > max_d1)
+						max_d1 = d1.count();
+					if (d2.count() > max_d2)
+						max_d2 = d2.count();
+					if (d3.count() > max_d3)
+						max_d3 = d3.count();
+					std::cout << max_d1 << " - " << max_d2 << " - " << max_d3 <<std::endl;
 
 					return feat_count_value;
 				}
@@ -945,7 +987,7 @@ namespace aptk
 						if (m_use_rp)
 							// if(n->h2n() == head->h2n())
 							eval_relevant_fluents(n);
-
+						auto n_start = std::chrono::high_resolution_clock::now(); //time
 						if (m_use_novelty)
 						{
 							eval_novel(n);
@@ -963,8 +1005,16 @@ namespace aptk
 									continue;
 								}
 						}
+						auto n_end = std::chrono::high_resolution_clock::now(); //time
 
+						auto lf_start = std::chrono::high_resolution_clock::now(); //time
 						eval_lf_counts(n);
+						auto lf_end = std::chrono::high_resolution_clock::now(); //time
+
+						std::chrono::duration<double> n_d = n_end - n_start;	
+						std::chrono::duration<double> lf_d = lf_end - lf_start;
+
+						std::cout << "outer times: "<< n_d.count() << " - " << lf_d.count() <<std::endl;
 
 #ifdef DEBUG
 						if (m_verbose)
