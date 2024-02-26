@@ -261,22 +261,22 @@ namespace aptk
 				if (n->parent() != nullptr && n->partition() == n->parent()->partition())
 				{
 					float temp = 0;
-					std::vector<unsigned> bot3 = cover_compute_tuples_1_op(n, temp);
+					std::vector<unsigned> bot3 = cover_compute_tuples_1_op(n, h_val);
 					// if (m_arity == 2)
-						cover_compute_tuples_2_op(n, bot3, h_val);
+					//	cover_compute_tuples_2_op(n, bot3, h_val);
 
-					if (temp < -0.3)
-					h_val += temp;
+					//if (temp < -0.3)
+					//h_val += temp;
 				}
 				else
 				{
 					float temp = 0;
-					cover_compute_tuples_1(n, temp);
+					cover_compute_tuples_1(n, h_val);
 					// if (m_arity == 2)
-					cover_compute_tuples_2(n, h_val);
+					//cover_compute_tuples_2(n, h_val);
 
-					if (temp < -0.3)
-					h_val += temp;
+					//if (temp < -0.3)
+					//	h_val += temp;
 				}
 			}
 

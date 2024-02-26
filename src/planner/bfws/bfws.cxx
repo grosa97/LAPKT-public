@@ -328,7 +328,7 @@ void BFWS::solve()
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
-		unsigned max_width = 2;
+		unsigned max_width = 1;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
@@ -340,7 +340,8 @@ void BFWS::solve()
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
 
-		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
+		//if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
+		if (false)
 		{
 			std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
 
