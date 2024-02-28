@@ -37,6 +37,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <iostream>
 #include <hash_table.hxx>
 
+#include <memory.hxx>
+
 namespace aptk
 {
 
@@ -239,7 +241,7 @@ namespace aptk
 						m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), 
 						m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), 
 						m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true),
-						m_use_rp_from_init_only(false), m_memory_stop(false)
+						m_use_rp_from_init_only(false), m_memory_stop(false), m_memory_budget(0)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -247,6 +249,8 @@ namespace aptk
 
 					int OPEN_MAX_DEPTH =18;
 					m_open.init(OPEN_MAX_DEPTH);
+
+					m_memory_budget = 6000;
 				}
 
 				virtual ~BFWS_2H()
@@ -936,6 +940,7 @@ namespace aptk
 				bool m_use_rp_from_init_only;
 
 				bool m_memory_stop;
+				int m_memory_budget;
 			};
 
 		}
