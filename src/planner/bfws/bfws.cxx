@@ -482,6 +482,9 @@ void BFWS::solve()
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
+
+		if (!m_found_plan && (m_search_alg.compare("BFWS-f5") == 0))
+			std::exit(14);
 	}
 	else if (m_search_alg.compare("BFWS-f5-initstate-relevant") == 0)
 	{

@@ -235,7 +235,11 @@ namespace aptk
 				typedef aptk::agnostic::Landmarks_Graph_Manager<Search_Model> Landmarks_Graph_Manager;
 
 				BFWS_2H(const Search_Model &search_problem, bool verbose)
-						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false)
+						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), 
+						m_novelty_count_plan(nullptr), m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), 
+						m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), m_max_h2n(no_such_index), 
+						m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(true), m_use_novelty_pruning(false), m_use_rp(true),
+						m_use_rp_from_init_only(false), m_memory_stop(false)
 				{
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -709,6 +713,19 @@ namespace aptk
 						if (m_verbose)
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
+
+						static struct rusage usage_report;
+						if (generated() % 1000 == 0)
+						{
+							getrusage(RUSAGE_SELF, &usage_report);
+							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) 
+							{
+								std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+								std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+								m_memory_stop = true;
+							}
+						}
+
 						open_node(n);
 					}
 					inc_eval();
@@ -743,6 +760,9 @@ namespace aptk
 						}
 						if ((time_used() - m_t0) > m_time_budget)
 							return NULL;
+
+						if (m_memory_stop)
+							return NULL;	
 
 						if (is_closed(head))
 						{
@@ -914,6 +934,8 @@ namespace aptk
 				bool m_use_novelty_pruning;
 				bool m_use_rp;
 				bool m_use_rp_from_init_only;
+
+				bool m_memory_stop;
 			};
 
 		}
