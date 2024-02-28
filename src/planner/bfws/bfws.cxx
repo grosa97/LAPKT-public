@@ -55,7 +55,7 @@ void BFWS::bfws_options(Fwd_Search_Problem &search_prob, Search_Engine &bfs_engi
 	const aptk::State *s_0 = search_prob.init();
 	hadd.eval(*s_0, h_init);
 
-	bfs_engine.set_arity(max_novelty, graph.num_landmarks() * h_init);
+	bfs_engine.set_arity(max_novelty, graph.num_landmarks() * h_init); //novelty hardcoded to 1 and 2 for count & normal novelty respectively
 }
 
 template <typename Search_Engine>
@@ -328,7 +328,7 @@ void BFWS::solve()
 		//PARTITIONED BUT WITH NO H2 TIE BREAK
 		BFCS_1_p_pruned bfs_engine(search_prob, m_verbose);
 
-		unsigned max_width = 1;
+		unsigned max_width = 2;
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
@@ -474,7 +474,7 @@ void BFWS::solve()
 
 		k_BFWS bfs_engine(search_prob, m_verbose);
 
-		bfws_options(search_prob, bfs_engine, m_max_novelty, graph);
+		bfws_options(search_prob, bfs_engine, m_max_novelty, graph); //max novelty hardcoded in method
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 

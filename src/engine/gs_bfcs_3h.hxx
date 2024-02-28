@@ -321,7 +321,7 @@ namespace aptk
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
-					// m_third_h = new Third_Heuristic(search_problem);
+					m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
@@ -348,28 +348,7 @@ namespace aptk
 					// {
 					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
 					// }
-					for (auto* act_p: m_problem.task().actions())
-					{
-						std::string act_sign = act_p->signature();
-						// std::cout << m_problem.task().actions()[a]->signature() <<std::endl;
-						std::string subString = "move-painting pos-1-1 pos-2-1 g1 n3 n2";
-						std::string sub2 = "g1";
-						if (act_sign.find(subString) != std::string::npos && act_sign.find(sub2) != std::string::npos)
-							std::cout << act_p->index()  << " " <<  act_sign << std::endl;
-					}
 
-					// start-painting pos-5-1 g2 n3 n2 --> found
-					// 1107 --> move-painting pos-5-1 pos-5-2 g2 n2 n1
-					// 1333 --> move-painting pos-5-2 pos-5-3 g2 n1 n0 --> never generated
-					// end-painting g2 -->found
-
-					// start-painting pos-1-1 g1 n4 n3 -->found
-					// move-painting pos-1-1 pos-2-1 g1 n3 n2 --> found
-					// move-painting pos-2-1 pos-2-2 g1 n2 n1 --> found --> never generated
-					// move-painting pos-2-2 pos-3-2 g1 n1 n0 --> found
-
-					//issue seems to be that move-painting has errors which then does not allow the next move-painting / end-painting
-					// to be generated, thus potentially issue with effects?
 
 
 
@@ -549,7 +528,7 @@ namespace aptk
 					m_max_depth = B;
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL, m_problem.num_actions());
 					// Init Novelty
-					// m_third_h->init();
+					m_third_h->init();
 					m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
 
 					if (m_use_rp)
@@ -581,9 +560,9 @@ namespace aptk
 							eval_relevant_fluents(m_root);
 						}
 						eval_count_based(m_root);
-						eval_lf_counts(m_root);
-						// if (m_use_novelty)
-						// 	eval_novel(m_root);
+						// eval_lf_counts(m_root);
+						if (m_use_novelty)
+							eval_novel(m_root);
 
 						m_root->undo_land_graph(m_lgm);
 
@@ -601,8 +580,8 @@ namespace aptk
 							eval_relevant_fluents(m_root);
 						}
 
-						// if (m_use_novelty)
-						// 	eval_novel(m_root);
+						if (m_use_novelty)
+							eval_novel(m_root);
 						
 						// if (m_use_h3n)
 							// eval_count_based(m_root);
@@ -770,6 +749,12 @@ namespace aptk
 				// 	candidate->partition() = (1000 * candidate->h2n()) + candidate->r();
 				// 	m_first_h->eval(candidate, candidate->h1n());
 				// }
+
+				void eval_novel(Search_Node *candidate)
+				{
+					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					m_third_h->eval(candidate, candidate->alt_h1n());
+				}
 
 				void eval_count_based(Search_Node *candidate)
 				{
@@ -1234,17 +1219,6 @@ namespace aptk
 					{
 						int a = app_set[i];
 
-
-
-						std::string act_sign = m_problem.task().actions()[a]->signature();
-						// std::cout << m_problem.task().actions()[a]->signature() <<std::endl;
-						std::string subString = "move-painting pos-5-2 pos-5-3 g2 n1 n0";
-						if (act_sign.find(subString) != std::string::npos)
-							std::cout << act_sign << std::endl;
-
-
-
-
 						float a_cost = m_problem.cost(*(head->state()), a);
 
 						if (head->gn() + a_cost > m_max_depth)
@@ -1286,7 +1260,7 @@ namespace aptk
 							eval_relevant_fluents(n);
 
 						eval_count_based(n);
-						eval_lf_counts(n);
+						// eval_lf_counts(n);
 
 						// int tv = get_lifted_counts_state(n);
 						// std::cout << "DEBUG: " << tv <<std::endl;
@@ -1300,23 +1274,23 @@ namespace aptk
 						// 	continue;
 						// }
 
-// 						if (m_use_novelty)
-// 						{
-// 							eval_novel(n);
-// 							if (m_use_novelty_pruning)
-// 								if (n->h1n() > m_max_novelty)
-// 								{
-// #ifdef DEBUG
-// 									if (m_verbose)
-// 									{
-// 										std::cout << "h_add is infinite" << std::endl;
-// 									}
-// #endif
-// 									inc_dead_end();
-// 									delete n;
-// 									continue;
-// 								}
-// 						}
+						if (m_use_novelty)
+						{
+							eval_novel(n);
+							if (m_use_novelty_pruning)
+								if (n->h1n() > m_max_novelty)
+								{
+#ifdef DEBUG
+									if (m_verbose)
+									{
+										std::cout << "h_add is infinite" << std::endl;
+									}
+#endif
+									inc_dead_end();
+									delete n;
+									continue;
+								}
+						}
 
 						// if (m_use_h3n) 
 						// 	eval_count_based(n);
@@ -1451,7 +1425,12 @@ namespace aptk
 					return NULL;
 				}
 
-				void set_arity(float v, unsigned g = 0) { m_first_h->set_arity(v, g); }
+				void set_arity(float v, unsigned g = 0) { 
+					m_first_h->set_arity(1, g); 
+					m_third_h->set_arity(2, g);
+					
+					}
+				// void set_arity_h3(float v, unsigned g = 0) { m_third_h->set_arity(v, g); }
 				void set_max_novelty(unsigned v)
 				{
 					m_max_novelty = v;

@@ -166,7 +166,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
-				m_alt_counter(0), m_alt_interval(9)
+				m_alt_counter(0), m_alt_interval(2)
 				{
 					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
@@ -225,8 +225,8 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						d_1->m_open_delete++;
 					}
 
-					if (n->alt_h1n() < m_th_value)
-					{
+					//if (n->alt_h1n() < m_th_value)
+					//{
 						if (size_2() < m_size_limit_2)
 						{
 							m_heap_2.push_back(n);
@@ -257,12 +257,12 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 								// delete n;
 							d_2->m_open_delete++;
 						}
-					}
-					else
-					{
-						d_2 = n;
-						d_2->m_open_delete++;
-					}
+					//}
+					//else
+					// {
+					// 	d_2 = n;
+					// 	d_2->m_open_delete++;
+					// }
 
 					if (d_1 != nullptr && d_1 == d_2)
 					{
