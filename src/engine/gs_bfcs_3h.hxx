@@ -559,7 +559,7 @@ namespace aptk
 							eval_rp(m_root);
 							eval_relevant_fluents(m_root);
 						}
-						eval_count_based(m_root);
+						// eval_count_based(m_root);
 						// eval_lf_counts(m_root);
 						if (m_use_novelty)
 							eval_novel(m_root);
@@ -754,6 +754,8 @@ namespace aptk
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					m_third_h->eval(candidate, candidate->alt_h1n());
+					//testing novelty 1 for first open list
+					candidate->h1n() = (candidate->alt_h1n() > 2) ? 2 : candidate->alt_h1n();
 				}
 
 				void eval_count_based(Search_Node *candidate)
@@ -1259,7 +1261,7 @@ namespace aptk
 							// if(n->h2n() == head->h2n())
 							eval_relevant_fluents(n);
 
-						eval_count_based(n);
+						// eval_count_based(n);
 						// eval_lf_counts(n);
 
 						// int tv = get_lifted_counts_state(n);
