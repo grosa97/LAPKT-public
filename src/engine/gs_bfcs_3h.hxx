@@ -127,6 +127,8 @@ namespace aptk
 				float alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
+				float &alt_2_h1n() { return m_alt_2_h1; }
+				float alt_2_h1n() const { return m_alt_2_h1; }
 				// unsigned &alt_h2n() { return m_h2; }
 				// unsigned alt_h2n() const { return m_h2; }
 				// unsigned &h3n() { return m_h3; }
@@ -260,6 +262,7 @@ namespace aptk
 				unsigned m_g_unit;
 				float m_h1;
 				float m_alt_h1;
+				float m_alt_2_h1;
 				unsigned m_h2;
 				// unsigned m_alt_h2;
 				// unsigned m_h3;
@@ -348,10 +351,6 @@ namespace aptk
 					// {
 					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
 					// }
-
-
-
-
 				}
 
 				virtual ~GS_BFCS_3H()
@@ -415,13 +414,19 @@ namespace aptk
 					while (!m_open.empty())
 					{
 						Search_Node *n = m_open.pop();
-						if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+						int pc = n->m_pop_count;
+						int od = n->m_open_delete;
+						// or just pc + od == 3 ?!
+						if ( !n->m_closed && ( pc + od == 3 ) ) 
 							delete n;
-						// else
-						// {
-						// 	//n->m_pop_count++;
-						// 	//n->m_open_delete++;
-						// }
+
+						// if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+						// 	delete n;
+						// // else
+						// // {
+						// // 	//n->m_pop_count++;
+						// // 	//n->m_open_delete++;
+						// // }
 					}
 					for (typename Closed_List_Type::iterator i = m_closed.begin();
 							 i != m_closed.end(); i++)
@@ -560,7 +565,7 @@ namespace aptk
 							eval_relevant_fluents(m_root);
 						}
 						eval_count_based(m_root);
-						// eval_lf_counts(m_root);
+						eval_lf_counts(m_root);
 						if (m_use_novelty)
 							eval_novel(m_root);
 
@@ -570,7 +575,6 @@ namespace aptk
 						// 	eval_count_based(m_root);
 					}
 					else
-
 					{
 						eval(m_root);
 
@@ -781,7 +785,7 @@ namespace aptk
 					//unsigned lf_count = get_lifted_counts_state(n);
 					// if (n->parent() != nullptr && !n->parent()->is_alt())
 					unsigned lf_count = get_lifted_counts_state_partition(n);
-					n->alt_h1n() = -(float)1 / (1+lf_count);
+					n->alt_2_h1n() = -(float)1 / (1+lf_count);
 
 						// n->alt_h1n() = lf_c_nov;
 					// if (is_alt())
@@ -1260,7 +1264,7 @@ namespace aptk
 							eval_relevant_fluents(n);
 
 						eval_count_based(n);
-						// eval_lf_counts(n);
+						eval_lf_counts(n);
 
 						// int tv = get_lifted_counts_state(n);
 						// std::cout << "DEBUG: " << tv <<std::endl;
@@ -1326,7 +1330,7 @@ namespace aptk
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
 					{
-						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+						std::cout << head->h1n()<< " -- "<< head->alt_h1n()<< " -- "<< head->alt_2_h1n()<< " -- "
 							<< head->GC()<<" -- "<<head->gn_unit() << std::endl;// <<" -- " << m_open.size()<<std::endl;
 						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
@@ -1341,30 +1345,13 @@ namespace aptk
 					// static struct rusage usage_report;
 					while (head)
 					{
-						// bool timer = false;
-						// if (generated() % 100000 < 100){
-						// 	auto start = std::chrono::steady_clock::now();
-						// 	getrusage(RUSAGE_SELF, &usage_report);
-						// 	auto end = std::chrono::steady_clock::now();
-						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
-						// 	std::chrono::duration<double, std::milli> duration = end - start;
-						// 	std::cout << duration.count() <<std::endl;
-						// 	timer = true;
-						// 	// if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
-						// 	// 	// std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: counterval: "<<counter<<std::endl;
-						// 	// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
-						// 	// 	std::cout << "Search: Memory limit exceeded." << std::endl;
-						// 	// 	return NULL;
-						// 	// }
-						// }
-						// auto start = std::chrono::steady_clock::now();
+
 						if (head->already_expanded())
 						{
 							head = get_node();
 							continue;
 						}
 
-						// record_count_h(head);
 						if (head->gn() >= max_depth())
 						{
 							close(head);
@@ -1397,9 +1384,12 @@ namespace aptk
 							if (m_verbose)
 								std::cout << "Already in CLOSED" << std::endl;
 #endif
-							if (head->m_pop_count == 2 || head->m_open_delete == 1)
+							// if (head->m_pop_count == 2 || head->m_open_delete == 1)
+							int pc = head->m_pop_count;
+							int od = head->m_open_delete;
+							if ( pc + od == 3 ) //if expanded, pc value must be 1 when od is 2
 								delete head;
-							else 
+							else
 							{
 								head->m_open_delete++;
 								delete head->state();
