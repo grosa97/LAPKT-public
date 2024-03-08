@@ -36,6 +36,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <vector>
 #include <deque>
 #include <algorithm>
+#include <limits>
 
 namespace aptk
 {
@@ -258,26 +259,26 @@ namespace aptk
 				if (n->partition() == std::numeric_limits<unsigned>::max())
 					return;
 
-				if (n->parent() != nullptr && n->partition() == n->parent()->partition())
-				{
-					float temp = 0;
-					std::vector<unsigned> bot3 = cover_compute_tuples_1_op(n, h_val);
-					// if (m_arity == 2)
-					//	cover_compute_tuples_2_op(n, bot3, h_val);
+				// if (n->parent() != nullptr && n->partition() == n->parent()->partition())
+				// {
+				// 	float temp = 0;
+				// 	std::vector<unsigned> bot3 = cover_compute_tuples_1_op(n, h_val);
+				// 	// if (m_arity == 2)
+				// 	//	cover_compute_tuples_2_op(n, bot3, h_val);
 
-					//if (temp < -0.3)
-					//h_val += temp;
-				}
-				else
-				{
-					float temp = 0;
-					cover_compute_tuples_1(n, h_val);
+				// 	//if (temp < -0.3)
+				// 	//h_val += temp;
+				// }
+				// else
+				//{
+				// float temp = 0;
+				cover_compute_tuples_1(n, h_val);
 					// if (m_arity == 2)
 					//cover_compute_tuples_2(n, h_val);
 
 					//if (temp < -0.3)
 					//	h_val += temp;
-				}
+				//}
 			}
 
 			/**
@@ -915,6 +916,9 @@ namespace aptk
 
 				float m = 0;
 
+				std::vector<int>& tuple_counts_partition = m_tuple_counts_by_partition_2[n->partition()];
+
+				int min_count = std::numeric_limits<int>::max();
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 
@@ -932,18 +936,25 @@ namespace aptk
 
 					tuple_idx = tuple2idx(tuple, arity);
 
-					if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
-						tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+					// if (tuple_counts_partition[tuple_idx] > 0)
+					tuple_count = tuple_counts_partition[tuple_idx]++; //because set as 0 by default
 						// tuple_count = -1;
-					else 
-					{
-						m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-						tuple_count = 0;
-					}
+					// else
+					// {
+					// 	tuple_counts_partition[tuple_idx] = 1;
+					// 	tuple_count = 0;
+					// }
 
-					m = -(float)1 / (1 + tuple_count);
-					if (m < metric_value_2)
+					// m = -(float)1 / (1 + tuple_count);
+					// if (m < metric_value_2)
+					// 	metric_value_2 = m;
+
+					//compare counts to avoid redundant division calculation
+					if (tuple_count < min_count)
+					{
+						m = -(float)1 / (1 + tuple_count);
 						metric_value_2 = m;
+					}
 				}
 
 				metric_value += metric_value_2;

@@ -1300,24 +1300,16 @@ namespace aptk
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 
-						//static struct rusage usage_report;
-						//if (generated() % 1000 == 0){
-						//	// auto start = std::chrono::steady_clock::now();
-						//	getrusage(RUSAGE_SELF, &usage_report);
-						//	// auto end = std::chrono::steady_clock::now();
-						//	// std::cout<<"DEBUG: MEMORY MEASUREMENT: "<< (usage_report.ru_maxrss / 1024) <<std::endl;
-						//	// std::chrono::duration<double, std::milli> duration = end - start;
-						//	// std::cout << duration.count() <<std::endl;
-						//	if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
-//
-//							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
-//							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
-//							m_memory_stop = true;
-//							// 	// std::cout <<(usage_report.ru_maxrss / 1024)<<std::endl;
-//							// 	std::cout << "Search: Memory limit exceeded." << std::endl;
-//							// 	return NULL;
-//							}
-//						}
+						static struct rusage usage_report;
+						if (generated() % 1000 == 0){
+							getrusage(RUSAGE_SELF, &usage_report);
+							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+
+							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+							m_memory_stop = true;
+							}
+						}
 						open_node(n);
 					}
 					inc_eval();

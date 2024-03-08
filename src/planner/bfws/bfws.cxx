@@ -340,9 +340,11 @@ void BFWS::solve()
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
 
-		//if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
-		if (false)
+		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
 		{
+
+			std::exit(14); //for external backend planners
+
 			std::cout << "Starting search with BFWS(novel,land,h_ff)..." << std::endl;
 
 			BFWS_w_hlm_hadd bfs_engine(search_prob, m_verbose);
