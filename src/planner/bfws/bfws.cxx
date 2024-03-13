@@ -334,6 +334,7 @@ void BFWS::solve()
 		// bfs_engine.set_use_h3n(true);
 
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
+		bfs_engine.set_budget(1600);
 
 		bfs_engine.delete_heuristics();
 
