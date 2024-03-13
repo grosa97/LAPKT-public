@@ -952,6 +952,7 @@ namespace aptk
 					//compare counts to avoid redundant division calculation
 					if (tuple_count < min_count)
 					{
+						min_count = tuple_count;
 						m = -(float)1 / (1 + tuple_count);
 						metric_value_2 = m;
 					}
