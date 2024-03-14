@@ -919,6 +919,7 @@ namespace aptk
 				std::vector<int>& tuple_counts_partition = m_tuple_counts_by_partition_2[n->partition()];
 
 				int min_count = std::numeric_limits<int>::max();
+				int min_effect_count = std::numeric_limits<int>::max();
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 
@@ -938,6 +939,11 @@ namespace aptk
 
 					// if (tuple_counts_partition[tuple_idx] > 0)
 					tuple_count = tuple_counts_partition[tuple_idx]++; //because set as 0 by default
+
+					if (std::find(added.begin(), added.end(), tuple[0]) != added.end() && tuple_count < min_effect_count)
+					{
+						min_effect_count = tuple_count;
+					}
 						// tuple_count = -1;
 					// else
 					// {
@@ -953,12 +959,13 @@ namespace aptk
 					if (tuple_count < min_count)
 					{
 						min_count = tuple_count;
-						m = -(float)1 / (1 + tuple_count);
-						metric_value_2 = m;
+						// m = -(float)1 / (1 + tuple_count);
+						// metric_value_2 = min_count;
 					}
 				}
 
-				metric_value += metric_value_2;
+				metric_value = (float)min_count + ((float)min_effect_count / 10000);
+				// metric_value = (float)min_effect_count + ((float)min_count / 10000);
 
 				if (!has_state)
 				{
