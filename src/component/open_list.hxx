@@ -162,11 +162,12 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				int m_alt_counter;
 				int m_alt_interval;
 				float m_th_value;
+				int m_insert_iter_limit;
 
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
-				m_alt_counter(0), m_alt_interval(2)
+				m_alt_counter(0), m_alt_interval(2), m_insert_iter_limit(5)
 				{
 					m_th_value = -(float)1 / (1+UINT8_MAX);
 					// int max_depth = 17;
@@ -201,27 +202,30 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					}
 					else
 					{
-						static std::uniform_int_distribution<> distrib(m_last_layer_first_element_1, m_size_limit_1);
-						int r_i = distrib(m_gen)-1;
-						if (m_node_comp(m_heap_1[r_i], n))
-						{
-							// int r_diff = m_size_limit - r;
-							// if (n->h1n() < -0.9)
-							// {
-							// 	std::cout <<"==="<<std::endl;
-							// 	std::cout << top()->h1n()<<std::endl;
-							// }
-							d_1 = m_heap_1[r_i];
-							m_heap_1[r_i] = n;
-							std::push_heap(m_heap_1.begin(), m_heap_1.begin()+r_i+1, Node_Comp());
-							// delete d;
-							// if (n->h1n() < -0.9)
-							// 	std::cout << top()->h1n()<<std::endl;
-						}
-						else
-							d_1 = n;
-							// delete n;
 
+						bool insert = true;
+						Node* temp_n = n;
+						int i = 0;
+
+						while (insert && i<m_insert_iter_limit)
+						{
+							i++;
+							static std::uniform_int_distribution<> distrib(m_last_layer_first_element_1, m_size_limit_1);
+							int r_i = distrib(m_gen)-1;
+							if (m_node_comp(m_heap_1[r_i], temp_n))
+							{
+								d_1 = m_heap_1[r_i];
+								m_heap_1[r_i] = temp_n;
+								std::push_heap(m_heap_1.begin(), m_heap_1.begin()+r_i+1, Node_Comp());
+								//insert remains true
+								temp_n = d_1;  //removed node is node_n for trying reinsertion in next iteration
+							}
+							else
+							{
+								d_1 = temp_n;
+								insert = false;
+							}
+						}
 						d_1->m_open_delete++;
 					}
 
@@ -234,27 +238,30 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						}
 						else
 						{
-							static std::uniform_int_distribution<> distrib(m_last_layer_first_element_2, m_size_limit_2);
-							int r_i = distrib(m_gen)-1;
-							if (m_alt_node_comp(m_heap_2[r_i], n))
-							{
-								// int r_diff = m_size_limit - r;
-								// if (n->h1n() < -0.9)
-								// {
-								// 	std::cout <<"==="<<std::endl;
-								// 	std::cout << top()->h1n()<<std::endl;
-								// }
-								d_2 = m_heap_2[r_i];
-								m_heap_2[r_i] = n;
-								std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
-								
-								// delete d;
-								// if (n->h1n() < -0.9)
-								// 	std::cout << top()->h1n()<<std::endl;
+
+							bool insert = true;
+							Node* temp_n = n;
+							int i = 0;
+
+							while (insert && i<m_insert_iter_limit){
+							// while (insert && i<1){
+								i++;
+								static std::uniform_int_distribution<> distrib(m_last_layer_first_element_2, m_size_limit_2);
+								int r_i = distrib(m_gen)-1;
+								if (m_alt_node_comp(m_heap_2[r_i], temp_n))
+								{
+									d_2 = m_heap_2[r_i];
+									m_heap_2[r_i] = temp_n;
+									std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
+									//insert remains true
+									temp_n = d_2;  //removed node is node_n for trying reinsertion in next iteration
+								}
+								else
+								{
+									d_2 = temp_n;
+									insert = false;
+								}
 							}
-							else
-								d_2 = n;
-								// delete n;
 							d_2->m_open_delete++;
 						}
 					//}
