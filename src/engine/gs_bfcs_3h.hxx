@@ -104,7 +104,8 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false) //, m_alt(false)
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false),
+						m_open_child_count(0), m_decced_parent(0)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -233,6 +234,14 @@ namespace aptk
 					if (o.m_parent == NULL)
 						return false;
 
+					//added for closed list cleanup
+					// if either of nodes has nullptr state, and
+					// if this nodes parent state has been deleted or other parent state has been deleted,
+					// then assume different node (as cannot tell whether same)
+					if (m_parent->state() == nullptr || o.m_parent->state() == nullptr)
+						return false;
+					//-----------------------------
+
 					return (m_action == o.m_action) && (*(m_parent->m_state) == *(o.m_parent->m_state));
 				}
 
@@ -250,6 +259,47 @@ namespace aptk
 					{
 						m_hash = m_state->hash();
 					}
+				}
+
+				bool no_lazy_child()
+				{
+					return m_open_child_count == 0;
+				}
+
+				void inc_lazy_child()
+				{
+					m_open_child_count++;
+				}
+
+				void dec_lazy_child()
+				{
+					if (m_open_child_count > 0)
+						m_open_child_count--;
+				}
+
+				void inc_parent_lazy_child()
+				{
+					if (m_parent != nullptr)
+					{
+						m_parent->inc_lazy_child();
+					}
+				}
+
+				void dec_parent_lazy_child()
+				{
+					if (m_parent != nullptr && !m_decced_parent)
+					{
+						m_parent->dec_lazy_child();
+						m_decced_parent = true;
+					}
+					// else if (m_decced_parent)
+					// 	std::cout << "DEBUG AAAAAAAAAAAAAAAA" <<std::endl; //DEBUG
+				}
+
+				void delete_state()
+				{
+					delete m_state;
+					m_state = nullptr;
 				}
 
 			public:
@@ -286,6 +336,10 @@ namespace aptk
 				bool m_already_expanded;
 				bool m_closed;
 				//bool m_alt;
+
+				int m_open_child_count;
+
+				bool m_decced_parent;
 			};
 
 
@@ -760,78 +814,13 @@ namespace aptk
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					m_first_h->eval(candidate, candidate->h1n());		
-					// candidate->h3n() = candidate->h1n();
-
-
-					// if (candidate->h1n() > m_max_novelty)
-					// {
-					// 	m_third_h->eval(candidate, candidate->h1n());
-					// }
-					// else
-					// {
-					// 	if (m_h3_only_max_nov)
-					// 		m_third_h->update_counts(candidate);
-					// 	else
-					// 		m_third_h->eval(candidate, candidate->h1n());
-					// }	
 				}
 
 				void eval_lf_counts(Search_Node* n)
 				{
-					//unsigned lf_count = get_lifted_counts_state(n);
-					// if (n->parent() != nullptr && !n->parent()->is_alt())
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					n->alt_h1n() = -(float)1 / (1+lf_count);
 
-						// n->alt_h1n() = lf_c_nov;
-					// if (is_alt())
-					// {
-					// 	set_alt(false);
-					// 	float lf_c_nov = -(float)1 / (1+lf_count);
-					// 	n->h1n() = lf_c_nov;
-					// }
-					// else
-					// 	set_alt(true);
-
-					// if (lf_count < 10) 
-					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
-
-					// if (lf_count > 10)  //testing good, also good with partitions in bm
-					// 	n->h1n() += 0.5;
-
-					//if (lf_count > 10)  //testing good, also good with partitions in bm 12 29865 exp
-					//	n->h1n() *= 0.9999;
-
-					//if (lf_count < 10)  //with partition seems to do well, bm 12 in 28604 expansions
-					// 	n->h1n() = -2; 
-					
-
-					// if (lf_count == 0)
-					// 	n->h1n() = -2;
-					//if (lf_count < 3) //good (also when fixed)
-					//	n->h1n() = -2;
-					//if (lf_count > 0)
-					//	n->h1n() += 0.5; //(using lf_count > 1 & adding)
-					
-					//if (lf_count < 3 && -(float)1/(lf_count + 1) < n->h1n())
-					//	n->h1n() = -(float)1/(lf_count + 1);
-					// if (lf_count < 3)
-					// 	n->h1n() += lf_c_nov;
-
-					// if (lf_count < 1) 
-					// 	n->h1n() = -2;
-					
-
-					// float lf_c_nov = -(float)1 / (1+lf_count);
-					// if (lf_c_nov < n->h1n())
-					// 	n->h1n() = lf_c_nov;
-
-					// float lf_c_nov = 1000*-(float)1 / (1+lf_count) ;
-
-					// if (lf_count < 1)
-					// 	n->h3n() = 0;
-					// else 
-					// 	n->h3n() = 1;
 				}
 
 
@@ -870,7 +859,15 @@ namespace aptk
 						}
 						// Otherwise, we put it into Open and remove
 						// n2 from closed
-						this->closed().erase(this->closed().retrieve_iterator(n2));
+						
+						//added for closed list cleanup
+						// do not erase if n2 state is nullptr (was deleted)
+						// and thus iterator is nullptr as well
+						typename std::unordered_multimap<size_t, Search_Node*>::const_iterator n2_it = this->closed().retrieve_iterator(n2);
+						if (n2_it != nullptr)
+							this->closed().erase(n2_it);
+						//---------------------------------------------------
+						// this->closed().erase(n2_it);
 					}
 					return false;
 				}
@@ -887,6 +884,7 @@ namespace aptk
 
 				void open_node(Search_Node *n)
 				{
+					n->inc_parent_lazy_child();
 					m_open.insert(n);
 					inc_gen();
 					// m_generated_count_by_novelty[n->h1n() - 1]++;
@@ -1366,7 +1364,13 @@ namespace aptk
 
 						// Generate state
 						if (!head->has_state())
+						{
 							head->set_state(m_problem.next(*(head->parent()->state()), head->action()));
+							// head->parent()->dec_lazy_child();
+							head->dec_parent_lazy_child();
+							if (head->parent()->no_lazy_child())
+								head->parent()->delete_state();
+						}
 
 						if (m_problem.goal(*(head->state())))
 						{

@@ -266,14 +266,30 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 					if (d_1 != nullptr && d_1 == d_2)
 					{
+						Node* d_1_p = d_1->parent();
+						d_1->dec_parent_lazy_child();
 						delete d_1;
 						d_1 = d_2 = nullptr;
+						if (d_1_p->no_lazy_child())
+							d_1_p->delete_state();
 					}
 					
 					if (d_1 != nullptr && d_1->m_open_delete == 2)
+					{
+						Node* d_1_p = d_1->parent();
+						d_1->dec_parent_lazy_child();
 						delete d_1;
+						if (d_1_p->no_lazy_child())
+							d_1_p->delete_state();
+					}
 					if (d_2 != nullptr && d_2->m_open_delete == 2)
+					{
+						Node* d_2_p = d_2->parent();
+						d_2->dec_parent_lazy_child();
 						delete d_2;
+						if (d_2_p->no_lazy_child())
+							d_2_p->delete_state();
+					}
 
 				}
 
