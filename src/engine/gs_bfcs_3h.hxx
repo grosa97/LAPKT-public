@@ -317,45 +317,21 @@ namespace aptk
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 6000;
+					// m_memory_budget = 6000;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
-					m_third_h = new Third_Heuristic(search_problem);
+					// m_third_h = new Third_Heuristic(search_problem);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
-					//max depth determined size of list (2^17 = 262143)					
+					//max depth determined size of list (2^17 = 262143)			
 					int OPEN_MAX_DEPTH =18;
 					m_open.init(OPEN_MAX_DEPTH);
-
-					std::unordered_set<std::string> unique_signatures;
-					m_fluent_to_feature.resize(this->problem().task().num_fluents());
-					unsigned i_val = 0;
-					for (const Fluent* f: this->m_problem.task().fluents())
-					{
-						std::string s = signature_to_lifted_fl(f->signature());
-						if (unique_signatures.find(s) == unique_signatures.end())
-						{
-							unique_signatures.insert(s);
-							m_sign_to_int[s] = i_val++;
-						}
-						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
-					}
-					m_sign_count = i_val;
-
-					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
-					// for (auto f: this->problem().task().goal())
-					// {
-					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
-					// }
-
-
-
-
 				}
 
 				virtual ~GS_BFCS_3H()
 				{
+					delete_heuristics();
 					delete_lists_nodes();
 					// while (!m_open.empty())
 					// {
@@ -402,26 +378,45 @@ namespace aptk
 					if (m_relevant_fluents_h != nullptr)
 						delete m_relevant_fluents_h;
 					m_relevant_fluents_h = nullptr;
-					if (m_expanded_count_by_novelty != nullptr)
-						free(m_expanded_count_by_novelty);
-					if (m_generated_count_by_novelty != nullptr)
-						free(m_generated_count_by_novelty);
-					if (m_novelty_count_plan != nullptr)
-						free(m_novelty_count_plan);
+					// if (m_expanded_count_by_novelty != nullptr)
+					// 	free(m_expanded_count_by_novelty);
+					// if (m_generated_count_by_novelty != nullptr)
+					// 	free(m_generated_count_by_novelty);
+					// if (m_novelty_count_plan != nullptr)
+					// 	free(m_novelty_count_plan);
 				}
+
+				// void delete_lists_nodes()
+				// {
+				// 	while (!m_open.empty())
+				// 	{
+				// 		Search_Node *n = m_open.pop();
+				// 		if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+				// 			delete n;
+				// 		// else
+				// 		// {
+				// 		// 	//n->m_pop_count++;
+				// 		// 	//n->m_open_delete++;
+				// 		// }
+				// 	}
+				// 	for (typename Closed_List_Type::iterator i = m_closed.begin();
+				// 			 i != m_closed.end(); i++)
+				// 	{
+				// 		delete i->second;
+				// 	}
+
+				// 	m_closed.clear();
+				// }
 
 				void delete_lists_nodes()
 				{
 					while (!m_open.empty())
 					{
+						//CODE FOR SINGLE PRUNED OPEN ----	
 						Search_Node *n = m_open.pop();
-						if ( !n->m_closed && (n->m_pop_count == 2 || n->m_open_delete == 1))
+						if ( !n->m_closed )
 							delete n;
-						// else
-						// {
-						// 	//n->m_pop_count++;
-						// 	//n->m_open_delete++;
-						// }
+						//-----------
 					}
 					for (typename Closed_List_Type::iterator i = m_closed.begin();
 							 i != m_closed.end(); i++)
@@ -528,7 +523,7 @@ namespace aptk
 					m_max_depth = B;
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL, m_problem.num_actions());
 					// Init Novelty
-					m_third_h->init();
+					// m_third_h->init();
 					m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
 
 					if (m_use_rp)
@@ -560,9 +555,9 @@ namespace aptk
 							eval_relevant_fluents(m_root);
 						}
 						eval_count_based(m_root);
-						// eval_lf_counts(m_root);
-						if (m_use_novelty)
-							eval_novel(m_root);
+
+						// if (m_use_novelty)
+						// 	eval_novel(m_root);
 
 						m_root->undo_land_graph(m_lgm);
 
@@ -580,8 +575,8 @@ namespace aptk
 							eval_relevant_fluents(m_root);
 						}
 
-						if (m_use_novelty)
-							eval_novel(m_root);
+						// if (m_use_novelty)
+						// 	eval_novel(m_root);
 						
 						// if (m_use_h3n)
 							// eval_count_based(m_root);
@@ -750,102 +745,19 @@ namespace aptk
 				// 	m_first_h->eval(candidate, candidate->h1n());
 				// }
 
-				void eval_novel(Search_Node *candidate)
-				{
-					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					m_third_h->eval(candidate, candidate->alt_h1n());
-				}
+				// void eval_novel(Search_Node *candidate)
+				// {
+				// 	candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+				// 	m_third_h->eval(candidate, candidate->alt_h1n());
+				// }
 
 				void eval_count_based(Search_Node *candidate)
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					m_first_h->eval(candidate, candidate->h1n());		
-					// candidate->h3n() = candidate->h1n();
-
-
-					// if (candidate->h1n() > m_max_novelty)
-					// {
-					// 	m_third_h->eval(candidate, candidate->h1n());
-					// }
-					// else
-					// {
-					// 	if (m_h3_only_max_nov)
-					// 		m_third_h->update_counts(candidate);
-					// 	else
-					// 		m_third_h->eval(candidate, candidate->h1n());
-					// }	
-				}
-
-				void eval_lf_counts(Search_Node* n)
-				{
-					//unsigned lf_count = get_lifted_counts_state(n);
-					// if (n->parent() != nullptr && !n->parent()->is_alt())
-					unsigned lf_count = get_lifted_counts_state_partition(n);
-					n->alt_h1n() = -(float)1 / (1+lf_count);
-
-						// n->alt_h1n() = lf_c_nov;
-					// if (is_alt())
-					// {
-					// 	set_alt(false);
-					// 	float lf_c_nov = -(float)1 / (1+lf_count);
-					// 	n->h1n() = lf_c_nov;
-					// }
-					// else
-					// 	set_alt(true);
-
-					// if (lf_count < 10) 
-					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
-
-					// if (lf_count > 10)  //testing good, also good with partitions in bm
-					// 	n->h1n() += 0.5;
-
-					//if (lf_count > 10)  //testing good, also good with partitions in bm 12 29865 exp
-					//	n->h1n() *= 0.9999;
-
-					//if (lf_count < 10)  //with partition seems to do well, bm 12 in 28604 expansions
-					// 	n->h1n() = -2; 
-					
-
-					// if (lf_count == 0)
-					// 	n->h1n() = -2;
-					//if (lf_count < 3) //good (also when fixed)
-					//	n->h1n() = -2;
-					//if (lf_count > 0)
-					//	n->h1n() += 0.5; //(using lf_count > 1 & adding)
-					
-					//if (lf_count < 3 && -(float)1/(lf_count + 1) < n->h1n())
-					//	n->h1n() = -(float)1/(lf_count + 1);
-					// if (lf_count < 3)
-					// 	n->h1n() += lf_c_nov;
-
-					// if (lf_count < 1) 
-					// 	n->h1n() = -2;
-					
-
-					// float lf_c_nov = -(float)1 / (1+lf_count);
-					// if (lf_c_nov < n->h1n())
-					// 	n->h1n() = lf_c_nov;
-
-					// float lf_c_nov = 1000*-(float)1 / (1+lf_count) ;
-
-					// if (lf_count < 1)
-					// 	n->h3n() = 0;
-					// else 
-					// 	n->h3n() = 1;
 				}
 
 
-				// void record_count_h(Search_Node* candidate)
-				// {
-				// 	int key = (int)(-10000*candidate->h1n());
-				// 	if (m_h1_record.find(key) != m_h1_record.end()) {
-				// 		// Key found in map, increment its value by 1
-				// 		m_h1_record[key]++;
-				// 	} else {
-				// 		// Key not found in map, set its value to 1
-				// 		m_h1_record[key] = 1;
-				// 	}
-				// }
 
 				void printMap(const std::unordered_map<int, unsigned int>& myMap) {
 					std::cout << "--- count h1 values:" <<std::endl;
@@ -897,287 +809,7 @@ namespace aptk
 				// 	return this->problem().task().fluents()[ai]->signature();
 				// }
 
-				std::string signature_to_lifted_fl(std::string signature)
-				{
-					std::stringstream ss(signature);
 
-					std::string lfl;
-					if (std::getline(ss, lfl, '_'))
-						return lfl;
-					return "";
-				}
-
-				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, unsigned, VectorHash>& myMap, const std::vector<int>& keyToFind) {
-					auto it = myMap.find(keyToFind);
-					if (it != myMap.end()) {
-						return &(it->first); // Return pointer to the key vector
-					} else {
-						return nullptr; // Key not found, return null pointer
-					}
-				}
-
-				const std::vector<int>* get_key_ptr(const std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& myMap, const std::vector<int>& keyToFind) {
-					auto it = myMap.find(keyToFind);
-					if (it != myMap.end()) {
-						return &(it->first); // Return pointer to the key vector
-					} else {
-						return nullptr; // Key not found, return null pointer
-					}
-				}
-
-				unsigned get_lifted_counts_state(Search_Node* n)
-				{
-					if (n->parent() == NULL) //root node
-					{
-						std::vector<int> sign_features(m_sign_count, 0);
-						for (auto f: n->state()->fluent_vec())
-							sign_features[m_fluent_to_feature[f]]++;
-						m_sign_feat_occurrences[sign_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, sign_features);
-						n->m_sign_features = kp;
-						return 0;			
-					}
-					unsigned feat_count_value;
-					
-					static Fluent_Vec added, deleted, temp_fv;
-					added.clear();
-					deleted.clear();	
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					
-					const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					std::vector<int> child_features(*parent_features);
-					std::unordered_set<unsigned> counted_a;
-					for (auto f: added)
-					{
-						if (counted_a.find(f) == counted_a.end())
-						{
-							counted_a.insert(f);
-							if (!n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]++;
-						}
-					}
-					std::unordered_set<unsigned> counted_d;
-					for (auto f: deleted)
-					{
-						if (counted_d.find(f) == counted_d.end())
-						{
-							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
-					}
-					auto it = m_sign_feat_occurrences.find(child_features);
-					if (it != m_sign_feat_occurrences.end())
-					{
-						feat_count_value = m_sign_feat_occurrences[child_features]++;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-					}
-					else
-					{
-						m_sign_feat_occurrences[child_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
-					}
-
-					// std::unordered_set<unsigned> counted;
-					// std::vector<int> child_features(m_sign_count, 0);
-					// // const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					// // std::vector<int> child_features(*parent_features);
-					// // for (auto f: added)
-					// // 	child_features[m_fluent_to_feature[f]]++;
-					// // for (auto f: deleted)
-					// // {
-					// // 	if (child_features[m_fluent_to_feature[f]] > 0)
-					// // 		child_features[m_fluent_to_feature[f]]--;
-					// // }
-					
-					// for (auto f: n->parent()->state()->fluent_vec())
-					// {
-					// 	if (counted.find(f) != counted.end())
-					// 	{
-					// 		counted.insert(f);
-					// 		child_features[m_fluent_to_feature[f]]++;
-					// 	}
-					// }
-					// auto it = m_sign_feat_occurrences.find(child_features);
-					// if (it != m_sign_feat_occurrences.end())
-					// {
-					// 	feat_count_value = m_sign_feat_occurrences[child_features]++;
-					// 	const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-					// 	n->m_sign_features = kp;
-					// }
-					// else
-					// {
-					// 	m_sign_feat_occurrences[child_features] = 1;
-					// 	const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-					// 	n->m_sign_features = kp;					
-					// }
-					return feat_count_value;
-				}
-
-				unsigned get_lifted_counts_state_partition(Search_Node* n)
-				{
-					unsigned partition = n->partition();
-					// if (m_sign_feat_partitions.find(partition) == m_sign_feat_partitions.end())
-					// {
-					// 	m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, unsigned int, VectorHash>();
-					// }
-					
-					if (m_sign_feat_partitions.size() <= partition)
-					{
-						m_sign_feat_partitions.resize(partition + 1);
-					}
-
-					if (m_sign_feat_partitions[partition].empty())
-					{
-						m_sign_feat_partitions[partition] = std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>();
-					}
-					
-					std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>& sign_feat_occurrences = m_sign_feat_partitions[partition];
-
-
-					if (n->parent() == NULL) //root node
-					{
-						std::vector<int> sign_features(m_sign_count, 0);
-						for (auto f: n->state()->fluent_vec())
-							sign_features[m_fluent_to_feature[f]]++;
-						sign_feat_occurrences[sign_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, sign_features);
-						n->m_sign_features = kp;
-						return 0;			
-					}
-					unsigned feat_count_value;
-					
-					static Fluent_Vec added, deleted, temp_fv;
-					added.clear();
-					deleted.clear();
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					
-					const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					std::vector<int> child_features(*parent_features);
-					std::unordered_set<unsigned> counted_a;
-					for (auto f: added)
-					{
-						if (counted_a.find(f) == counted_a.end())
-						{
-							counted_a.insert(f);
-							if (!n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]++;
-						}
-					}
-					std::unordered_set<unsigned> counted_d;
-					for (auto f: deleted)
-					{
-						if (counted_d.find(f) == counted_d.end())
-						{
-							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
-					}
-					auto it = sign_feat_occurrences.find(child_features);
-					if (it != sign_feat_occurrences.end())
-					{
-						if (sign_feat_occurrences[child_features] < UINT8_MAX)
-							feat_count_value = sign_feat_occurrences[child_features]++;
-						else
-							feat_count_value = UINT8_MAX;
-
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-					}
-					else
-					{
-						sign_feat_occurrences[child_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
-						feat_count_value = 0;
-					}
-
-					// unsigned alt_h2n = 0;
-					// for (int i = 0; i<m_sign_count; i++)
-					// {
-					// 	unsigned gfi = m_goal_partial_lf_feat[i];
-					// 	unsigned cfi = child_features[i];
-					// 	if (gfi > cfi)
-					// 		alt_h2n += ( gfi - cfi );
-					// }
-
-					return feat_count_value;
-				}
-
-				unsigned get_lifted_counts_p_number(Search_Node* n)
-				{
-					if (n->parent() == NULL) //root node
-					{
-						std::vector<int> sign_features(m_sign_count, 0);
-						for (auto f: n->state()->fluent_vec())
-							sign_features[m_fluent_to_feature[f]]++;
-						m_sign_feat_occurrences[sign_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, sign_features);
-						n->m_sign_features = kp;
-
-						m_sign_feat_to_p[sign_features] = m_num_lf_p++;
-						return 0;
-					}
-					unsigned feat_count_value;
-					
-					static Fluent_Vec added, deleted, temp_fv;
-					added.clear();
-					deleted.clear();
-					n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added, &deleted);
-					
-					const std::vector<int>* parent_features = n->parent()->m_sign_features;
-					std::vector<int> child_features(*parent_features);
-					std::unordered_set<unsigned> counted_a;
-					for (auto f: added)
-					{
-						if (counted_a.find(f) == counted_a.end())
-						{
-							counted_a.insert(f);
-							if (!n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]++;
-						}
-					}
-					std::unordered_set<unsigned> counted_d;
-					for (auto f: deleted)
-					{
-						if (counted_d.find(f) == counted_d.end())
-						{
-							// if (child_features[m_fluent_to_feature[f]] > 0)
-							counted_d.insert(f);
-							if (n->parent()->state()->entails(f))
-								child_features[m_fluent_to_feature[f]]--;
-						}
-					}
-
-					if (m_sign_feat_to_p.find(child_features) == m_sign_feat_to_p.end())
-						m_sign_feat_to_p[child_features] = m_num_lf_p++;
-					
-
-					auto it = m_sign_feat_occurrences.find(child_features);
-					if (it != m_sign_feat_occurrences.end())
-					{
-						feat_count_value = m_sign_feat_occurrences[child_features]++;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;
-					}
-					else
-					{
-						m_sign_feat_occurrences[child_features] = 1;
-						const std::vector<int>* kp = get_key_ptr(m_sign_feat_occurrences, child_features);
-						n->m_sign_features = kp;					
-					}
-
-					return m_sign_feat_to_p[child_features];
-					// return feat_count_value;
-				}
 
 
 				virtual void process(Search_Node *head)
@@ -1274,23 +906,23 @@ namespace aptk
 						// 	continue;
 						// }
 
-						if (m_use_novelty)
-						{
-							eval_novel(n);
-							if (m_use_novelty_pruning)
-								if (n->h1n() > m_max_novelty)
-								{
-#ifdef DEBUG
-									if (m_verbose)
-									{
-										std::cout << "h_add is infinite" << std::endl;
-									}
-#endif
-									inc_dead_end();
-									delete n;
-									continue;
-								}
-						}
+// 						if (m_use_novelty)
+// 						{
+// 							eval_novel(n);
+// 							if (m_use_novelty_pruning)
+// 								if (n->h1n() > m_max_novelty)
+// 								{
+// #ifdef DEBUG
+// 									if (m_verbose)
+// 									{
+// 										std::cout << "h_add is infinite" << std::endl;
+// 									}
+// #endif
+// 									inc_dead_end();
+// 									delete n;
+// 									continue;
+// 								}
+// 						}
 
 						// if (m_use_h3n) 
 						// 	eval_count_based(n);
@@ -1300,16 +932,16 @@ namespace aptk
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 
-						static struct rusage usage_report;
-						if (generated() % 1000 == 0){
-							getrusage(RUSAGE_SELF, &usage_report);
-							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+						// static struct rusage usage_report;
+						// if (generated() % 1000 == 0){
+						// 	getrusage(RUSAGE_SELF, &usage_report);
+						// 	if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 
-							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
-							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
-							m_memory_stop = true;
-							}
-						}
+						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+						// 	std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+						// 	m_memory_stop = true;
+						// 	}
+						// }
 						open_node(n);
 					}
 					inc_eval();
@@ -1389,14 +1021,16 @@ namespace aptk
 							if (m_verbose)
 								std::cout << "Already in CLOSED" << std::endl;
 #endif
-							if (head->m_pop_count == 2 || head->m_open_delete == 1)
-								delete head;
-							else 
-							{
-								head->m_open_delete++;
-								delete head->state();
-								head->set_state(nullptr);
-							}
+							// if (head->m_pop_count == 2 || head->m_open_delete == 1)
+							// 	delete head;
+							// else 
+							// {
+							// 	head->m_open_delete++;
+							// 	delete head->state();
+							// 	head->set_state(nullptr);
+							// }
+
+							delete head;
 
 							head = get_node();
 							continue;
@@ -1419,7 +1053,7 @@ namespace aptk
 
 				void set_arity(float v, unsigned g = 0) { 
 					m_first_h->set_arity(1, g); 
-					m_third_h->set_arity(2, g);
+					// m_third_h->set_arity(2, g);
 					
 					}
 				// void set_arity_h3(float v, unsigned g = 0) { m_third_h->set_arity(v, g); }
@@ -1559,7 +1193,7 @@ namespace aptk
 				const Search_Model &m_problem;
 				First_Heuristic *m_first_h;
 				Second_Heuristic *m_second_h;
-				Third_Heuristic *m_third_h;
+				// Third_Heuristic *m_third_h;
 				Relevant_Fluents_Heuristic *m_relevant_fluents_h;
 
 				Open_List_Type m_open;
@@ -1601,11 +1235,11 @@ namespace aptk
 				int m_sign_count;
 				std::unordered_map<std::string, unsigned> m_sign_to_int;
 				// std::unordered_map<unsigned, unsigned> m_fluent_to_feature;
-				std::vector<unsigned> m_fluent_to_feature;
-				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
-				// std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
-				std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
-				std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
+				// std::vector<unsigned> m_fluent_to_feature;
+				// std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_occurrences;
+				// // std::unordered_map<unsigned, std::unordered_map<std::vector<int>, unsigned int, VectorHash>> m_sign_feat_partitions;
+				// std::vector<std::unordered_map<std::vector<int>, uint_fast8_t, VectorHash>> m_sign_feat_partitions;
+				// std::unordered_map<std::vector<int>, unsigned int, VectorHash> m_sign_feat_to_p;
 				unsigned m_num_lf_p;
 
 				int m_memory_budget;
