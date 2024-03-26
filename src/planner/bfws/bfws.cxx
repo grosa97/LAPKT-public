@@ -332,16 +332,17 @@ void BFWS::solve()
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
-
+		// bfs_engine.set_budget(1600);
+		
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
-		bfs_engine.set_budget(1600);
 
 		bfs_engine.delete_heuristics();
 
 		std::cout << "Fast-BFS search completed in " << bfs_t << " secs" << std::endl;
 
 
-		if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
+		// if (!m_found_plan && (m_search_alg.compare("BFCS-1") == 0))
+		if (false)
 		{
 
 			std::exit(14); //for external backend planners
