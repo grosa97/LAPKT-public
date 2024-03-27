@@ -919,6 +919,9 @@ namespace aptk
 				std::vector<int>& tuple_counts_partition = m_tuple_counts_by_partition_2[n->partition()];
 
 				int min_count = std::numeric_limits<int>::max();
+
+				std::vector<bool> check_dupl(m_num_fluents, false);
+				
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 
@@ -936,6 +939,12 @@ namespace aptk
 
 					tuple_idx = tuple2idx(tuple, arity);
 
+					if (check_dupl[tuple_idx] == false)
+						check_dupl[tuple_idx] = true;
+					else
+						continue;
+
+
 					// if (tuple_counts_partition[tuple_idx] > 0)
 					tuple_count = tuple_counts_partition[tuple_idx]++; //because set as 0 by default
 						// tuple_count = -1;
@@ -951,14 +960,16 @@ namespace aptk
 
 					//compare counts to avoid redundant division calculation
 					if (tuple_count < min_count)
-					{
 						min_count = tuple_count;
-						m = -(float)1 / (1 + tuple_count);
-						metric_value_2 = m;
-					}
+					// {
+					// 	min_count = tuple_count;
+					// 	m = -(float)1 / (1 + tuple_count);
+					// 	metric_value_2 = m;
+					// }
 				}
 
-				metric_value += metric_value_2;
+				// metric_value += metric_value_2;
+				metric_value = min_count;
 
 				if (!has_state)
 				{
