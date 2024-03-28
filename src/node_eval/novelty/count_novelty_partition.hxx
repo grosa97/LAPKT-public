@@ -136,7 +136,7 @@ namespace aptk
 				//int oldSize = m_tuple_counts_by_partition_2.size();
 
 				// Resize the vector
-				m_tuple_counts_by_partition_2.resize(partition_size + 1);
+				// m_tuple_counts_by_partition_2.resize(partition_size + 1);
 
 					// // Add unordered maps at the new indices
 					// for (int i = oldSize; i < (partition_size + 1); ++i) {
@@ -160,7 +160,7 @@ namespace aptk
 				
 			// }
 
-			virtual void eval(Search_Node *n, float &h_val)
+			virtual void eval(Search_Node *n, unsigned &h_val)
 			{
 				compute(n, h_val);
 
@@ -228,32 +228,32 @@ namespace aptk
 				// 	m_tuple_counts_by_partition_1[n->partition()] = std::unordered_map<int, int>();
 			}
 
-			void check_table_size_2(Search_Node *n)
-			{
+			// void check_table_size_2(Search_Node *n)
+			// {
 
-				if (m_partition_size_2 < n->partition())
-				{
-					// m_nodes_tuples_by_partition.resize(n->partition() + 1);
-					// m_tuple_counts_by_partition.resize(n->partition() + 1);
+			// 	if (m_partition_size_2 < n->partition())
+			// 	{
+			// 		// m_nodes_tuples_by_partition.resize(n->partition() + 1);
+			// 		// m_tuple_counts_by_partition.resize(n->partition() + 1);
 
-					m_tuple_counts_by_partition_2.resize(n->partition() + 1);
+			// 		m_tuple_counts_by_partition_2.resize(n->partition() + 1);
 
-					m_partition_size_2 = n->partition();
+			// 		m_partition_size_2 = n->partition();
 
-				}
+			// 	}
 
-				// if (m_nodes_tuples_by_partition[n->partition()].empty())
-				// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
+			// 	// if (m_nodes_tuples_by_partition[n->partition()].empty())
+			// 	// 	m_nodes_tuples_by_partition[n->partition()].resize(m_num_tuples, NULL);
 
-				if (m_tuple_counts_by_partition_2[n->partition()].empty())
-					m_tuple_counts_by_partition_2[n->partition()].resize(m_num_tuples_2, 0);
+			// 	if (m_tuple_counts_by_partition_2[n->partition()].empty())
+			// 		m_tuple_counts_by_partition_2[n->partition()].resize(m_num_tuples_2, 0);
 
-				// if (m_tuple_counts_by_partition_2[n->partition()].empty())
-				// 	m_tuple_counts_by_partition_2[n->partition()] = std::unordered_map<int, int>();
-			}
+			// 	// if (m_tuple_counts_by_partition_2[n->partition()].empty())
+			// 	// 	m_tuple_counts_by_partition_2[n->partition()] = std::unordered_map<int, int>();
+			// }
 			
 
-			void compute(Search_Node *n, float &h_val)
+			void compute(Search_Node *n, unsigned &h_val)
 			{
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
@@ -364,172 +364,172 @@ namespace aptk
 				}
 			}
 
-			std::vector<unsigned> cover_compute_tuples_1_op(Search_Node *n, float &metric_value)
-			{
-				metric_value = 0;
-				unsigned arity = 1;
-				// assert(arity == 1);
+			// std::vector<unsigned> cover_compute_tuples_1_op(Search_Node *n, float &metric_value)
+			// {
+			// 	metric_value = 0;
+			// 	unsigned arity = 1;
+			// 	// assert(arity == 1);
 				
 
-				if (n->partition() == std::numeric_limits<unsigned>::max())
-					return std::vector<unsigned>();
+			// 	if (n->partition() == std::numeric_limits<unsigned>::max())
+			// 		return std::vector<unsigned>();
 
-				check_table_size_1(n);
+			// 	check_table_size_1(n);
 
-				const bool has_state = n->has_state();
-				Fluent_Vec fl;
-				if (n->parent() == NULL)
-				{
-					fl = n->state()->fluent_vec();
-				}
-				else
-				{
-					static Fluent_Vec new_atom_vec;
-					const Action *a = m_strips_model.actions()[n->action()];
-					if (a->has_ceff())
-					{
-						static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
-						new_atom_set.reset();
-						new_atom_vec.clear();
-						for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
-						{
-							if (new_atom_set.isset(*it))
-								continue;
+			// 	const bool has_state = n->has_state();
+			// 	Fluent_Vec fl;
+			// 	if (n->parent() == NULL)
+			// 	{
+			// 		fl = n->state()->fluent_vec();
+			// 	}
+			// 	else
+			// 	{
+			// 		static Fluent_Vec new_atom_vec;
+			// 		const Action *a = m_strips_model.actions()[n->action()];
+			// 		if (a->has_ceff())
+			// 		{
+			// 			static Fluent_Set new_atom_set(m_strips_model.num_fluents() + 1);
+			// 			new_atom_set.reset();
+			// 			new_atom_vec.clear();
+			// 			for (Fluent_Vec::const_iterator it = a->add_vec().begin(); it != a->add_vec().end(); it++)
+			// 			{
+			// 				if (new_atom_set.isset(*it))
+			// 					continue;
 
-							new_atom_vec.push_back(*it);
-							new_atom_set.set(*it);
-						}
-						for (unsigned i = 0; i < a->ceff_vec().size(); i++)
-						{
-							Conditional_Effect *ce = a->ceff_vec()[i];
-							if (ce->can_be_applied_on(*(n->parent()->state())))
-								for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
-								{
-									{
-										if (new_atom_set.isset(*it))
-											continue;
+			// 				new_atom_vec.push_back(*it);
+			// 				new_atom_set.set(*it);
+			// 			}
+			// 			for (unsigned i = 0; i < a->ceff_vec().size(); i++)
+			// 			{
+			// 				Conditional_Effect *ce = a->ceff_vec()[i];
+			// 				if (ce->can_be_applied_on(*(n->parent()->state())))
+			// 					for (Fluent_Vec::iterator it = ce->add_vec().begin(); it != ce->add_vec().end(); it++)
+			// 					{
+			// 						{
+			// 							if (new_atom_set.isset(*it))
+			// 								continue;
 
-										new_atom_vec.push_back(*it);
-										new_atom_set.set(*it);
-									}
-								}
-						}
-					}
+			// 							new_atom_vec.push_back(*it);
+			// 							new_atom_set.set(*it);
+			// 						}
+			// 					}
+			// 			}
+			// 		}
 
-				const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
-				fl = add;
-				}
+			// 	const Fluent_Vec &add = a->has_ceff() ? new_atom_vec : a->add_vec();
+			// 	fl = add;
+			// 	}
 
 				
 
-				bool new_covers = false;
+			// 	bool new_covers = false;
 
-				std::vector<unsigned> tuple(arity);
+			// 	std::vector<unsigned> tuple(arity);
 
-				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
+			// 	unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
 
 
-				float m = 0;
+			// 	float m = 0;
 
-				std::map<unsigned, unsigned> bot3;
+			// 	std::map<unsigned, unsigned> bot3;
 
-				for (unsigned idx = 0; idx < n_combinations; idx++)
-				{
-					/**
-					 * get tuples from indexes
-					 */
-					idx2tuple(tuple, fl, idx, arity);
+			// 	for (unsigned idx = 0; idx < n_combinations; idx++)
+			// 	{
+			// 		/**
+			// 		 * get tuples from indexes
+			// 		 */
+			// 		idx2tuple(tuple, fl, idx, arity);
 
-					/**
-					 * Check if tuple is covered
-					 */
+			// 		/**
+			// 		 * Check if tuple is covered
+			// 		 */
 
-					unsigned tuple_idx;
-					int tuple_count;
+			// 		unsigned tuple_idx;
+			// 		int tuple_count;
 
-					if (arity == 1)
-					{
-						tuple_idx = tuple2idx(tuple, arity);
-					}
-					else if (arity == 2)
-					{
-						if (tuple[0] == tuple[1])
-							continue; // don't check singleton tuples
-						tuple_idx = tuple2idx_size2(tuple, arity);
-					}
-					else
-					{
+			// 		if (arity == 1)
+			// 		{
+			// 			tuple_idx = tuple2idx(tuple, arity);
+			// 		}
+			// 		else if (arity == 2)
+			// 		{
+			// 			if (tuple[0] == tuple[1])
+			// 				continue; // don't check singleton tuples
+			// 			tuple_idx = tuple2idx_size2(tuple, arity);
+			// 		}
+			// 		else
+			// 		{
 
-						// If all elements in the tuple are equal, ignore the tuple
-						if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
-														{ return x != tuple[0]; }))
-							continue;
-						tuple_idx = tuple2idx(tuple, arity);
-					}
+			// 			// If all elements in the tuple are equal, ignore the tuple
+			// 			if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+			// 											{ return x != tuple[0]; }))
+			// 				continue;
+			// 			tuple_idx = tuple2idx(tuple, arity);
+			// 		}
 
-					/**
-					 * new_tuple if
-					 * -> none was registered
-					 * OR
-					 * -> n better than old_n
-					 */
+			// 		/**
+			// 		 * new_tuple if
+			// 		 * -> none was registered
+			// 		 * OR
+			// 		 * -> n better than old_n
+			// 		 */
 
-					// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+			// 		// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
 
-					/*increment tuple counts for partition*/
-					// if(m_use_threshold) {
-					// 	if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
-					// 	{
-					// 		if( !(m_tuple_counts_by_partition_1[n->partition()][tuple_idx] >= m_count_threshold) )
-					// 			tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
-					// 		else
-					// 			tuple_count = -1;
-					// 	}
-					// 	else {
-					// 		m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
-					// 		tuple_count = 0;
-					// 	}
-					// }
-					// else{
-					// 	if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
-					// 		tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
-					// 		// tuple_count = -1;
-					// 	else 
-					// 	{
-					// 		m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
-					// 		tuple_count = 0;
-					// 	}
-					// }
-					if (m_tuple_counts_by_partition_1[n->partition()][tuple_idx] > 0)
-						tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
-						// tuple_count = -1;
-					else 
-					{
-						m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
-						tuple_count = 0;
-					}
+			// 		/*increment tuple counts for partition*/
+			// 		// if(m_use_threshold) {
+			// 		// 	if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
+			// 		// 	{
+			// 		// 		if( !(m_tuple_counts_by_partition_1[n->partition()][tuple_idx] >= m_count_threshold) )
+			// 		// 			tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+			// 		// 		else
+			// 		// 			tuple_count = -1;
+			// 		// 	}
+			// 		// 	else {
+			// 		// 		m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+			// 		// 		tuple_count = 0;
+			// 		// 	}
+			// 		// }
+			// 		// else{
+			// 		// 	if (m_tuple_counts_by_partition_1[n->partition()].count(tuple_idx) > 0)
+			// 		// 		tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+			// 		// 		// tuple_count = -1;
+			// 		// 	else 
+			// 		// 	{
+			// 		// 		m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+			// 		// 		tuple_count = 0;
+			// 		// 	}
+			// 		// }
+			// 		if (m_tuple_counts_by_partition_1[n->partition()][tuple_idx] > 0)
+			// 			tuple_count = m_tuple_counts_by_partition_1[n->partition()][tuple_idx]++;
+			// 			// tuple_count = -1;
+			// 		else 
+			// 		{
+			// 			m_tuple_counts_by_partition_1[n->partition()][tuple_idx] = 1;
+			// 			tuple_count = 0;
+			// 		}
 
-					// if (tuple_count == -1)
-					// 	m = 0;
-					// else
-					// {
-					m = -(float)1 / (1 + tuple_count);
-					if (m < metric_value)
-						metric_value = m;
-					// }
+			// 		// if (tuple_count == -1)
+			// 		// 	m = 0;
+			// 		// else
+			// 		// {
+			// 		m = -(float)1 / (1 + tuple_count);
+			// 		if (m < metric_value)
+			// 			metric_value = m;
+			// 		// }
 
-					// keepBottom3(tuple[0], tuple_count, bot3);
-				}
-				// if (!has_state)
-				// {
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-				// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
-				// }
-				// if (!has_state)
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+			// 		// keepBottom3(tuple[0], tuple_count, bot3);
+			// 	}
+			// 	// if (!has_state)
+			// 	// {
+			// 	// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+			// 	// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+			// 	// }
+			// 	// if (!has_state)
+			// 	// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				return fl;
-			}
+			// 	return fl;
+			// }
 									// m = -(float)1 / (1 + tuple_count);
 						// if (m < metric_value)
 						// 	metric_value = m;
@@ -550,138 +550,136 @@ namespace aptk
 						// 				}
 
 
-			bool cover_compute_tuples_2_op(Search_Node *n, std::vector<unsigned> &bot_3_fl, float &metric_value)
-			{
-				float metric_value_2 = 0;
-				unsigned arity = m_arity;
-				// assert(arity == 1);
+			// bool cover_compute_tuples_2_op(Search_Node *n, std::vector<unsigned> &bot_3_fl, float &metric_value)
+			// {
+			// 	float metric_value_2 = 0;
+			// 	unsigned arity = m_arity;
+			// 	// assert(arity == 1);
 
-				if (n->partition() == std::numeric_limits<unsigned>::max())
-					return false;
+			// 	if (n->partition() == std::numeric_limits<unsigned>::max())
+			// 		return false;
 
-				check_table_size_2(n);
+			// 	check_table_size_2(n);
 
-				const bool has_state = n->has_state();
+			// 	const bool has_state = n->has_state();
 
-				static Fluent_Vec added, deleted, temp_fv;
-				if (!has_state)
-				{
-					added.clear();
-					deleted.clear();
-					// temp_fv.clear();
-					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
-					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-				}
-				// if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+			// 	static Fluent_Vec added, deleted, temp_fv;
+			// 	if (!has_state)
+			// 	{
+			// 		added.clear();
+			// 		deleted.clear();
+			// 		// temp_fv.clear();
+			// 		// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
+			// 		n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+			// 	}
+			// 	// if (!has_state)
+			// 	// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+			// 	Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
-				bool new_covers = false;
+			// 	bool new_covers = false;
 
-				std::vector<unsigned> tuple(arity);
+			// 	std::vector<unsigned> tuple(arity);
 
-				unsigned atoms_arity = arity - 1;
-				unsigned n_combinations = aptk::unrolled_pow(fl.size(), atoms_arity);
-				float m = 0;
-				for (Fluent_Vec::const_iterator it_bot_3_fl = bot_3_fl.begin();
-						 it_bot_3_fl != bot_3_fl.end(); it_bot_3_fl++)
-				{
+			// 	unsigned atoms_arity = arity - 1;
+			// 	unsigned n_combinations = aptk::unrolled_pow(fl.size(), atoms_arity);
+			// 	float m = 0;
+			// 	for (Fluent_Vec::const_iterator it_bot_3_fl = bot_3_fl.begin();
+			// 			 it_bot_3_fl != bot_3_fl.end(); it_bot_3_fl++)
+			// 	{
 
-					for (unsigned idx = 0; idx < n_combinations; idx++)
-					{
+			// 		for (unsigned idx = 0; idx < n_combinations; idx++)
+			// 		{
 
-						tuple[atoms_arity] = *it_bot_3_fl;
-						/**
-						 * Check if tuple is covered
-						 */
-						unsigned tuple_idx;
-						int tuple_count;
+			// 			tuple[atoms_arity] = *it_bot_3_fl;
+			// 			/**
+			// 			 * Check if tuple is covered
+			// 			 */
+			// 			unsigned tuple_idx;
+			// 			int tuple_count;
 
-						if (arity == 1)
-						{
-							tuple_idx = tuple2idx(tuple, arity);
-						}
-						else if (arity == 2)
-						{
-							tuple[0] = fl[idx];
-							if (tuple[0] == tuple[1])
-								continue; // don't check singleton tuples
-							tuple_idx = tuple2idx_size2(tuple, arity);
-						}
-						else
-						{
+			// 			if (arity == 1)
+			// 			{
+			// 				tuple_idx = tuple2idx(tuple, arity);
+			// 			}
+			// 			else if (arity == 2)
+			// 			{
+			// 				tuple[0] = fl[idx];
+			// 				if (tuple[0] == tuple[1])
+			// 					continue; // don't check singleton tuples
+			// 				tuple_idx = tuple2idx_size2(tuple, arity);
+			// 			}
+			// 			else
+			// 			{
 							
-							exit(1); //undefined for width > 2
+			// 				exit(1); //undefined for width > 2
 
-							// // If all elements in the tuple are equal, ignore the tuple
-							// if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
-							// 								{ return x != tuple[0]; }))
-							// 	continue;
-							// /**
-							//  * get tuples from indexes
-							//  */
-							// idx2tuple(tuple, fl, idx, atoms_arity);
+			// 				// // If all elements in the tuple are equal, ignore the tuple
+			// 				// if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+			// 				// 								{ return x != tuple[0]; }))
+			// 				// 	continue;
+			// 				// /**
+			// 				//  * get tuples from indexes
+			// 				//  */
+			// 				// idx2tuple(tuple, fl, idx, atoms_arity);
 
-							// tuple_idx = tuple2idx(tuple, arity);
-						}
+			// 				// tuple_idx = tuple2idx(tuple, arity);
+			// 			}
 
-						/**
-						 * new_tuple if
-						 * -> none was registered
-						 * OR
-						 * -> n better than old_n
-						 */
+			// 			/**
+			// 			 * new_tuple if
+			// 			 * -> none was registered
+			// 			 * OR
+			// 			 * -> n better than old_n
+			// 			 */
 
-						// /*increment tuple counts for partition*/
-						// if(m_use_threshold) {
-						// 	if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
-						// 	{
-						// 		if( !(m_tuple_counts_by_partition_2[n->partition()][tuple_idx] >= m_count_threshold) )
-						// 			tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-						// 		else
-						// 			tuple_count = -1;
-						// 	}
-						// 	else {
-						// 		m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-						// 		tuple_count = 0;
-						// 	}
-						// }
-						// else{
-						// if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
-						if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
-							tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-							// tuple_count = -1;
-						else 
-						{
-							m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-							tuple_count = 0;
-						}
-						// }
+			// 			// /*increment tuple counts for partition*/
+			// 			// if(m_use_threshold) {
+			// 			// 	if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
+			// 			// 	{
+			// 			// 		if( !(m_tuple_counts_by_partition_2[n->partition()][tuple_idx] >= m_count_threshold) )
+			// 			// 			tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+			// 			// 		else
+			// 			// 			tuple_count = -1;
+			// 			// 	}
+			// 			// 	else {
+			// 			// 		m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+			// 			// 		tuple_count = 0;
+			// 			// 	}
+			// 			// }
+			// 			// else{
+			// 			// if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
+			// 			if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
+			// 				tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+			// 				// tuple_count = -1;
+			// 			else 
+			// 			{
+			// 				m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+			// 				tuple_count = 0;
+			// 			}
+			// 			// }
 
-						// if (tuple_count == -1)
-						// 	m = 0;
-						// else
-						// {
-						m = -(float)1 / (1 + tuple_count);
-						if (m < metric_value_2)
-							metric_value_2 = m;
-						// }	
-					}
-				}
-				metric_value += metric_value_2;
+			// 			// if (tuple_count == -1)
+			// 			// 	m = 0;
+			// 			// else
+			// 			// {
+			// 			m = -(float)1 / (1 + tuple_count);
+			// 			if (m < metric_value_2)
+			// 				metric_value_2 = m;
+			// 			// }	
+			// 		}
+			// 	}
+			// 	metric_value += metric_value_2;
 
-				if (!has_state)
-				{
-					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
-				}
-				// if (!has_state)
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+			// 	if (!has_state)
+			// 	{
+			// 		n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+			// 		// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+			// 	}
+			// 	// if (!has_state)
+			// 	// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				return new_covers;
-
-
+			// 	return new_covers;
 
 
 
@@ -689,208 +687,210 @@ namespace aptk
 
 
 
-				// std::vector<unsigned> tuple(arity);
 
 
-				// unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
+			// 	// std::vector<unsigned> tuple(arity);
 
 
-				// float m = 0;
-				// for (unsigned idx = 0; idx < n_combinations; idx++)
-				// {
-				// 	/**
-				// 	 * get tuples from indexes
-				// 	 */
-				// 	idx2tuple(tuple, fl, idx, arity);
+			// 	// unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity);
 
-				// 	/**
-				// 	 * Check if tuple is covered
-				// 	 */
 
-				// 	unsigned tuple_idx;
-				// 	int tuple_count;
+			// 	// float m = 0;
+			// 	// for (unsigned idx = 0; idx < n_combinations; idx++)
+			// 	// {
+			// 	// 	/**
+			// 	// 	 * get tuples from indexes
+			// 	// 	 */
+			// 	// 	idx2tuple(tuple, fl, idx, arity);
 
-				// 	if (arity == 1)
-				// 	{
-				// 		tuple_idx = tuple2idx(tuple, arity);
-				// 	}
-				// 	else if (arity == 2)
-				// 	{
-				// 		if (tuple[0] == tuple[1])
-				// 			continue; // don't check singleton tuples
-				// 		tuple_idx = tuple2idx_size2(tuple, arity);
-				// 	}
-				// 	else
-				// 	{
+			// 	// 	/**
+			// 	// 	 * Check if tuple is covered
+			// 	// 	 */
 
-				// 		// If all elements in the tuple are equal, ignore the tuple
-				// 		if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
-				// 										{ return x != tuple[0]; }))
-				// 			continue;
-				// 		tuple_idx = tuple2idx(tuple, arity);
-				// 	}
+			// 	// 	unsigned tuple_idx;
+			// 	// 	int tuple_count;
 
-				// 	/**
-				// 	 * new_tuple if
-				// 	 * -> none was registered
-				// 	 * OR
-				// 	 * -> n better than old_n
-				// 	 */
+			// 	// 	if (arity == 1)
+			// 	// 	{
+			// 	// 		tuple_idx = tuple2idx(tuple, arity);
+			// 	// 	}
+			// 	// 	else if (arity == 2)
+			// 	// 	{
+			// 	// 		if (tuple[0] == tuple[1])
+			// 	// 			continue; // don't check singleton tuples
+			// 	// 		tuple_idx = tuple2idx_size2(tuple, arity);
+			// 	// 	}
+			// 	// 	else
+			// 	// 	{
 
-				// 	// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+			// 	// 		// If all elements in the tuple are equal, ignore the tuple
+			// 	// 		if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+			// 	// 										{ return x != tuple[0]; }))
+			// 	// 			continue;
+			// 	// 		tuple_idx = tuple2idx(tuple, arity);
+			// 	// 	}
 
-				// 	/*increment tuple counts for partition*/
-				// 	if(m_use_threshold) {
-				// 		if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
-				// 		{
-				// 			if( !(m_tuple_counts_by_partition_2[n->partition()][tuple_idx] >= m_count_threshold) )
-				// 				tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-				// 			else
-				// 				tuple_count = -1;
-				// 		}
-				// 		else {
-				// 			m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-				// 			tuple_count = 0;
-				// 		}
-				// 	}
-				// 	else{
-				// 		if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
-				// 			tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-				// 			// tuple_count = -1;
-				// 		else 
-				// 		{
-				// 			m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-				// 			tuple_count = 0;
-				// 		}
-				// 	}
+			// 	// 	/**
+			// 	// 	 * new_tuple if
+			// 	// 	 * -> none was registered
+			// 	// 	 * OR
+			// 	// 	 * -> n better than old_n
+			// 	// 	 */
 
-				// 	if (tuple_count == -1)
-				// 		m = 0;
-				// 	else
-				// 	{
-				// 		m = -(float)1 / (1 + tuple_count);
-				// 		if (m < metric_value)
-				// 			metric_value = m;
-				// 	}
+			// 	// 	// auto &n_seen = m_nodes_tuples_by_partition[n->partition()][tuple_idx];
+
+			// 	// 	/*increment tuple counts for partition*/
+			// 	// 	if(m_use_threshold) {
+			// 	// 		if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
+			// 	// 		{
+			// 	// 			if( !(m_tuple_counts_by_partition_2[n->partition()][tuple_idx] >= m_count_threshold) )
+			// 	// 				tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+			// 	// 			else
+			// 	// 				tuple_count = -1;
+			// 	// 		}
+			// 	// 		else {
+			// 	// 			m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+			// 	// 			tuple_count = 0;
+			// 	// 		}
+			// 	// 	}
+			// 	// 	else{
+			// 	// 		if (m_tuple_counts_by_partition_2[n->partition()].count(tuple_idx) > 0)
+			// 	// 			tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+			// 	// 			// tuple_count = -1;
+			// 	// 		else 
+			// 	// 		{
+			// 	// 			m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+			// 	// 			tuple_count = 0;
+			// 	// 		}
+			// 	// 	}
+
+			// 	// 	if (tuple_count == -1)
+			// 	// 		m = 0;
+			// 	// 	else
+			// 	// 	{
+			// 	// 		m = -(float)1 / (1 + tuple_count);
+			// 	// 		if (m < metric_value)
+			// 	// 			metric_value = m;
+			// 	// 	}
 					
-				// }
-				// if (!has_state)
-				// {
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-				// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
-				// }
-				// // if (!has_state)
-				// // 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+			// 	// }
+			// 	// if (!has_state)
+			// 	// {
+			// 	// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+			// 	// 	// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+			// 	// }
+			// 	// // if (!has_state)
+			// 	// // 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				// return new_covers;
-			}
+			// 	// return new_covers;
+			// }
 
-			bool cover_compute_tuples_2(Search_Node *n, float &metric_value)
+			// bool cover_compute_tuples_2(Search_Node *n, float &metric_value)
+			// {
+			// 	float metric_value_2 = 0;
+			// 	unsigned arity = m_arity;
+			// 	// assert(arity == 1);
+
+			// 	if (n->partition() == std::numeric_limits<unsigned>::max())
+			// 		return false;
+
+			// 	check_table_size_2(n);
+
+			// 	const bool has_state = n->has_state();
+
+			// 	static Fluent_Vec added, deleted, temp_fv;
+			// 	if (!has_state)
+			// 	{
+			// 		added.clear();
+			// 		deleted.clear();
+			// 		// temp_fv.clear();
+			// 		// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
+			// 		n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+			// 	}
+			// 	// if (!has_state)
+			// 	// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
+
+			// 	Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
+
+			// 	bool new_covers = false;
+
+			// 	std::vector<unsigned> tuple(arity);
+
+			// 	unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
+
+			// 	float m = 0;
+
+			// 	for (unsigned idx = 0; idx < n_combinations; idx++)
+			// 	{
+
+
+			// 		/**
+			// 		 * get tuples from indexes
+			// 		 */
+			// 		idx2tuple(tuple, fl, idx, arity);
+
+			// 		/**
+			// 		 * Check if tuple is covered
+			// 		 */
+			// 		unsigned tuple_idx;
+			// 		int tuple_count;
+
+			// 		if (arity == 1)
+			// 		{
+			// 			tuple_idx = tuple2idx(tuple, arity);
+			// 		}
+			// 		else if (arity == 2)
+			// 		{
+			// 			if (tuple[0] == tuple[1])
+			// 				continue; // don't check singleton tuples
+			// 			tuple_idx = tuple2idx_size2(tuple, arity);
+			// 		}
+			// 		else
+			// 		{
+
+			// 			// If all elements in the tuple are equal, ignore the tuple
+			// 			if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
+			// 											{ return x != tuple[0]; }))
+			// 				continue;
+			// 		}
+
+			// 		if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
+			// 			tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
+			// 			// tuple_count = -1;
+			// 		else 
+			// 		{
+			// 			m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
+			// 			tuple_count = 0;
+			// 		}
+
+			// 		m = -(float)1 / (1 + tuple_count);
+			// 		if (m < metric_value_2)
+			// 			metric_value_2 = m;
+			// 	}
+
+			// 	metric_value += metric_value_2;
+
+			// 	if (!has_state)
+			// 	{
+			// 		n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
+			// 		// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
+			// 	}
+			// 	// if (!has_state)
+			// 	// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
+
+			// 	return new_covers;
+			// }
+
+			bool cover_compute_tuples_1(Search_Node *n, unsigned &metric_value)
 			{
-				float metric_value_2 = 0;
-				unsigned arity = m_arity;
-				// assert(arity == 1);
-
-				if (n->partition() == std::numeric_limits<unsigned>::max())
-					return false;
-
-				check_table_size_2(n);
-
-				const bool has_state = n->has_state();
-
-				static Fluent_Vec added, deleted, temp_fv;
-				if (!has_state)
-				{
-					added.clear();
-					deleted.clear();
-					// temp_fv.clear();
-					// temp_fv.assign(n->parent()->state()->fluent_vec().begin(), n->parent()->state()->fluent_vec().end());	
-					n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-				}
-				// if (!has_state)
-				// 	n->parent()->state()->progress_lazy_state(m_strips_model.actions()[n->action()]);
-
-				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
-
-				bool new_covers = false;
-
-				std::vector<unsigned> tuple(arity);
-
-				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
-
-				float m = 0;
-
-				for (unsigned idx = 0; idx < n_combinations; idx++)
-				{
-
-
-					/**
-					 * get tuples from indexes
-					 */
-					idx2tuple(tuple, fl, idx, arity);
-
-					/**
-					 * Check if tuple is covered
-					 */
-					unsigned tuple_idx;
-					int tuple_count;
-
-					if (arity == 1)
-					{
-						tuple_idx = tuple2idx(tuple, arity);
-					}
-					else if (arity == 2)
-					{
-						if (tuple[0] == tuple[1])
-							continue; // don't check singleton tuples
-						tuple_idx = tuple2idx_size2(tuple, arity);
-					}
-					else
-					{
-
-						// If all elements in the tuple are equal, ignore the tuple
-						if (std::any_of(tuple.cbegin(), tuple.cend(), [&tuple](unsigned x)
-														{ return x != tuple[0]; }))
-							continue;
-					}
-
-					if (m_tuple_counts_by_partition_2[n->partition()][tuple_idx] > 0)
-						tuple_count = m_tuple_counts_by_partition_2[n->partition()][tuple_idx]++;
-						// tuple_count = -1;
-					else 
-					{
-						m_tuple_counts_by_partition_2[n->partition()][tuple_idx] = 1;
-						tuple_count = 0;
-					}
-
-					m = -(float)1 / (1 + tuple_count);
-					if (m < metric_value_2)
-						metric_value_2 = m;
-				}
-
-				metric_value += metric_value_2;
-
-				if (!has_state)
-				{
-					n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()], &added, &deleted);
-					// n->parent()->state()->fluent_vec().assign(temp_fv.begin(), temp_fv.end());
-				}
-				// if (!has_state)
-				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
-
-				return new_covers;
-			}
-
-			bool cover_compute_tuples_1(Search_Node *n, float &metric_value)
-			{
-				float metric_value_2 = 0;
+				// float metric_value_2 = 0;
 				unsigned arity = 1;
 				// assert(arity == 1);
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
 					return false;
 
-				check_table_size_2(n);
+				check_table_size_1(n);
 
 				const bool has_state = n->has_state();
 
@@ -914,14 +914,14 @@ namespace aptk
 
 				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
 
-				float m = 0;
+				// unsigned m = 0;
 
-				std::vector<int>& tuple_counts_partition = m_tuple_counts_by_partition_2[n->partition()];
+				std::vector<unsigned>& tuple_counts_partition = m_tuple_counts_by_partition_1[n->partition()];
 
-				int min_count = std::numeric_limits<int>::max();
+				unsigned min_count = std::numeric_limits<unsigned>::max();
 
 				std::vector<bool> check_dupl(m_num_fluents, false);
-				
+
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 
@@ -935,7 +935,7 @@ namespace aptk
 					 * Check if tuple is covered
 					 */
 					unsigned tuple_idx;
-					int tuple_count;
+					unsigned tuple_count;
 
 					tuple_idx = tuple2idx(tuple, arity);
 
@@ -943,7 +943,6 @@ namespace aptk
 						check_dupl[tuple_idx] = true;
 					else
 						continue;
-
 
 					// if (tuple_counts_partition[tuple_idx] > 0)
 					tuple_count = tuple_counts_partition[tuple_idx]++; //because set as 0 by default
@@ -1391,8 +1390,8 @@ namespace aptk
 			// std::vector<std::vector<int>> m_tuple_counts_by_partition;
 			// std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_2;
 			// std::vector<std::unordered_map<int, int>> m_tuple_counts_by_partition_1;
-			std::vector<std::vector<int>> m_tuple_counts_by_partition_2;
-			std::vector<std::vector<int>> m_tuple_counts_by_partition_1;
+			// std::vector<std::vector<int>> m_tuple_counts_by_partition_2;
+			std::vector<std::vector<unsigned>> m_tuple_counts_by_partition_1;
 			unsigned m_arity;
 			unsigned long m_num_tuples_2;
 			unsigned m_num_fluents;

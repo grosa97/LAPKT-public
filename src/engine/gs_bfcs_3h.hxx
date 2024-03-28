@@ -121,10 +121,10 @@ namespace aptk
 						delete m_rp_fl_set;
 				}
 
-				float &h1n() { return m_h1; }
-				float h1n() const { return m_h1; }
-				float &alt_h1n() { return m_alt_h1; }
-				float alt_h1n() const { return m_alt_h1; }
+				unsigned &h1n() { return m_h1; }
+				unsigned h1n() const { return m_h1; }
+				unsigned &alt_h1n() { return m_alt_h1; }
+				unsigned alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
 				// unsigned &alt_h2n() { return m_h2; }
@@ -258,8 +258,8 @@ namespace aptk
 				Action_Idx m_action;
 				float m_g;
 				unsigned m_g_unit;
-				float m_h1;
-				float m_alt_h1;
+				unsigned m_h1;
+				unsigned m_alt_h1;
 				unsigned m_h2;
 				// unsigned m_alt_h2;
 				// unsigned m_h3;
