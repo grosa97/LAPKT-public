@@ -121,10 +121,10 @@ namespace aptk
 						delete m_rp_fl_set;
 				}
 
-				float &h1n() { return m_h1; }
-				float h1n() const { return m_h1; }
-				float &alt_h1n() { return m_alt_h1; }
-				float alt_h1n() const { return m_alt_h1; }
+				unsigned &h1n() { return m_h1; }
+				unsigned h1n() const { return m_h1; }
+				unsigned &alt_h1n() { return m_alt_h1; }
+				unsigned alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
 				unsigned h2n() const { return m_h2; }
 				// unsigned &alt_h2n() { return m_h2; }
@@ -258,8 +258,8 @@ namespace aptk
 				Action_Idx m_action;
 				float m_g;
 				unsigned m_g_unit;
-				float m_h1;
-				float m_alt_h1;
+				unsigned m_h1;
+				unsigned m_alt_h1;
 				unsigned m_h2;
 				// unsigned m_alt_h2;
 				// unsigned m_h3;
@@ -783,55 +783,6 @@ namespace aptk
 					unsigned lf_count = get_lifted_counts_state_partition(n);
 					n->alt_h1n() = -(float)1 / (1+lf_count);
 
-						// n->alt_h1n() = lf_c_nov;
-					// if (is_alt())
-					// {
-					// 	set_alt(false);
-					// 	float lf_c_nov = -(float)1 / (1+lf_count);
-					// 	n->h1n() = lf_c_nov;
-					// }
-					// else
-					// 	set_alt(true);
-
-					// if (lf_count < 10) 
-					// 	n->h1n() -= 0.5;//-0.5, seems better, -0.1 improves also in bm, issue may be that bonus reduces ties?
-
-					// if (lf_count > 10)  //testing good, also good with partitions in bm
-					// 	n->h1n() += 0.5;
-
-					//if (lf_count > 10)  //testing good, also good with partitions in bm 12 29865 exp
-					//	n->h1n() *= 0.9999;
-
-					//if (lf_count < 10)  //with partition seems to do well, bm 12 in 28604 expansions
-					// 	n->h1n() = -2; 
-					
-
-					// if (lf_count == 0)
-					// 	n->h1n() = -2;
-					//if (lf_count < 3) //good (also when fixed)
-					//	n->h1n() = -2;
-					//if (lf_count > 0)
-					//	n->h1n() += 0.5; //(using lf_count > 1 & adding)
-					
-					//if (lf_count < 3 && -(float)1/(lf_count + 1) < n->h1n())
-					//	n->h1n() = -(float)1/(lf_count + 1);
-					// if (lf_count < 3)
-					// 	n->h1n() += lf_c_nov;
-
-					// if (lf_count < 1) 
-					// 	n->h1n() = -2;
-					
-
-					// float lf_c_nov = -(float)1 / (1+lf_count);
-					// if (lf_c_nov < n->h1n())
-					// 	n->h1n() = lf_c_nov;
-
-					// float lf_c_nov = 1000*-(float)1 / (1+lf_count) ;
-
-					// if (lf_count < 1)
-					// 	n->h3n() = 0;
-					// else 
-					// 	n->h3n() = 1;
 				}
 
 
