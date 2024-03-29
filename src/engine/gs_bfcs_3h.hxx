@@ -317,7 +317,7 @@ namespace aptk
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 6000;
+					// m_memory_budget = 6000;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -328,20 +328,23 @@ namespace aptk
 					int OPEN_MAX_DEPTH =18;
 					m_open.init(OPEN_MAX_DEPTH);
 
-					std::unordered_set<std::string> unique_signatures;
-					m_fluent_to_feature.resize(this->problem().task().num_fluents());
-					unsigned i_val = 0;
-					for (const Fluent* f: this->m_problem.task().fluents())
-					{
-						std::string s = signature_to_lifted_fl(f->signature());
-						if (unique_signatures.find(s) == unique_signatures.end())
-						{
-							unique_signatures.insert(s);
-							m_sign_to_int[s] = i_val++;
-						}
-						m_fluent_to_feature[f->index()] = m_sign_to_int[s];
-					}
-					m_sign_count = i_val;
+					m_reachability = new aptk::agnostic::Reachability_Test(this->problem().task());
+
+					// std::unordered_set<std::string> unique_signatures;
+					// m_fluent_to_feature.resize(this->problem().task().num_fluents());
+					// unsigned i_val = 0;
+					// for (const Fluent* f: this->m_problem.task().fluents())
+					// {
+					// 	std::string s = signature_to_lifted_fl(f->signature());
+					// 	if (unique_signatures.find(s) == unique_signatures.end())
+					// 	{
+					// 		unique_signatures.insert(s);
+					// 		m_sign_to_int[s] = i_val++;
+					// 	}
+					// 	m_fluent_to_feature[f->index()] = m_sign_to_int[s];
+					// }
+					// m_sign_count = i_val;
+
 
 					// m_goal_partial_lf_feat = std::vector<unsigned>(m_sign_count, 0);
 					// for (auto f: this->problem().task().goal())
@@ -357,6 +360,8 @@ namespace aptk
 				virtual ~GS_BFCS_3H()
 				{
 					delete_lists_nodes();
+
+					delete m_reachability;
 					// while (!m_open.empty())
 					// {
 					// 	Search_Node *n = m_open.pop();
@@ -529,10 +534,14 @@ namespace aptk
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL, m_problem.num_actions());
 					// Init Novelty
 					m_third_h->init();
-					m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
+					// m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
+					m_first_h->set_rp_fl_only(false);
 
 					if (m_use_rp)
 						set_relplan(this->m_root, this->m_root->state());
+
+					this->m_root->m_goal_candidates.insert(this->m_root->m_goal_candidates.begin(),
+																								 this->problem().task().goal().begin(), this->problem().task().goal().end());
 
 					if (m_root->relaxed_deadend())
 					{ // rel_plan infty
@@ -547,29 +556,29 @@ namespace aptk
 						;
 					}
 
-					// if using the landmark manager to count goals or landmarks
-					if (m_lgm)
-					{
-						m_lgm->apply_state(m_root->state()->fluent_vec(), m_root->land_consumed(), m_root->land_unconsumed());
+					// // if using the landmark manager to count goals or landmarks
+					// if (m_lgm)
+					// {
+					// 	m_lgm->apply_state(m_root->state()->fluent_vec(), m_root->land_consumed(), m_root->land_unconsumed());
 
-						eval(m_root);
+					// 	eval(m_root);
 
-						if (m_use_rp)
-						{
-							eval_rp(m_root);
-							eval_relevant_fluents(m_root);
-						}
-						eval_count_based(m_root);
-						// eval_lf_counts(m_root);
-						if (m_use_novelty)
-							eval_novel(m_root);
+					// 	if (m_use_rp)
+					// 	{
+					// 		eval_rp(m_root);
+					// 		eval_relevant_fluents(m_root);
+					// 	}
+					// 	eval_count_based(m_root);
+					// 	// eval_lf_counts(m_root);
+					// 	if (m_use_novelty)
+					// 		eval_novel(m_root);
 
-						m_root->undo_land_graph(m_lgm);
+					// 	m_root->undo_land_graph(m_lgm);
 
-						// if (m_use_h3n)
-						// 	eval_count_based(m_root);
-					}
-					else
+					// 	// if (m_use_h3n)
+					// 	// 	eval_count_based(m_root);
+					// }
+					// else
 
 					{
 						eval(m_root);
@@ -605,56 +614,183 @@ namespace aptk
 					inc_gen();
 				}
 
+				// virtual void eval(Search_Node *candidate)
+				// {
+
+				// 	if (m_lgm)
+				// 	{
+				// 		// Update land/goal counter up to parent node
+				// 		if (candidate->parent())
+				// 			candidate->parent()->update_land_graph(m_lgm);
+
+				// 		// Update counter with current operator
+				// 		if (candidate->action() != no_op)
+				// 		{
+				// 			const bool has_cond_eff = !(m_problem.task().actions()[candidate->action()]->ceff_vec().empty());
+
+				// 			// If state hasn't been generated yet, update counter progressing the state of the parent
+				// 			if (!candidate->has_state() && has_cond_eff)
+				// 			{
+				// 				//	candidate->parent()->state()->progress_lazy_state(  m_problem.task().actions()[ candidate->action() ] );
+
+				// 				m_lgm->apply_action(candidate->parent()->state(), candidate->action(), candidate->land_consumed(), candidate->land_unconsumed());
+
+				// 				// candidate->parent()->state()->regress_lazy_state( m_problem.task().actions()[ candidate->action() ] );
+				// 			}
+				// 			else
+				// 			{
+				// 				// update the counter with current state
+				// 				m_lgm->apply_action(candidate->state(), candidate->action(), candidate->land_consumed(), candidate->land_unconsumed());
+				// 			}
+				// 		}
+				// 		else // If it's the root node, just initialize the counter
+				// 			m_lgm->apply_state(m_root->state()->fluent_vec(), m_root->land_consumed(), m_root->land_unconsumed());
+				// 	}
+
+				// 	// Count land/goal unachieved
+				// 	m_second_h->eval(*(candidate->state()), candidate->GC());
+				// 	if (m_use_h2n)
+				// 		candidate->h2n() = candidate->GC();
+
+				// 	if (candidate->GC() < m_max_h2n)
+				// 	{
+				// 		m_max_h2n = candidate->GC();
+				// 		m_max_r = 0;
+				// 		if (m_verbose)
+				// 		{
+				// 			std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+				// 		}
+				// 		//DEBUG
+				// 		std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+				// 		std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+				// 	}
+				// }
+
 				virtual void eval(Search_Node *candidate)
 				{
 
-					if (m_lgm)
+					if (candidate->parent())
+						candidate->m_goal_candidates = candidate->parent()->m_goal_candidates;
+
+					candidate->GC() = consistent_goal_counting(candidate);
+					candidate->h2n() = candidate->GC();
+
+					if (candidate->h2n() < this->m_max_h2n)
 					{
-						// Update land/goal counter up to parent node
-						if (candidate->parent())
-							candidate->parent()->update_land_graph(m_lgm);
+						this->m_max_h2n = candidate->h2n();
+						this->m_max_r = 0;
+						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+						// if (this->m_verbose)
+						// {
+						// 	std::cout << "--[" << this->m_max_h2n << " / " << this->m_max_r << "]--" << std::endl;
+						// }
+					}
+				}
 
-						// Update counter with current operator
-						if (candidate->action() != no_op)
+
+				// Exclude action that add or edel any newly achieved goal
+				void exclude_actions(Search_Node *n, Bit_Set &excluded)
+				{
+					std::vector<const Action *>::const_iterator it_a = this->problem().task().actions().begin();
+					unsigned asize = this->problem().num_actions();
+					unsigned fsize = n->m_goals_achieved.size();
+					const bool has_ceff = this->problem().task().has_conditional_effects();
+
+					for (unsigned i = 0; i < asize; i++, it_a++)
+					{
+
+						/**
+						 * If actions edel or adds fluent that has to persist, exclude action.
+						 */
+						unsigned p = 0;
+						for (; p < fsize; p++)
 						{
-							const bool has_cond_eff = !(m_problem.task().actions()[candidate->action()]->ceff_vec().empty());
+							unsigned fl = n->m_goals_achieved.at(p);
 
-							// If state hasn't been generated yet, update counter progressing the state of the parent
-							if (!candidate->has_state() && has_cond_eff)
+							if (has_ceff)
 							{
-								//	candidate->parent()->state()->progress_lazy_state(  m_problem.task().actions()[ candidate->action() ] );
+								if ((*it_a)->consumes(fl))
+								{
+									excluded.set(i);
+									break;
+								}
+							}
+							else if ((*it_a)->edeletes(fl))
+							{
+								excluded.set(i);
+								break;
+							}
+						}
+						if (p == fsize)
+							excluded.unset(i);
+					}
+				}
 
-								m_lgm->apply_action(candidate->parent()->state(), candidate->action(), candidate->land_consumed(), candidate->land_unconsumed());
+				virtual unsigned consistent_goal_counting(Search_Node *n)
+				{
 
-								// candidate->parent()->state()->regress_lazy_state( m_problem.task().actions()[ candidate->action() ] );
+					const bool has_state = n->has_state();
+					static Fluent_Vec added_fluents;
+					static Fluent_Vec deleted_fluents;
+
+					State *s = has_state ? n->state() : n->parent()->state();
+
+					if (!has_state)
+					{
+						added_fluents.clear();
+						deleted_fluents.clear();
+						n->parent()->state()->progress_lazy_state(this->problem().task().actions()[n->action()], &added_fluents, &deleted_fluents);
+					}
+
+					Fluent_Vec unachieved;
+
+					// Mark goals that were true at the parent and still are in current node
+					if (n->parent())
+						for (Fluent_Vec::iterator it = n->parent()->m_goals_achieved.begin(); it != n->parent()->m_goals_achieved.end(); it++)
+						{
+							if (!s->entails(*it))
+							{
+								unachieved.push_back(*it);
 							}
 							else
 							{
-								// update the counter with current state
-								m_lgm->apply_action(candidate->state(), candidate->action(), candidate->land_consumed(), candidate->land_unconsumed());
+								n->m_goals_achieved.push_back(*it);
 							}
 						}
-						else // If it's the root node, just initialize the counter
-							m_lgm->apply_state(m_root->state()->fluent_vec(), m_root->land_consumed(), m_root->land_unconsumed());
-					}
 
-					// Count land/goal unachieved
-					m_second_h->eval(*(candidate->state()), candidate->GC());
-					if (m_use_h2n)
-						candidate->h2n() = candidate->GC();
-
-					if (candidate->GC() < m_max_h2n)
+					// Among goal candidates false in parent, check if they have been achieved
+					// and do not make other goals unreachable if mantained true
+					for (Fluent_Vec::iterator it = n->m_goal_candidates.begin(); it != n->m_goal_candidates.end(); it++)
 					{
-						m_max_h2n = candidate->GC();
-						m_max_r = 0;
-						if (m_verbose)
+						if (s->entails(*it))
 						{
-							std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
+							n->m_goals_achieved.push_back(*it);
+
+							static Bit_Set excluded(this->problem().num_actions());
+							exclude_actions(n, excluded);
+
+#ifdef DEBUG
+							if (this->verbose())
+								debug_info(s, unachieved);
+#endif
+
+							if (!m_reachability->is_reachable(s->fluent_vec(), this->problem().task().goal(), excluded))
+							{
+								unachieved.push_back(*it);
+								n->m_goals_achieved.pop_back();
+							}
 						}
-						//DEBUG
-						std::cout << "--[" << m_max_h2n << " / " << m_max_r << "]--" << std::endl;
-						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+						else
+							unachieved.push_back(*it);
 					}
+
+					if (!has_state)
+						n->parent()->state()->regress_lazy_state(this->problem().task().actions()[n->action()], &added_fluents, &deleted_fluents);
+
+					n->m_goal_candidates = unachieved;
+
+					return n->m_goal_candidates.size();
 				}
 
 			void eval_rp(Search_Node *candidate)
@@ -1251,16 +1387,16 @@ namespace aptk
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 
-						static struct rusage usage_report;
-						if (generated() % 1000 == 0){
-							getrusage(RUSAGE_SELF, &usage_report);
-							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+						// static struct rusage usage_report;
+						// if (generated() % 1000 == 0){
+						// 	getrusage(RUSAGE_SELF, &usage_report);
+						// 	if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 
-							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
-							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
-							m_memory_stop = true;
-							}
-						}
+						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+						// 	std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+						// 	m_memory_stop = true;
+						// 	}
+						// }
 						open_node(n);
 					}
 					inc_eval();
@@ -1564,6 +1700,8 @@ namespace aptk
 				bool m_alt;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
+
+				aptk::agnostic::Reachability_Test *m_reachability;
 			};
 
 		}
