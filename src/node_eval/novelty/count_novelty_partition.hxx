@@ -920,8 +920,6 @@ namespace aptk
 
 				unsigned min_count = std::numeric_limits<unsigned>::max();
 
-				std::vector<bool> check_dupl(m_num_fluents, false);
-
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
 
@@ -938,11 +936,6 @@ namespace aptk
 					unsigned tuple_count;
 
 					tuple_idx = tuple2idx(tuple, arity);
-
-					if (check_dupl[tuple_idx] == false)
-						check_dupl[tuple_idx] = true;
-					else
-						continue;
 
 					// if (tuple_counts_partition[tuple_idx] > 0)
 					tuple_count = tuple_counts_partition[tuple_idx]++; //because set as 0 by default

@@ -1486,7 +1486,8 @@ namespace aptk
 					while (tmp != s)
 					{
 						// m_novelty_count_plan[tmp->h1n() - 1]++;
-						cost += m_problem.cost(*(tmp->state()), tmp->action());
+						// cost += m_problem.cost(*(tmp->state()), tmp->action());
+						cost++;
 						plan.push_back(tmp->action());
 						tmp = tmp->parent();
 					}
