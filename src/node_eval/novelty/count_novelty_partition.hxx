@@ -908,29 +908,22 @@ namespace aptk
 
 				Fluent_Vec &fl = has_state ? n->state()->fluent_vec() : n->parent()->state()->fluent_vec();
 
-				bool new_covers = false;
+				// bool new_covers = false;
 
 				std::vector<unsigned> tuple(arity);
 
 				unsigned n_combinations = aptk::unrolled_pow(fl.size(), arity); 
 
-				// unsigned m = 0;
-
 				std::vector<unsigned>& tuple_counts_partition = m_tuple_counts_by_partition_1[n->partition()];
 
 				unsigned min_count = std::numeric_limits<unsigned>::max();
 
-				std::vector<bool> check_dupl(m_num_fluents, false);
-
 				for (unsigned idx = 0; idx < n_combinations; idx++)
 				{
-
-
 					/**
 					 * get tuples from indexes
 					 */
 					idx2tuple(tuple, fl, idx, arity);
-
 					/**
 					 * Check if tuple is covered
 					 */
@@ -939,32 +932,12 @@ namespace aptk
 
 					tuple_idx = tuple2idx(tuple, arity);
 
-					if (check_dupl[tuple_idx] == false)
-						check_dupl[tuple_idx] = true;
-					else
-						continue;
-
 					// if (tuple_counts_partition[tuple_idx] > 0)
 					tuple_count = tuple_counts_partition[tuple_idx]++; //because set as 0 by default
-						// tuple_count = -1;
-					// else
-					// {
-					// 	tuple_counts_partition[tuple_idx] = 1;
-					// 	tuple_count = 0;
-					// }
-
-					// m = -(float)1 / (1 + tuple_count);
-					// if (m < metric_value_2)
-					// 	metric_value_2 = m;
 
 					//compare counts to avoid redundant division calculation
 					if (tuple_count < min_count)
 						min_count = tuple_count;
-					// {
-					// 	min_count = tuple_count;
-					// 	m = -(float)1 / (1 + tuple_count);
-					// 	metric_value_2 = m;
-					// }
 				}
 
 				// metric_value += metric_value_2;
@@ -978,7 +951,7 @@ namespace aptk
 				// if (!has_state)
 				// 	n->parent()->state()->regress_lazy_state(m_strips_model.actions()[n->action()]);
 
-				return new_covers;
+				return false;
 			}
 
 
