@@ -107,6 +107,7 @@ using aptk::search::gs_bfcs_3h::GS_BFCS_3H;
 using aptk::search::Pruned_Open_List;
 
 using aptk::search::Alt_Node_Comparer_3H_gn_unit;
+using aptk::search::Alt_Node_Comparer_2H_gn_unit;
 
 using aptk::search::Inverse_Node_Comparer_3H_gn_unit;
 using aptk::search::Pruned_Node_Comparer_3H_gn_unit;
@@ -180,6 +181,10 @@ typedef Count_Novelty_Heuristic<Fwd_Search_Problem, Search_Node_3h> H_Novel_Coun
 typedef Count_Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Count_Partition;
 typedef Node_Comparer_3H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_3h_ignore_costs;
 typedef Alt_Node_Comparer_3H_gn_unit<Search_Node_3h> Alt_Tie_Breaking_Algorithm_3h_ignore_costs;
+typedef Node_Comparer_2H_gn_unit<Search_Node_3h> Tie_Breaking_Algorithm_2h_ignore_costs_bfcs;
+typedef Alt_Node_Comparer_2H_gn_unit<Search_Node_3h> Alt_Tie_Breaking_Algorithm_2h_ignore_costs_bfcs;
+
+
 typedef Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> BFS_Open_List_3h;
 typedef Novelty_Partition<Fwd_Search_Problem, Search_Node_3h> H_Novel_Fwd_3h;
 // typedef GS_BFWS_3H<Fwd_Search_Problem, H_Novel_Fwd_3h, H_Lmcount_Fwd, H_Novel_Count_Blind, H_Add_Rp_Fwd, BFS_Open_List_3h> custom_BFWS;
@@ -191,7 +196,7 @@ typedef Pruned_Open_List<Tie_Breaking_Algorithm_3h_ignore_costs, Inverse_Tie_Bre
 
 
 typedef Custom_Priority_Queue<Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Testing_Open_List;
-typedef Double_Custom_Priority_Queue<Tie_Breaking_Algorithm_3h_ignore_costs, Alt_Tie_Breaking_Algorithm_3h_ignore_costs, Search_Node_3h> Double_Testing_Open_List;
+typedef Double_Custom_Priority_Queue<Tie_Breaking_Algorithm_2h_ignore_costs_bfcs, Alt_Tie_Breaking_Algorithm_2h_ignore_costs_bfcs, Search_Node_3h> Double_Testing_Open_List;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Blind, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, BFS_Open_List_3h> BFCS_1_p;
 // typedef GS_BFCS_3H<Fwd_Search_Problem, H_Novel_Count_Partition, H_Lmcount_Fwd, H_Novel_Fwd_3h, H_Add_Rp_Fwd, Pruned_BFS_Open_List_3h> BFCS_1_p_pruned;
