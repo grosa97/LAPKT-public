@@ -314,10 +314,10 @@ namespace aptk
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
-						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
+						m_memory_stop(false), m_alt(false), m_max_count(0)//, m_h3_only_max_nov(true)
 				{
 
-					// m_memory_budget = 6000;
+					m_memory_budget = 8100;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -327,6 +327,13 @@ namespace aptk
 					//max depth determined size of list (2^17 = 262143)			
 					int OPEN_MAX_DEPTH =18;
 					m_open.init(OPEN_MAX_DEPTH);
+
+					m_gen_count_map = {
+    					{0, 0}, {1, 0}, {5, 0}, {10, 0}, {100, 0}, {1000, 0}, {10000, 0}
+					};
+					m_exp_count_map = {
+    					{0, 0}, {1, 0}, {5, 0}, {10, 0}, {100, 0}, {1000, 0}, {10000, 0}
+					};
 				}
 
 				virtual ~GS_BFCS_3H()
@@ -751,10 +758,50 @@ namespace aptk
 				// 	m_third_h->eval(candidate, candidate->alt_h1n());
 				// }
 
+				void update_gen_count_map(unsigned count)
+				{
+					// Increment key 0 for every call to track total counts
+					++m_gen_count_map[0];
+
+					// Check and increment the counts for each threshold
+					if (count >= 1) ++m_gen_count_map[1];
+					if (count >= 5) ++m_gen_count_map[5];
+					if (count >= 10) ++m_gen_count_map[10];
+					if (count >= 100) ++m_gen_count_map[100];
+					if (count >= 1000) ++m_gen_count_map[1000];
+					if (count >= 10000) ++m_gen_count_map[10000];
+				}
+
+				void update_exp_count_map(unsigned count)
+				{
+					// Increment key 0 for every call to track total counts
+					++m_exp_count_map[0];
+
+					// Check and increment the counts for each threshold
+					if (count >= 1) ++m_exp_count_map[1];
+					if (count >= 5) ++m_exp_count_map[5];
+					if (count >= 10) ++m_exp_count_map[10];
+					if (count >= 100) ++m_exp_count_map[100];
+					if (count >= 1000) ++m_exp_count_map[1000];
+					if (count >= 10000) ++m_exp_count_map[10000];
+				}
+
+				void print_count_map() {
+					std::cout << "--gen_count_map:" << std::endl;
+					for (const auto& pair : m_gen_count_map) {
+						std::cout << "key: " << pair.first << ", count: " << pair.second << std::endl;
+					}
+					std::cout << "--exp_count_map:" << std::endl;
+					for (const auto& pair : m_exp_count_map) {
+						std::cout << "key: " << pair.first << ", count: " << pair.second << std::endl;
+					}
+				}
+
 				void eval_count_based(Search_Node *candidate)
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					m_first_h->eval(candidate, candidate->h1n());		
+					m_first_h->eval(candidate, candidate->h1n());
+					update_gen_count_map(candidate->h1n());
 				}
 
 
@@ -932,16 +979,16 @@ namespace aptk
 							std::cout << "Inserted into OPEN" << std::endl;
 #endif
 
-						// static struct rusage usage_report;
-						// if (generated() % 1000 == 0){
-						// 	getrusage(RUSAGE_SELF, &usage_report);
-						// 	if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+						static struct rusage usage_report;
+						if (generated() % 1000 == 0){
+							getrusage(RUSAGE_SELF, &usage_report);
+							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
 
-						// 	std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
-						// 	std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
-						// 	m_memory_stop = true;
-						// 	}
-						// }
+							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
+							m_memory_stop = true;
+							}
+						}
 						open_node(n);
 					}
 					inc_eval();
@@ -965,6 +1012,7 @@ namespace aptk
 					// static struct rusage usage_report;
 					while (head)
 					{
+						update_exp_count_map(head->h1n());
 						// bool timer = false;
 						// if (generated() % 100000 < 100){
 						// 	auto start = std::chrono::steady_clock::now();
@@ -1246,6 +1294,10 @@ namespace aptk
 				int m_memory_budget;
 				bool m_memory_stop;
 				bool m_alt;
+
+				unsigned m_max_count;
+				std::unordered_map<unsigned, unsigned> m_gen_count_map;
+				std::unordered_map<unsigned, unsigned> m_exp_count_map;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};
