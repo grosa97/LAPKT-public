@@ -334,6 +334,10 @@ namespace aptk
 					m_exp_count_map = {
     					{0, 0}, {1, 0}, {5, 0}, {10, 0}, {100, 0}, {1000, 0}, {10000, 0}
 					};
+
+					m_open_count_map = {
+    					{0, 0}, {1, 0}, {5, 0}, {10, 0}, {100, 0}, {1000, 0}, {10000, 0}
+					};
 				}
 
 				virtual ~GS_BFCS_3H()
@@ -786,6 +790,20 @@ namespace aptk
 					if (count >= 10000) ++m_exp_count_map[10000];
 				}
 
+				void update_open_count_map(unsigned count)
+				{
+					// Increment key 0 for every call to track total counts
+					++m_open_count_map[0];
+
+					// Check and increment the counts for each threshold
+					if (count >= 1) ++m_open_count_map[1];
+					if (count >= 5) ++m_open_count_map[5];
+					if (count >= 10) ++m_open_count_map[10];
+					if (count >= 100) ++m_open_count_map[100];
+					if (count >= 1000) ++m_open_count_map[1000];
+					if (count >= 10000) ++m_open_count_map[10000];
+				}
+
 				void print_count_map() {
 					std::cout << "--gen_count_map:" << std::endl;
 					for (const auto& pair : m_gen_count_map) {
@@ -794,6 +812,11 @@ namespace aptk
 					std::cout << "--exp_count_map:" << std::endl;
 					for (const auto& pair : m_exp_count_map) {
 						std::cout << "key: " << pair.first << ", count: " << pair.second << std::endl;
+					}
+					std::cout << "--open_count_map:" << std::endl;
+					for (const auto& pair : m_open_count_map) {
+						std::cout << "key: " << pair.first << ", count: " << pair.second << std::endl;
+			
 					}
 				}
 
@@ -846,7 +869,9 @@ namespace aptk
 
 				void open_node(Search_Node *n)
 				{
-					m_open.insert(n);
+					int open_h1 = m_open.insert(n);
+					if (open_h1 > -1)
+						update_open_count_map(open_h1);
 					inc_gen();
 					// m_generated_count_by_novelty[n->h1n() - 1]++;
 				}
@@ -1298,6 +1323,7 @@ namespace aptk
 				unsigned m_max_count;
 				std::unordered_map<unsigned, unsigned> m_gen_count_map;
 				std::unordered_map<unsigned, unsigned> m_exp_count_map;
+				std::unordered_map<unsigned, unsigned> m_open_count_map;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};

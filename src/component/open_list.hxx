@@ -378,12 +378,13 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				bool empty() const { return m_heap.empty(); }
 				std::size_t size() const { return m_heap.size(); }
 
-				void insert(Node *n)
+				int insert(Node *n)
 				{
 					if (size() < m_size_limit)
 					{
 						m_heap.push_back(n);
 						std::push_heap(m_heap.begin(), m_heap.end(), Node_Comp());
+						return n->h1n();
 					}
 					else
 					{
@@ -401,11 +402,15 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 							m_heap[r_i] = n;
 							std::push_heap(m_heap.begin(), m_heap.begin()+r_i+1, Node_Comp());
 							delete d;
+							return n->h1n();
 							// if (n->h1n() < -0.9)
 							// 	std::cout << top()->h1n()<<std::endl;
 						}
 						else
+						{
 							delete n;
+							return -1;
+						}
 					}
 
 
