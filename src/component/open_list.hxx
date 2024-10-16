@@ -319,6 +319,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
 					m_heap_1.pop_back();
 					r->m_pop_count++;
+					r->set_olp(0);
 					return r;
 				}
 
@@ -328,6 +329,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					std::pop_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
 					m_heap_2.pop_back();
 					r->m_pop_count++;
+					r->set_olp(1);
 					return r;
 				}
 

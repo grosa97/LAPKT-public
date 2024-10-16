@@ -104,7 +104,7 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false) //, m_alt(false)
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false), m_olp(0) //, m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -165,6 +165,10 @@ namespace aptk
 				bool already_expanded() { return m_already_expanded; }
 				// bool is_alt() { return m_alt; }
 				// void set_alt() { m_alt = true; }
+
+				void set_olp(unsigned olp_index) { m_olp = olp_index; }
+
+				unsigned olp() { return m_olp; }
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -268,6 +272,8 @@ namespace aptk
 				unsigned m_partition;
 				unsigned m_M;
 				unsigned m_GC;
+
+				unsigned m_olp;
 
 				size_t m_hash;
 				Bool_Vec_Ptr *m_land_consumed;
@@ -752,13 +758,24 @@ namespace aptk
 
 				void eval_novel(Search_Node *candidate)
 				{
-					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					if (candidate->parent() != NULL)
+						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+					else
+						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+						
 					m_third_h->eval(candidate, candidate->alt_h1n());
 				}
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
+					if (candidate->parent() != NULL)
+						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+					else
+						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+
 					m_first_h->eval(candidate, candidate->h1n());		
 					// candidate->h3n() = candidate->h1n();
 
