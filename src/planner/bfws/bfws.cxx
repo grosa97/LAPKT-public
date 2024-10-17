@@ -332,7 +332,7 @@ void BFWS::solve()
 		bfws_options(search_prob, bfs_engine, max_width, graph);
 		bfs_engine.set_use_h2n(true);
 		// bfs_engine.set_use_h3n(true);
-		bfs_engine.set_budget(1600);
+		bfs_engine.set_budget(1800);
 		
 		float bfs_t = do_search(bfs_engine, *prob, plan_stream);
 

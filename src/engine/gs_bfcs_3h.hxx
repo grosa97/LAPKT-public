@@ -323,7 +323,7 @@ namespace aptk
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 6000;
+					m_memory_budget = 9999;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -769,14 +769,20 @@ namespace aptk
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
-					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
-					else
-						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-
-					m_first_h->eval(candidate, candidate->h1n());		
+					if (candidate->alt_h1n() == 1)
+					{
+						candidate->h1n() = 0;
+					}
+					else 
+					{
+						// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+						//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
+						if (candidate->parent() != NULL)
+							candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+						else
+							candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+						m_first_h->eval(candidate, candidate->h1n());		
+					}
 					// candidate->h3n() = candidate->h1n();
 
 
@@ -1150,7 +1156,6 @@ namespace aptk
 
 				virtual void process(Search_Node *head)
 				{
-
 #ifdef DEBUG
 					
 					if (m_verbose)
@@ -1182,6 +1187,7 @@ namespace aptk
 						inc_dead_end();
 						return;
 					}
+
 
 					for (unsigned i = 0; i < app_set.size(); ++i)
 					{
@@ -1227,20 +1233,6 @@ namespace aptk
 							// if(n->h2n() == head->h2n())
 							eval_relevant_fluents(n);
 
-						eval_count_based(n);
-						// eval_lf_counts(n);
-
-						// int tv = get_lifted_counts_state(n);
-						// std::cout << "DEBUG: " << tv <<std::endl;
-						// std::cout << m_sign_feat_occurrences.size() << std::endl;
-
-
-						// if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
-						// {
-						// 	inc_dead_end();
-						// 	delete n;
-						// 	continue;
-						// }
 
 						if (m_use_novelty)
 						{
@@ -1259,6 +1251,22 @@ namespace aptk
 									continue;
 								}
 						}
+
+						eval_count_based(n);
+						// eval_lf_counts(n);
+
+						// int tv = get_lifted_counts_state(n);
+						// std::cout << "DEBUG: " << tv <<std::endl;
+						// std::cout << m_sign_feat_occurrences.size() << std::endl;
+
+
+						// if (n->h1n() > -0.0001) //if its == 0 (assuming count novelty threshold not allow values <= 0.0001)
+						// {
+						// 	inc_dead_end();
+						// 	delete n;
+						// 	continue;
+						// }
+
 
 						// if (m_use_h3n) 
 						// 	eval_count_based(n);
