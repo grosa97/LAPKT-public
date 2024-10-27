@@ -332,7 +332,7 @@ namespace aptk
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 6000;
+					m_memory_budget = 9999;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -775,7 +775,7 @@ namespace aptk
 				{
 					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hc()+ candidate->parent()->olp_cc();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hn()+ candidate->parent()->olp_cn();
 					else
 						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 						
@@ -787,7 +787,7 @@ namespace aptk
 					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hn()+ candidate->parent()->olp_cn();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hc()+ candidate->parent()->olp_cc();
 					else
 						candidate->partition() = (1000 * candidate->GC()) +candidate->r();
 
