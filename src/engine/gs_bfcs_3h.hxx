@@ -104,7 +104,7 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false), m_olp(0) //, m_alt(false)
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false), m_olp_cc(0), m_olp_cn(0), m_olp_hc(0), m_olp_hn(0) //, m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -166,9 +166,15 @@ namespace aptk
 				// bool is_alt() { return m_alt; }
 				// void set_alt() { m_alt = true; }
 
-				void set_olp(unsigned olp_index) { m_olp = olp_index; }
+				void set_olp_cc(unsigned olp_index) { m_olp_cc = olp_index; }
+				void set_olp_cn(unsigned olp_index) { m_olp_cn = olp_index; }
+				void set_olp_hc(unsigned olp_index) { m_olp_hc = olp_index; }
+				void set_olp_hn(unsigned olp_index) { m_olp_hn = olp_index; }
 
-				unsigned olp() { return m_olp; }
+				unsigned olp_cc() { return m_olp_cc; }
+				unsigned olp_cn() { return m_olp_cn; }
+				unsigned olp_hc() { return m_olp_hc; }
+				unsigned olp_hn() { return m_olp_hn; }
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -273,7 +279,10 @@ namespace aptk
 				unsigned m_M;
 				unsigned m_GC;
 
-				unsigned m_olp;
+				unsigned m_olp_cc;
+				unsigned m_olp_cn;
+				unsigned m_olp_hc;
+				unsigned m_olp_hn;
 
 				size_t m_hash;
 				Bool_Vec_Ptr *m_land_consumed;
@@ -605,6 +614,12 @@ namespace aptk
 						std::cout << std::endl;
 					}
 #endif
+
+					m_root->set_olp_cc(1);
+					m_root->set_olp_cn(1);
+					m_root->set_olp_hc(1);
+					m_root->set_olp_hn(1);
+
 					m_open.insert(m_root);
 
 					// m_generated_count_by_novelty[m_root->h1n() - 1]++;
@@ -760,7 +775,7 @@ namespace aptk
 				{
 					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hc()+ candidate->parent()->olp_cc();
 					else
 						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 						
@@ -772,11 +787,11 @@ namespace aptk
 					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hn()+ candidate->parent()->olp_cn();
 					else
-						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+						candidate->partition() = (1000 * candidate->GC()) +candidate->r();
 
-					m_first_h->eval(candidate, candidate->h1n());		
+					m_first_h->eval(candidate, candidate->h1n());
 					// candidate->h3n() = candidate->h1n();
 
 
@@ -850,6 +865,10 @@ namespace aptk
 					{
 						next = m_open.pop();
 					}
+					// std::cout << next->olp_cc() << " "
+					// 		  << next->olp_hc() << " "
+					// 		  << next->olp_cn() << " "
+					// 		  << next->olp_hn() << std::endl;
 					return next;
 				}
 
@@ -1259,6 +1278,24 @@ namespace aptk
 									continue;
 								}
 						}
+
+
+						// if (n->parent() != NULL)
+						// {
+						// 	n->set_olp_hc(n->parent()->olp_hc());
+						// 	n->set_olp_hn(n->parent()->olp_hn());
+						// }
+
+						//------
+						// if (n->parent() == NULL)
+						// 	n->set_olp_hc(0);
+						// else
+						// 	n->set_olp_hc(n->parent()->olp_c());
+						//------
+
+
+
+
 
 						// if (m_use_h3n) 
 						// 	eval_count_based(n);

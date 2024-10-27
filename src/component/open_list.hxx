@@ -194,6 +194,9 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				{
 					Node* d_1 = NULL;
 					Node* d_2 = NULL;
+
+
+
 					if (size_1() < m_size_limit_1)
 					{
 						m_heap_1.push_back(n);
@@ -319,7 +322,17 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
 					m_heap_1.pop_back();
 					r->m_pop_count++;
-					r->set_olp(0);
+
+					r->set_olp_cc(1);
+					if (r->parent() != NULL && r->parent()->olp_hc() == 1)
+						r->set_olp_hc(1);
+
+					// if (r->olp_h() == 0)
+					// 	r->set_olp_c(0);
+					// else
+					// 	r->set_olp_c(2);
+
+					// std::cout << r->olp_cc() <<std::endl;
 					return r;
 				}
 
@@ -329,7 +342,17 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					std::pop_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
 					m_heap_2.pop_back();
 					r->m_pop_count++;
-					r->set_olp(1);
+					
+					r->set_olp_cn(1);
+					if (r->parent() != NULL && r->parent()->olp_hn() == 1)
+						r->set_olp_hn(1);
+
+					// if (r->olp_h() == 1)
+					// 	r->set_olp_c(1);
+					// else
+					// 	r->set_olp_c(2);
+
+					// std::cout << r->olp_cn() <<std::endl;
 					return r;
 				}
 
