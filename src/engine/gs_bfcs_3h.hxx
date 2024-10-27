@@ -759,15 +759,21 @@ namespace aptk
 				void eval_novel(Search_Node *candidate)
 				{
 					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-					if (candidate->parent() != NULL && candidate->parent()->olp() == 0)
+					if (candidate->parent() != NULL)
 					{
-					// 	candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
-					// else
-						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-						m_third_h->eval(candidate, candidate->alt_h1n());
+						if (candidate->parent()->olp() == 0) {
+						// 	candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+						// 	else
+								candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+								m_third_h->eval(candidate, candidate->alt_h1n());
+							}
+							else
+							{
+								candidate->alt_h1n() = candidate->parent()->alt_h1n();
+							}
 					}
 					else
-						candidate->alt_h1n() = 4;
+						m_third_h->eval(candidate, candidate->alt_h1n());
 						
 				}
 
@@ -781,15 +787,22 @@ namespace aptk
 					{
 						// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 						//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
-						if (candidate->parent() != NULL && candidate->parent()->olp() == 1)
+						if (candidate->parent() != NULL)
 						{
-						// 	candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
-						// else
-							candidate->partition() = (1000 * candidate->GC()) + candidate->r();
-							m_first_h->eval(candidate, candidate->h1n());
+							if (candidate->parent()->olp() == 1)
+							{
+							// 	candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp();
+							// else
+								candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+								m_first_h->eval(candidate, candidate->h1n());
+							}
+							else 
+							{
+								candidate->h1n() = candidate->parent()->h1n();
+							}
 						}
 						else
-							candidate->h1n() = 9999999;
+							m_first_h->eval(candidate, candidate->h1n());
 					}
 					// candidate->h3n() = candidate->h1n();
 
