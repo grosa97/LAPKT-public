@@ -773,23 +773,23 @@ namespace aptk
 
 				void eval_novel(Search_Node *candidate)
 				{
-					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hn()+ candidate->parent()->olp_cn();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() +  candidate->parent()->olp_hn()+  candidate->parent()->olp_cn();
 					else
-						candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + 2;
 						
 					m_third_h->eval(candidate, candidate->alt_h1n());
 				}
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
+					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hc()+ candidate->parent()->olp_cc();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hc() +  candidate->parent()->olp_cc();
 					else
-						candidate->partition() = (1000 * candidate->GC()) +candidate->r();
+						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + 2;
 
 					m_first_h->eval(candidate, candidate->h1n());
 					// candidate->h3n() = candidate->h1n();
