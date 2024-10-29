@@ -336,7 +336,7 @@ namespace aptk
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
-					m_third_h = new Third_Heuristic(search_problem);
+					m_third_h = new Third_Heuristic(search_problem, "rand", 0.1, 42, 1);
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
@@ -775,9 +775,9 @@ namespace aptk
 				{
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() +  candidate->parent()->olp_hn()+  candidate->parent()->olp_cn();
+						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() +   candidate->parent()->olp_cn();
 					else
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + 2;
+						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
 						
 					m_third_h->eval(candidate, candidate->alt_h1n());
 				}
@@ -787,9 +787,9 @@ namespace aptk
 					candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + candidate->parent()->olp_hc() +  candidate->parent()->olp_cc();
+						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp_cc();
 					else
-						candidate->partition() = (1000 * candidate->GC()) + 3*candidate->r() + 2;
+						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
 
 					m_first_h->eval(candidate, candidate->h1n());
 					// candidate->h3n() = candidate->h1n();
@@ -1323,7 +1323,7 @@ namespace aptk
 					//DEBUG
 					if ( (m_exp_count % 10000) == 0 )
 					{
-						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->h3n()<< " -- "
+						std::cout << head->h1n()<< " -- "<< head->h2n()<< " -- "<< head->alt_h1n()<< " -- "
 							<< head->GC()<<" -- "<<head->gn_unit() << std::endl;// <<" -- " << m_open.size()<<std::endl;
 						std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
 					}
@@ -1424,7 +1424,7 @@ namespace aptk
 
 				void set_arity(float v, unsigned g = 0) { 
 					m_first_h->set_arity(1, g); 
-					m_third_h->set_arity(2, g);
+					m_third_h->set_arity(v, g);
 					
 					}
 				// void set_arity_h3(float v, unsigned g = 0) { m_third_h->set_arity(v, g); }
