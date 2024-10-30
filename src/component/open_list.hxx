@@ -197,8 +197,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 
 
-					// if (size_1() < m_size_limit_1)
-					if (true)
+					if (size_1() < m_size_limit_1)
 					{
 						m_heap_1.push_back(n);
 						std::push_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
@@ -231,8 +230,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 					//if (n->alt_h1n() < m_th_value)
 					//{
-						//if (size_2() < m_size_limit_2)
-						if (true)
+						if (size_2() < m_size_limit_2)
 						{
 							m_heap_2.push_back(n);
 							std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
