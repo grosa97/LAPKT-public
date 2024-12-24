@@ -796,9 +796,11 @@ namespace aptk
 
 					m_first_h->eval(candidate, candidate->h1n());
 
-					// float c = 1;
+					float c = 1;
 					// std::cout <<c * (std::sqrt((float)m_max_gn_unit)) / (1 + (float)candidate->gn_unit()) <<std::endl;
-					// candidate->h1n() = candidate->h1n() - c * (std::sqrt((float)m_max_gn_unit)) / (1 + (float)candidate->gn_unit());
+					candidate->h1n() = candidate->h1n() - c * (std::sqrt((float)m_max_gn_unit)) / (1 + (float)candidate->gn_unit());
+
+					
 					// candidate->h3n() = candidate->h1n();
 
 
