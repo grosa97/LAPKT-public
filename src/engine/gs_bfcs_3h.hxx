@@ -40,6 +40,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <memory.hxx>
 // #include <chrono>
 #include <cstdint>
+#include <cmath>
 
 namespace aptk
 {
@@ -121,8 +122,8 @@ namespace aptk
 						delete m_rp_fl_set;
 				}
 
-				unsigned &h1n() { return m_h1; }
-				unsigned h1n() const { return m_h1; }
+				float &h1n() { return m_h1; }
+				float h1n() const { return m_h1; }
 				unsigned &alt_h1n() { return m_alt_h1; }
 				unsigned alt_h1n() const { return m_alt_h1; }
 				unsigned &h2n() { return m_h2; }
@@ -268,7 +269,7 @@ namespace aptk
 				Action_Idx m_action;
 				float m_g;
 				unsigned m_g_unit;
-				unsigned m_h1;
+				float m_h1;
 				unsigned m_alt_h1;
 				unsigned m_h2;
 				// unsigned m_alt_h2;
@@ -331,6 +332,8 @@ namespace aptk
 						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
+
+					m_max_gn_unit = 1;
 
 					m_memory_budget = 9999;
 
@@ -792,6 +795,10 @@ namespace aptk
 						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
 
 					m_first_h->eval(candidate, candidate->h1n());
+
+					// float c = 1;
+					// std::cout <<c * (std::sqrt((float)m_max_gn_unit)) / (1 + (float)candidate->gn_unit()) <<std::endl;
+					// candidate->h1n() = candidate->h1n() - c * (std::sqrt((float)m_max_gn_unit)) / (1 + (float)candidate->gn_unit());
 					// candidate->h3n() = candidate->h1n();
 
 
@@ -1211,6 +1218,10 @@ namespace aptk
 						if (head->gn() + a_cost > m_max_depth)
 							continue;
 
+
+						if (head->gn_unit()+1 > m_max_gn_unit)
+							m_max_gn_unit = head->gn_unit()+1;
+
 						// Lazy state generation
 						State *succ = nullptr;
 
@@ -1309,10 +1320,9 @@ namespace aptk
 						if (generated() % 1000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
 							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
-
-							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
-							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
-							m_memory_stop = true;
+								std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
+								std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl;
+								m_memory_stop = true;
 							}
 						}
 						open_node(n);
@@ -1617,6 +1627,8 @@ namespace aptk
 				int m_memory_budget;
 				bool m_memory_stop;
 				bool m_alt;
+
+				int m_max_gn_unit;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};

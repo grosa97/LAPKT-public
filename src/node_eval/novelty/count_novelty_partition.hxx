@@ -160,7 +160,7 @@ namespace aptk
 				
 			// }
 
-			virtual void eval(Search_Node *n, unsigned &h_val)
+			virtual void eval(Search_Node *n, float &h_val)
 			{
 				compute(n, h_val);
 
@@ -253,7 +253,7 @@ namespace aptk
 			// }
 			
 
-			void compute(Search_Node *n, unsigned &h_val)
+			void compute(Search_Node *n, float &h_val)
 			{
 
 				if (n->partition() == std::numeric_limits<unsigned>::max())
@@ -881,7 +881,7 @@ namespace aptk
 			// 	return new_covers;
 			// }
 
-			bool cover_compute_tuples_1(Search_Node *n, unsigned &metric_value)
+			bool cover_compute_tuples_1(Search_Node *n, float &metric_value)
 			{
 				// float metric_value_2 = 0;
 				unsigned arity = 1;
