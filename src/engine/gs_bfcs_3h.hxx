@@ -358,7 +358,7 @@ namespace aptk
 					// 	m_goal_partial_lf_feat[m_fluent_to_feature[f]]++;
 					// }
 
-
+					m_max_gc_partitions = 100;
 
 
 				}
@@ -441,6 +441,52 @@ namespace aptk
 					m_closed.clear();
 				}
 				
+				int partitionIndex(int i, int x, int max_v) {
+					// If i=0, we return 0
+					if (i == 0) {
+						return 0;
+					}
+
+					// Sanity check: if i > x, handle as you see fit. We'll just clamp i to x.
+					if (i > x) {
+						i = x; 
+					}
+
+					// Case 1: x <= max_v -> 1-to-1 mapping
+					if (x <= max_v) {
+						return i;  
+					}
+
+					// Case 2: x > max_v -> partition into max_v chunks "from the top down"
+					int chunk_size = x / max_v;  // base partition size
+					int remainder  = x % max_v;  // # of partitions that get (chunk_size+1)
+
+					// The bottom (max_v - remainder) partitions each have chunk_size elements;
+					// The top remainder partitions each have (chunk_size + 1).
+
+					int bottomCount = (max_v - remainder) * chunk_size;
+
+					if (i <= bottomCount) {
+						// i belongs to one of the bottom partitions
+						int offset = i - 1; 
+						int partitionIdx = offset / chunk_size; // zero-based
+						return partitionIdx + 1;                // convert to 1-based
+					} else {
+						// i is in the top partitions
+						int offset = i - bottomCount - 1;
+						int partitionIdx = offset / (chunk_size + 1); // zero-based among top partitions
+						return (max_v - remainder) + (partitionIdx + 1);
+					}
+				}
+
+				std::vector<int> buildPartitionMapping(int x, int max_v) {
+					std::vector<int> mapping(x + 1);
+					for (int i = 0; i <= x; ++i) {
+						mapping[i] = partitionIndex(i, x, max_v);
+					}
+					return mapping;
+				}
+
 
 
 				/**
@@ -761,21 +807,23 @@ namespace aptk
 
 				void eval_novel(Search_Node *candidate)
 				{
+					int gc_partition = m_gc_partition_mapping[candidate->GC()];
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp_cn();
+						candidate->partition() = (1000 * gc_partition) + 2*candidate->r() + candidate->parent()->olp_cn();
 					else
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
+						candidate->partition() = (1000 * gc_partition) + 2*candidate->r() + 1;
 					
 					m_third_h->eval(candidate, candidate->alt_h1n());
 				}
 
 				void eval_count_based(Search_Node *candidate)
 				{
+					int gc_partition = m_gc_partition_mapping[candidate->GC()];
 					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
 					if (candidate->parent() != NULL)
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp_cc();
+						candidate->partition() = (1000 * gc_partition) + 2*candidate->r() + candidate->parent()->olp_cc();
 					else
-						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
+						candidate->partition() = (1000 * gc_partition) + 2*candidate->r() + 1;
 
 					m_first_h->eval(candidate, candidate->h1n());		
 				}
@@ -1400,6 +1448,7 @@ namespace aptk
 
 				void set_arity_count(float v, unsigned g = 0) {
 					m_first_h->set_arity(v, g);
+					m_gc_partition_mapping = buildPartitionMapping(g, m_max_gc_partitions);
 				}
 				// void set_arity_h3(float v, unsigned g = 0) { m_third_h->set_arity(v, g); }
 				void set_max_novelty(unsigned v)
@@ -1598,6 +1647,9 @@ namespace aptk
 				int m_memory_budget;
 				bool m_memory_stop;
 				bool m_alt;
+
+				int m_max_gc_partitions;
+				std::vector<int> m_gc_partition_mapping;
 
 				// std::vector<unsigned> m_goal_partial_lf_feat;
 			};
