@@ -161,17 +161,15 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 				bool m_pop_alt;
 				int m_alt_counter;
 				int m_alt_interval;
-				float m_th_value;
+				// float m_th_value;
 
 			public:
 
 				Double_Custom_Priority_Queue() : m_next_1(0), m_next_2(0), m_size_limit_1(0), m_gen(seed), m_pop_alt(false),
 				m_alt_counter(0), m_alt_interval(2)
 				{
-					m_th_value = -(float)1 / (1+UINT8_MAX);
-					// int max_depth = 17;
-					// m_size_limit = pow(2, max_depth+1) - 1; //for index subtract 1
-					// m_last_layer_first_element = (m_size_limit / 2) + 1; //for index subtract 1
+					int default_max_depth = 18;
+					init(default_max_depth);
 				}
 				~Double_Custom_Priority_Queue() {}
 
@@ -182,6 +180,11 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 
 					m_size_limit_2 = pow(2, max_depth-1) - 1;
 					m_last_layer_first_element_2 = (m_size_limit_2 / 2) + 1;				
+				}
+
+				void set_seed(std::mt19937::result_type new_seed) {
+					seed = new_seed;
+					m_gen.seed(seed);
 				}
 
 				bool empty() const { return empty_1() && empty_2(); }
@@ -208,64 +211,34 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						int r_i = distrib(m_gen)-1;
 						if (m_node_comp(m_heap_1[r_i], n))
 						{
-							// int r_diff = m_size_limit - r;
-							// if (n->h1n() < -0.9)
-							// {
-							// 	std::cout <<"==="<<std::endl;
-							// 	std::cout << top()->h1n()<<std::endl;
-							// }
 							d_1 = m_heap_1[r_i];
 							m_heap_1[r_i] = n;
 							std::push_heap(m_heap_1.begin(), m_heap_1.begin()+r_i+1, Node_Comp());
-							// delete d;
-							// if (n->h1n() < -0.9)
-							// 	std::cout << top()->h1n()<<std::endl;
 						}
 						else
 							d_1 = n;
-							// delete n;
-
 						d_1->m_open_delete++;
 					}
 
-					//if (n->alt_h1n() < m_th_value)
-					//{
-						if (size_2() < m_size_limit_2)
+					if (size_2() < m_size_limit_2)
+					{
+						m_heap_2.push_back(n);
+						std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
+					}
+					else
+					{
+						static std::uniform_int_distribution<> distrib(m_last_layer_first_element_2, m_size_limit_2);
+						int r_i = distrib(m_gen)-1;
+						if (m_alt_node_comp(m_heap_2[r_i], n))
 						{
-							m_heap_2.push_back(n);
-							std::push_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
+							d_2 = m_heap_2[r_i];
+							m_heap_2[r_i] = n;
+							std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
 						}
 						else
-						{
-							static std::uniform_int_distribution<> distrib(m_last_layer_first_element_2, m_size_limit_2);
-							int r_i = distrib(m_gen)-1;
-							if (m_alt_node_comp(m_heap_2[r_i], n))
-							{
-								// int r_diff = m_size_limit - r;
-								// if (n->h1n() < -0.9)
-								// {
-								// 	std::cout <<"==="<<std::endl;
-								// 	std::cout << top()->h1n()<<std::endl;
-								// }
-								d_2 = m_heap_2[r_i];
-								m_heap_2[r_i] = n;
-								std::push_heap(m_heap_2.begin(), m_heap_2.begin()+r_i+1, Alt_Node_Comp());
-								
-								// delete d;
-								// if (n->h1n() < -0.9)
-								// 	std::cout << top()->h1n()<<std::endl;
-							}
-							else
-								d_2 = n;
-								// delete n;
-							d_2->m_open_delete++;
-						}
-					//}
-					//else
-					// {
-					// 	d_2 = n;
-					// 	d_2->m_open_delete++;
-					// }
+							d_2 = n;
+						d_2->m_open_delete++;
+					}
 
 					if (d_1 != nullptr && d_1 == d_2)
 					{
@@ -293,16 +266,6 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 						return pop_1();
 					else
 					{
-						// if (m_pop_alt)
-						// {
-						// 	m_pop_alt = false;
-						// 	return pop_2();
-						// }
-						// else
-						// {
-						// 	m_pop_alt = true;
-						// 	return pop_1();
-						// }
 						if (m_alt_counter == 0)
 						{
 							m_alt_counter = ++m_alt_counter % m_alt_interval;
@@ -322,17 +285,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					std::pop_heap(m_heap_1.begin(), m_heap_1.end(), Node_Comp());
 					m_heap_1.pop_back();
 					r->m_pop_count++;
-
 					r->set_olp_cc(1);
-					if (r->parent() != NULL && r->parent()->olp_hc() == 1)
-						r->set_olp_hc(1);
-
-					// if (r->olp_h() == 0)
-					// 	r->set_olp_c(0);
-					// else
-					// 	r->set_olp_c(2);
-
-					// std::cout << r->olp_cc() <<std::endl;
 					return r;
 				}
 
@@ -342,17 +295,7 @@ template <class Node_Comp, class Alt_Node_Comp, class Node>
 					std::pop_heap(m_heap_2.begin(), m_heap_2.end(), Alt_Node_Comp());
 					m_heap_2.pop_back();
 					r->m_pop_count++;
-					
 					r->set_olp_cn(1);
-					if (r->parent() != NULL && r->parent()->olp_hn() == 1)
-						r->set_olp_hn(1);
-
-					// if (r->olp_h() == 1)
-					// 	r->set_olp_c(1);
-					// else
-					// 	r->set_olp_c(2);
-
-					// std::cout << r->olp_cn() <<std::endl;
 					return r;
 				}
 

@@ -85,7 +85,13 @@ PYBIND11_MODULE(planner, m)
     .def_readwrite("found_plan", &BFWS::m_found_plan)
     .def_readwrite("plan_cost", &BFWS::m_cost)
     .def_readwrite("cost_bound", &BFWS::m_cost_bound)
-    .def_readwrite("verbose", &BFWS::m_verbose);
+    .def_readwrite("verbose", &BFWS::m_verbose)
+    .def_readwrite("memory_limit", &BFWS::m_memory_limit)
+    .def_readwrite("time_limit", &BFWS::m_time_limit)
+    .def_readwrite("fallback_backend", &BFWS::m_fallback_backend)
+    .def_readwrite("backend_type", &BFWS::m_backend_type)
+    .def_readwrite("tol_max_depth", &BFWS::m_tol_max_depth)
+    .def_readwrite("tol_seed", &BFWS::m_tol_seed);
 
   py::class_<Approximate_BFWS, STRIPS_Interface>(m, "Approximate_BFWS")
     .def(py::init<>())

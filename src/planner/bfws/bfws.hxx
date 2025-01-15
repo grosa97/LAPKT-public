@@ -227,10 +227,19 @@ public:
 	float m_cost;
 	float m_cost_bound;
 	bool m_verbose = false;
+	int m_memory_limit;
+	int m_time_limit;
+	bool m_fallback_backend;
+	std::string m_backend_type;
+	int m_tol_max_depth;
+	int m_tol_seed;
 
 protected:
 	template <typename Search_Engine>
 	void bfws_options(Fwd_Search_Problem &search_prob, Search_Engine &bfs_engine, unsigned max_novelty, Landmarks_Graph &graph);
+
+	template <typename Search_Engine>
+	void bfcs_options(Fwd_Search_Problem &search_prob, Search_Engine &bfs_engine, unsigned max_novelty_width, unsigned max_novelty_count, Landmarks_Graph &graph);
 
 	template <typename Search_Engine>
 	float do_search(Search_Engine &engine, aptk::STRIPS_Problem &plan_prob, std::ofstream &plan_stream);

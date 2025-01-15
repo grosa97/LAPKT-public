@@ -104,7 +104,8 @@ namespace aptk
 						: m_state(s), m_parent(parent), m_action(action), m_g(0), m_g_unit(0), 
 						m_h1(0), m_alt_h1(0), m_h2(0), m_h3(0.0), m_r(0), m_partition(0), m_M(0), m_GC(0),
 						m_land_consumed(NULL), m_land_unconsumed(NULL), m_rp_fl_vec(NULL), m_rp_fl_set(NULL), m_relaxed_deadend(false),
-						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false), m_olp_cc(0), m_olp_cn(0), m_olp_hc(0), m_olp_hn(0) //, m_alt(false)
+						m_sign_features(NULL), m_open_delete(0), m_already_expanded(false), m_pop_count(0), m_closed(false),
+						m_olp_cc(0), m_olp_cn(0) //, m_alt(false)
 				{
 					m_g = (parent ? parent->m_g + cost : 0.0f);
 					m_g_unit = (parent ? parent->m_g_unit + 1 : 0);
@@ -168,13 +169,8 @@ namespace aptk
 
 				void set_olp_cc(unsigned olp_index) { m_olp_cc = olp_index; }
 				void set_olp_cn(unsigned olp_index) { m_olp_cn = olp_index; }
-				void set_olp_hc(unsigned olp_index) { m_olp_hc = olp_index; }
-				void set_olp_hn(unsigned olp_index) { m_olp_hn = olp_index; }
-
 				unsigned olp_cc() { return m_olp_cc; }
-				unsigned olp_cn() { return m_olp_cn; }
-				unsigned olp_hc() { return m_olp_hc; }
-				unsigned olp_hn() { return m_olp_hn; }
+				unsigned olp_cn() { return m_olp_cn; }			
 
 				// Used to update novelty table
 				bool is_better(Node *n) const
@@ -281,8 +277,6 @@ namespace aptk
 
 				unsigned m_olp_cc;
 				unsigned m_olp_cn;
-				unsigned m_olp_hc;
-				unsigned m_olp_hn;
 
 				size_t m_hash;
 				Bool_Vec_Ptr *m_land_consumed;
@@ -328,11 +322,11 @@ namespace aptk
 						: m_problem(search_problem), m_expanded_count_by_novelty(nullptr), m_generated_count_by_novelty(nullptr), m_novelty_count_plan(nullptr), 
 						m_exp_count(0), m_gen_count(0), m_dead_end_count(0), m_open_repl_count(0), m_max_depth(infty), m_max_novelty(1), m_time_budget(infty), m_lgm(NULL), 
 						m_max_h2n(no_such_index), m_max_r(no_such_index), m_verbose(verbose), m_use_novelty(false), m_use_novelty_pruning(false), m_use_rp(true), m_use_rp_from_init_only(false), 
-						m_use_h2n(false), m_use_h3n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
+						m_use_h2n(false), m_h3_rp_fl_only(false), m_sign_count(0), m_num_lf_p(0), m_memory_budget(0),
 						m_memory_stop(false), m_alt(false)//, m_h3_only_max_nov(true)
 				{
 
-					m_memory_budget = 9999;
+					// m_memory_budget = 6000;
 
 					m_first_h = new First_Heuristic(search_problem);
 					m_second_h = new Second_Heuristic(search_problem);
@@ -340,8 +334,8 @@ namespace aptk
 					m_relevant_fluents_h = new Relevant_Fluents_Heuristic(search_problem);
 
 					//max depth determined size of list (2^17 = 262143)					
-					int OPEN_MAX_DEPTH =18;
-					m_open.init(OPEN_MAX_DEPTH);
+					// int OPEN_MAX_DEPTH =18;
+					// m_open.init(OPEN_MAX_DEPTH);
 
 					std::unordered_set<std::string> unique_signatures;
 					m_fluent_to_feature.resize(this->problem().task().num_fluents());
@@ -544,7 +538,7 @@ namespace aptk
 					m_root = new Search_Node(m_problem.init(), 0.0f, no_op, NULL, m_problem.num_actions());
 					// Init Novelty
 					m_third_h->init();
-					m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
+					// m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
 
 					if (m_use_rp)
 						set_relplan(this->m_root, this->m_root->state());
@@ -581,8 +575,6 @@ namespace aptk
 
 						m_root->undo_land_graph(m_lgm);
 
-						// if (m_use_h3n)
-						// 	eval_count_based(m_root);
 					}
 					else
 
@@ -594,12 +586,10 @@ namespace aptk
 							eval_rp(m_root);
 							eval_relevant_fluents(m_root);
 						}
-
+						eval_count_based(m_root);
 						if (m_use_novelty)
 							eval_novel(m_root);
 						
-						// if (m_use_h3n)
-							// eval_count_based(m_root);
 					}
 					// int tv = get_lifted_counts_state(m_root);
 					// std::cout << "DEBUG: " << tv <<std::endl;
@@ -617,8 +607,6 @@ namespace aptk
 
 					m_root->set_olp_cc(1);
 					m_root->set_olp_cn(1);
-					m_root->set_olp_hc(1);
-					m_root->set_olp_hn(1);
 
 					m_open.insert(m_root);
 
@@ -773,39 +761,23 @@ namespace aptk
 
 				void eval_novel(Search_Node *candidate)
 				{
-					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					if (candidate->parent() != NULL)
 						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp_cn();
 					else
 						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
-						
+					
 					m_third_h->eval(candidate, candidate->alt_h1n());
 				}
 
 				void eval_count_based(Search_Node *candidate)
 				{
-					// candidate->partition() = (1000 * candidate->GC()) + candidate->r();
 					//adding olp partitions by making r() even for open list 0 and odd for open list 1 of parent
 					if (candidate->parent() != NULL)
 						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + candidate->parent()->olp_cc();
 					else
 						candidate->partition() = (1000 * candidate->GC()) + 2*candidate->r() + 1;
 
-					m_first_h->eval(candidate, candidate->h1n());
-					// candidate->h3n() = candidate->h1n();
-
-
-					// if (candidate->h1n() > m_max_novelty)
-					// {
-					// 	m_third_h->eval(candidate, candidate->h1n());
-					// }
-					// else
-					// {
-					// 	if (m_h3_only_max_nov)
-					// 		m_third_h->update_counts(candidate);
-					// 	else
-					// 		m_third_h->eval(candidate, candidate->h1n());
-					// }	
+					m_first_h->eval(candidate, candidate->h1n());		
 				}
 
 				void eval_lf_counts(Search_Node* n)
@@ -1306,9 +1278,9 @@ namespace aptk
 #endif
 
 						static struct rusage usage_report;
-						if (generated() % 1000 == 0){
+						if (memory_budget_mb() > 0 && generated() % 1000 == 0){
 							getrusage(RUSAGE_SELF, &usage_report);
-							if ((usage_report.ru_maxrss / 1024) > m_memory_budget) {
+							if ((usage_report.ru_maxrss / 1024) > memory_budget_mb()) {
 
 							std::cout<<"DEBUG: MEMORY MEASUREMENT EXCEED LIMIT: "<<(usage_report.ru_maxrss / 1024)<<std::endl;
 							std::cout << "Expanded: "<<expanded()<<"\tGenerated: "<<generated()<<std::endl; 
@@ -1423,9 +1395,11 @@ namespace aptk
 				}
 
 				void set_arity(float v, unsigned g = 0) { 
-					m_first_h->set_arity(1, g); 
 					m_third_h->set_arity(v, g);
-					
+					}
+
+				void set_arity_count(float v, unsigned g = 0) {
+					m_first_h->set_arity(v, g);
 				}
 				// void set_arity_h3(float v, unsigned g = 0) { m_third_h->set_arity(v, g); }
 				void set_max_novelty(unsigned v)
@@ -1464,11 +1438,13 @@ namespace aptk
 				void set_alt(bool b) { m_alt = b; }
 
 				void set_use_h2n(bool v) {m_use_h2n = v; }
-				// void set_use_h3n(bool v) { m_use_h3n = v; }
 				// void set_use_h3_only_max_nov(bool v) { m_h3_only_max_nov = v; }
+
+				// current cbn heuristic version has code related to rp_fl_only commented, purpose
+				// was to only evaluate counts of fluents that are present in the #r relaxed plan
 				void set_use_count_rp_fl_only(bool v) {
 					m_h3_rp_fl_only = true;
-					m_first_h->set_rp_fl_only(m_h3_rp_fl_only);
+					m_first_h->set_rp_fl_only(m_h3_rp_fl_only); //currently does nothing
 				}
 
 				unsigned get_max_novelty_expanded()
@@ -1508,6 +1484,12 @@ namespace aptk
 
 				void set_budget(float v) { m_time_budget = v; }
 				float time_budget() const { return m_time_budget; }
+
+				void set_memory_budget_mb(int v) { m_memory_budget = v; }
+				int memory_budget_mb() const { return m_memory_budget; }
+
+				void set_tol_max_depth(int d) { m_open.init(d); }
+				void set_tol_seed(int s) { m_open.set_seed(s); }
 
 				float t0() const { return m_t0; }
 
@@ -1599,7 +1581,6 @@ namespace aptk
 				bool m_use_rp_from_init_only;
 
 				bool m_use_h2n;
-				bool m_use_h3n;
 				// bool m_h3_only_max_nov;
 				bool m_h3_rp_fl_only;
 
